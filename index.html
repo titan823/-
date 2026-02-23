@@ -205,6 +205,24 @@
             font-weight: bold;
             color: var(--text-secondary);
         }
+        
+        .paste-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .paste-btn:active {
+            background-color: var(--bg-secondary);
+        }
+
         textarea {
             width: 100%;
             flex-grow: 1;
@@ -427,7 +445,11 @@
         <main class="main-content">
             <div class="section-header">
                 <label for="inputText">入力テキスト</label>
-                <span class="char-count" id="inputCount">0文字</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- 追加: クリップボードから貼り付けボタン -->
+                    <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
+                    <span class="char-count" id="inputCount">0文字</span>
+                </div>
             </div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
 
@@ -455,7 +477,7 @@
                 <label for="outputText">整形結果</label>
                 <span class="char-count" id="outputCount">0文字</span>
             </div>
-            <textarea id="outputText" readonly placeholder="ボタンを押すと結果が表示されます..."></textarea>
+            <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
 
             <div class="action-row">
                 <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
@@ -489,7 +511,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.3</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.6</p>
             </div>
         </main>
     </div>
@@ -611,6 +633,7 @@
         outputCount.textContent = outputEl.value.length + "文字";
     }
     inputEl.addEventListener('input', updateCounts);
+    outputEl.addEventListener('input', updateCounts);
 
     // 半角カナ→全角カナ変換マップ
     const kanaMap = {
@@ -627,7 +650,7 @@
     };
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ウマ娘略称変換マップ
+    // ウマ娘略称変換マップ (トレーナーを追加)
     const umaMap = {
         'スペシャルウィーク': 'SW', 'サイレンススズカ': 'SSZ', 'トウカイテイオー': 'TT', 'マルゼンスキー': 'MZ',
         'フジキセキ': 'FK', 'オグリキャップ': 'OC', 'ゴールドシップ': 'GS', 'ウオッカ': 'VDK',
@@ -668,7 +691,8 @@
         'ヴェニュスパーク': 'VP', 'リガントーナ': 'RGT', 'ソノンエルフィー': 'SEF', 'シュガーライツ': 'SGL',
         'タッカーブライン': 'TKB', 'ユノハナブルーム': 'YHB', '駿川たづな': 'HT2', '秋川やよい': 'AY',
         '乙名史悦子': 'OE', '桐生院葵': 'KA2', '安心沢刺々美': 'ASS', '樫本理子': 'KR', '佐岳メイ': 'SM',
-        '都留岐涼花': 'TR', '保科健子': 'HK', '赤坂美聡': 'AKM', '細江純子': 'HJ'
+        '都留岐涼花': 'TR', '保科健子': 'HK', '赤坂美聡': 'AKM', '細江純子': 'HJ',
+        'トレーナー': 'TNR'
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
@@ -680,24 +704,51 @@
         }
 
         switch (action) {
-            case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
-            case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
-            case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
-            case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
-            case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
-            case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
-            case 'toUpperCase': text = text.toUpperCase(); break;
-            case 'toLowerCase': text = text.toLowerCase(); break;
+            case 'trimSpace': 
+                text = text.replace(/[ 　\t]+/g, ''); 
+                break;
+            case 'removeEmptyLines': 
+                text = text.replace(/^\s*[\r\n]/gm, ''); 
+                break;
+            case 'removeBreaks': 
+                text = text.replace(/[\r\n]+/g, ''); 
+                break;
+            case 'breaksToSpace': 
+                text = text.replace(/[\r\n]+/g, ' ').trim(); 
+                break;
+            case 'toHalfWidth': 
+                text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); 
+                break;
+            case 'toFullWidthKana': 
+                text = text.replace(kanaRegex, match => kanaMap[match]); 
+                break;
+            case 'toUpperCase': 
+                text = text.toUpperCase(); 
+                break;
+            case 'toLowerCase': 
+                text = text.toLowerCase(); 
+                break;
             case 'toUmaAbbr': {
-                const replaced = new Set();
+                const replaced = new Map();
+                let isReplaced = false;
+
                 text = text.replace(umaRegex, match => {
-                    replaced.add(match);
+                    replaced.set(match, umaMap[match]);
+                    isReplaced = true;
                     return umaMap[match];
                 });
-                if (replaced.size > 0) {
-                    // 置換したキャラとその略称の一覧を作成し、文頭に付与
-                    const noteStr = Array.from(replaced).map(name => `${name}(${umaMap[name]})`).join(', ');
-                    text = `※略称: ${noteStr}\n\n${text}`;
+
+                if (isReplaced) {
+                    let noteStr = "【適用された略称一覧】\n";
+                    replaced.forEach((abbr, name) => {
+                        noteStr += `・${name} → ${abbr}\n`;
+                    });
+                    noteStr += "------------------------\n\n";
+                    text = noteStr + text;
+                    showToast('ウマ娘・トレーナーの略称化を行いました！');
+                } else {
+                    showToast('略称化できる単語が見つかりませんでした');
+                    return; 
                 }
                 break;
             }
@@ -708,6 +759,29 @@
 
     document.querySelectorAll('.tools-grid .tool-btn').forEach(btn => {
         btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action')));
+    });
+
+    // クリップボードから貼り付け
+    document.getElementById('pasteBtn').addEventListener('click', async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                const selectionStart = inputEl.selectionStart;
+                const selectionEnd = inputEl.selectionEnd;
+                const currentText = inputEl.value;
+                
+                inputEl.value = currentText.substring(0, selectionStart) + text + currentText.substring(selectionEnd);
+                inputEl.selectionStart = inputEl.selectionEnd = selectionStart + text.length;
+                inputEl.focus();
+                
+                updateCounts();
+                showToast('貼り付けました');
+            } else {
+                showToast('クリップボードが空です');
+            }
+        } catch (err) {
+            showToast('貼り付けが許可されていません');
+        }
     });
 
     // 任意文字列の置換ロジック
@@ -725,7 +799,6 @@
             return;
         }
 
-        // 正規表現のエスケープ処理
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapeRegExp(source), 'g');
         
