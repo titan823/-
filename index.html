@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Toolbox PWA</title>
+    <link id="manifest-link" rel="manifest" href="">
+    <meta name="theme-color" id="theme-color-meta" content="#4a90e2">
+
+    <style>
+        /* =========================================
+           カラーテーマ定義
+        ========================================= */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f0f2f5;
+            --bg-tertiary: #fdfdfd;
+            --bg-input: #ffffff;
+            --bg-button: #4a90e2;
+            --bg-button-hover: #357abd;
+            --bg-button-action: #777777;
+            --bg-button-delete: #e53935;
+            --bg-button-save: #30d158;
+            --bg-header: #4a90e2;
+            --text-primary: #333333;
+            --text-secondary: #777777;
+            --text-light: #ffffff;
+            --border-primary: #cccccc;
+            --border-secondary: #dddddd;
+            --border-tertiary: #eeeeee;
+            --shadow-secondary: rgba(0, 0, 0, 0.1);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #101010;
+            --bg-tertiary: #252525;
+            --bg-input: #303030;
+            --bg-button: #007aff;
+            --bg-button-action: #666666;
+            --bg-header: #007aff;
+            --text-primary: #e0e0e0;
+            --text-secondary: #aaaaaa;
+            --border-primary: #444444;
+            --border-secondary: #555555;
+            --border-tertiary: #333333;
+        }
+        body.pastel-pink-mode {
+            --bg-primary: #fff5f8;
+            --bg-secondary: #ffe6ea;
+            --bg-tertiary: #fff0f3;
+            --bg-input: #ffffff;
+            --bg-button: #ff8fab;
+            --bg-button-action: #ffb3c1;
+            --bg-header: #ff8fab;
+            --text-primary: #5c3c45;
+            --text-secondary: #8c6b74;
+            --border-primary: #ffc2d7;
+            --border-secondary: #ffe0e7;
+            --border-tertiary: #fff0f3;
+        }
+        body.pastel-blue-mode {
+            --bg-primary: #f0f8ff;
+            --bg-secondary: #e0f0ff;
+            --bg-tertiary: #eaf5ff;
+            --bg-button: #87cefa;
+            --bg-button-action: #add8e6;
+            --bg-header: #87cefa;
+            --text-primary: #3a5679;
+            --text-secondary: #6b87a9;
+            --border-primary: #b0dfff;
+        }
+        body.pastel-yellow-mode {
+            --bg-primary: #fffefa;
+            --bg-secondary: #fffacd;
+            --bg-button: #ffd700;
+            --bg-button-action: #ffec8b;
+            --bg-header: #ffd700;
+            --text-primary: #5d4037;
+            --border-primary: #fff0b3;
+        }
+        body.pastel-purple-mode {
+            --bg-primary: #f3e5f5;
+            --bg-secondary: #e1bee7;
+            --bg-button: #ab47bc;
+            --bg-button-action: #ba68c8;
+            --bg-header: #ab47bc;
+            --text-primary: #4a148c;
+            --border-primary: #ce93d8;
+        }
+        body.pastel-rainbow-mode {
+            --bg-primary: #fdfdfd;
+            --bg-secondary: #f5f5f5;
+            --bg-button: #ff80c0;
+            --bg-button-action: #80d0ff;
+            --bg-header: linear-gradient(to right, #ffadad, #ffd6a5, #fdffb6, #caffbf, #9bf6ff, #a0c4ff, #bdb2ff, #ffc6ff, #ffadad);
+            --text-primary: #333;
+        }
+        body.turf-mode {
+            --bg-primary: #F6F4F9;
+            --bg-secondary: #e8f5e9;
+            --bg-button: #4CAF50;
+            --bg-button-action: #9ccc65;
+            --bg-header: #4CAF50;
+            --text-primary: #2e7d32;
+        }
+
+        /* =========================================
+           基本レイアウト & スクリーン（画面遷移）
+        ========================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            height: 100dvh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .app-container {
+            position: relative;
+            height: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-primary);
+            box-shadow: 0 0 10px var(--shadow-secondary);
+            overflow: hidden;
+        }
+
+        /* 画面（スクリーン）の定義 */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            transition: transform 0.3s ease-in-out;
+            z-index: 0;
+        }
+        .screen.active { z-index: 1; }
+        .screen.dormant { visibility: hidden; }
+
+        #menu-screen { transform: translateX(-100%); }
+        #main-screen { transform: translateX(0); }
+        #settings-screen { transform: translateX(100%); }
+
+        /* =========================================
+           ヘッダー
+        ========================================= */
+        .app-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: var(--bg-header);
+            color: var(--text-light);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .app-header h1 {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .header-button {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 20px;
+            padding: 5px;
+            min-width: 30px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+        }
+        .header-button:active { background-color: rgba(255,255,255,0.2); }
+        .header-button.left { margin-right: 10px; }
+        .header-button.right { margin-left: 10px; }
+
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* =========================================
+           メイン画面 (テキスト整形ツール)
+        ========================================= */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }
+        textarea {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: monospace;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            resize: none;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+        textarea:focus { outline: 2px solid var(--bg-button); border-color: transparent; }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+            gap: 8px;
+        }
+        button.tool-btn {
+            padding: 12px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--bg-button-action);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.1s;
+        }
+        button.tool-btn:active { filter: brightness(0.8); transform: scale(0.98); }
+
+        /* 任意文字列置換用UI */
+        .custom-replace-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-tertiary);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-secondary);
+        }
+        .custom-replace-container input[type="text"] {
+            margin-bottom: 0;
+            padding: 8px;
+            font-size: 13px;
+            flex-grow: 1;
+            min-width: 0;
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .custom-replace-container button {
+            margin: 0;
+            padding: 8px 12px;
+            white-space: nowrap;
+        }
+
+        .action-row { display: flex; gap: 10px; }
+        .primary-btn {
+            flex-grow: 1;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--bg-button);
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        .primary-btn:active { filter: brightness(0.8); }
+        .secondary-btn {
+            background-color: var(--bg-button-save);
+            color: var(--text-light);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); }
+
+        /* =========================================
+           メニュー画面
+        ========================================= */
+        .menu-list { list-style: none; padding: 0; }
+        .menu-item {
+            padding: 15px;
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 1px 3px var(--shadow-secondary);
+        }
+        .menu-item:hover { background-color: var(--bg-tertiary); }
+        .menu-item.active {
+            border: 2px solid var(--bg-button);
+            background-color: var(--bg-secondary);
+        }
+        .menu-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .menu-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: normal;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* =========================================
+           設定画面
+        ========================================= */
+        .settings-group {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid var(--border-tertiary);
+            border-radius: 8px;
+            background-color: var(--bg-tertiary);
+        }
+        .settings-group h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: var(--text-link, var(--bg-button));
+            border-bottom: 1px solid var(--border-tertiary);
+            padding-bottom: 5px;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-primary);
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        /* トースト通知 */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+            z-index: 1000;
+        }
+        #toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- ==========================================
+         左パネル: ツール選択メニュー
+    =========================================== -->
+    <div id="menu-screen" class="screen dormant">
+        <header class="app-header">
+            <h1 style="text-align: right; padding-right: 10px;">ツール選択</h1>
+            <button id="back-to-main-from-menu" class="header-button right" aria-label="メインに戻る">＞</button>
+        </header>
+        <main class="main-content">
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">利用するツールを選択してください</p>
+            <ul class="menu-list">
+                <li class="menu-item active">
+                    <div>
+                        テキスト整形ツール
+                        <span class="menu-desc">空白や改行の削除、半角/全角変換など</span>
+                    </div>
+                    <span>✔️</span>
+                </li>
+                <li class="menu-item disabled">
+                    <div>
+                        JSONフォーマッター
+                        <span class="menu-desc">（準備中）</span>
+                    </div>
+                </li>
+                <li class="menu-item disabled">
+                    <div>
+                        Base64 エンコード/デコード
+                        <span class="menu-desc">（準備中）</span>
+                    </div>
+                </li>
+            </ul>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         中央パネル: メイン画面
+    =========================================== -->
+    <div id="main-screen" class="screen active">
+        <header class="app-header">
+            <button id="goto-menu-btn" class="header-button left" aria-label="メニューを開く">☰</button>
+            <h1 id="main-title">テキスト整形</h1>
+            <button id="goto-settings-btn" class="header-button right" aria-label="設定を開く">⚙</button>
+        </header>
+        <main class="main-content">
+            <div class="section-header">
+                <label for="inputText">入力テキスト</label>
+                <span class="char-count" id="inputCount">0文字</span>
+            </div>
+            <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
+
+            <div class="tools-grid">
+                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
+                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
+                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
+                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
+                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
+                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
+            </div>
+
+            <!-- 任意文字列置換 UI -->
+            <div class="custom-replace-container">
+                <input type="text" id="replaceSource" placeholder="検索文字列">
+                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
+                <input type="text" id="replaceTarget" placeholder="置換後">
+                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
+            </div>
+
+            <div class="section-header">
+                <label for="outputText">整形結果</label>
+                <span class="char-count" id="outputCount">0文字</span>
+            </div>
+            <textarea id="outputText" readonly placeholder="ボタンを押すと結果が表示されます..."></textarea>
+
+            <div class="action-row">
+                <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
+                <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 続けて処理</button>
+                <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         右パネル: 設定画面
+    =========================================== -->
+    <div id="settings-screen" class="screen dormant">
+        <header class="app-header">
+            <button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button>
+            <h1>設定</h1>
+        </header>
+        <main class="main-content">
+            <div class="settings-group">
+                <h3>デザイン</h3>
+                <label for="theme-select">表示テーマ:</label>
+                <select id="theme-select" aria-label="表示テーマ">
+                    <option value="light">ライトモード</option>
+                    <option value="dark">ダークモード</option>
+                    <option value="pastel-pink">パステルモード🩷</option>
+                    <option value="pastel-blue">パステルモード🩵</option>
+                    <option value="pastel-yellow">パステルモード🟡</option>
+                    <option value="pastel-purple">パステルモード🟣</option>
+                    <option value="pastel-rainbow">パステルモード🌈</option>
+                    <option value="turf">ターフモード🌱</option>
+                </select>
+            </div>
+            <div class="settings-group" style="text-align: center;">
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.2</p>
+            </div>
+        </main>
+    </div>
+
+</div>
+
+<!-- 通知用トースト -->
+<div id="toast"></div>
+
+<script>
+    // ==========================================
+    // 1. PWA インストール対応 (動的Manifest)
+    // ==========================================
+    (function initPWA() {
+        const manifestJSON = {
+            name: "Toolbox PWA",
+            short_name: "Toolbox",
+            display: "standalone",
+            start_url: location.href,
+            background_color: "#ffffff",
+            theme_color: "#4a90e2",
+            icons: [{
+                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",
+                sizes: "192x192",
+                type: "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
+        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+
+        const swCode = `self.addEventListener('fetch', e => {});`;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+        }
+    })();
+
+    // ==========================================
+    // 2. 画面遷移 (スクリーン) ロジック
+    // ==========================================
+    const screens = {
+        main: document.getElementById('main-screen'),
+        menu: document.getElementById('menu-screen'),
+        settings: document.getElementById('settings-screen')
+    };
+
+    function showScreen(targetScreen) {
+        Object.values(screens).forEach(screen => {
+            screen.classList.remove('active');
+            screen.classList.remove('dormant');
+        });
+
+        if (targetScreen === 'main') {
+            screens.main.style.transform = 'translateX(0)';
+            screens.menu.style.transform = 'translateX(-100%)';
+            screens.settings.style.transform = 'translateX(100%)';
+            screens.main.classList.add('active');
+        } else if (targetScreen === 'menu') {
+            screens.main.style.transform = 'translateX(100%)';
+            screens.menu.style.transform = 'translateX(0)';
+            screens.settings.style.transform = 'translateX(200%)';
+            screens.menu.classList.add('active');
+        } else if (targetScreen === 'settings') {
+            screens.main.style.transform = 'translateX(-100%)';
+            screens.menu.style.transform = 'translateX(-200%)';
+            screens.settings.style.transform = 'translateX(0)';
+            screens.settings.classList.add('active');
+        }
+
+        setTimeout(() => {
+            Object.values(screens).forEach(screen => {
+                if (!screen.classList.contains('active')) {
+                    screen.classList.add('dormant');
+                }
+            });
+        }, 350);
+    }
+
+    document.getElementById('goto-menu-btn').addEventListener('click', () => showScreen('menu'));
+    document.getElementById('goto-settings-btn').addEventListener('click', () => showScreen('settings'));
+    document.getElementById('back-to-main-from-menu').addEventListener('click', () => showScreen('main'));
+    document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
+
+    // ==========================================
+    // 3. テーマ設定ロジック
+    // ==========================================
+    const themeSelect = document.getElementById('theme-select');
+    let currentTheme = localStorage.getItem('formatter_theme') || 'light';
+
+    function applyTheme(themeName) {
+        document.body.className = ''; 
+        if (themeName !== 'light') {
+            document.body.classList.add(themeName + '-mode');
+        }
+        localStorage.setItem('formatter_theme', themeName);
+        themeSelect.value = themeName;
+        
+        const colors = {
+            'light': '#4a90e2', 'dark': '#007aff', 'pastel-pink': '#ff8fab',
+            'pastel-blue': '#87cefa', 'pastel-yellow': '#ffd700', 'pastel-purple': '#ab47bc',
+            'pastel-rainbow': '#ffadad', 'turf': '#4CAF50'
+        };
+        document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
+    }
+
+    themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+    applyTheme(currentTheme);
+
+    // ==========================================
+    // 4. テキスト整形ロジック
+    // ==========================================
+    const inputEl = document.getElementById('inputText');
+    const outputEl = document.getElementById('outputText');
+    const inputCount = document.getElementById('inputCount');
+    const outputCount = document.getElementById('outputCount');
+
+    function updateCounts() {
+        inputCount.textContent = inputEl.value.length + "文字";
+        outputCount.textContent = outputEl.value.length + "文字";
+    }
+    inputEl.addEventListener('input', updateCounts);
+
+    // 半角カナ→全角カナ変換マップ
+    const kanaMap = {
+        'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
+        'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
+        'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ',
+        'ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ',
+        'ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト',
+        'ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ',
+        'ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ',
+        'ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン',
+        'ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ',
+        '｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'
+    };
+    const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
+
+    // ウマ娘略称変換マップ
+    const umaMap = {
+        'スペシャルウィーク': 'SW', 'サイレンススズカ': 'SSZ', 'トウカイテイオー': 'TT', 'マルゼンスキー': 'MZ',
+        'フジキセキ': 'FK', 'オグリキャップ': 'OC', 'ゴールドシップ': 'GS', 'ウオッカ': 'VDK',
+        'ダイワスカーレット': 'DS', 'タイキシャトル': 'TS', 'グラスワンダー': 'GW', 'ヒシアマゾン': 'HA',
+        'メジロマックイーン': 'MMQ', 'エルコンドルパサー': 'ECP', 'テイエムオペラオー': 'TMO', 'ナリタブライアン': 'NB',
+        'シンボリルドルフ': 'SR', 'エアグルーヴ': 'AG', 'アグネスデジタル': 'AD', 'セイウンスカイ': 'SUS',
+        'タマモクロス': 'TC', 'ファインモーション': 'FM', 'ビワハヤヒデ': 'BHH', 'マヤノトップガン': 'MTG',
+        'マンハッタンカフェ': 'MC', 'ミホノブルボン': 'MB', 'メジロライアン': 'MR', 'ヒシアケボノ': 'HAK',
+        'ユキノビジン': 'YB', 'ライスシャワー': 'RS', 'アイネスフウジン': 'AF', 'アグネスタキオン': 'AT',
+        'アドマイヤベガ': 'AV', 'イナリワン': 'IW', 'ウイニングチケット': 'WT', 'エアシャカール': 'ASK',
+        'エイシンフラッシュ': 'EF', 'カレンチャン': 'CC', 'カワカミプリンセス': 'KP', 'ゴールドシチー': 'GC',
+        'サクラバクシンオー': 'SBO', 'シーキングザパール': 'SZP', 'シンコウウインディ': 'SKW', 'スイープトウショウ': 'SWT',
+        'スーパークリーク': 'SCR', 'スマートファルコン': 'SF', 'ゼンノロブロイ': 'ZRR', 'トーセンジョーダン': 'TJ',
+        'ナカヤマフェスタ': 'NF', 'ナリタタイシン': 'NT', 'ニシノフラワー': 'NIF', 'ハルウララ': 'HU',
+        'バンブーメモリー': 'BM', 'ビコーペガサス': 'BP', 'マーベラスサンデー': 'MVS', 'マチカネフクキタル': 'MFK',
+        'ミスターシービー': 'MCB', 'メイショウドトウ': 'MSD', 'メジロドーベル': 'MD', 'ナイスネイチャ': 'NN',
+        'キングヘイロー': 'KH', 'マチカネタンホイザ': 'MTH', 'イクノディクタス': 'ID', 'メジロパーマー': 'MP',
+        'ダイタクヘリオス': 'DTH', 'ツインターボ': 'TTB', 'サトノダイヤモンド': 'SDD', 'キタサンブラック': 'KB',
+        'サクラチヨノオー': 'SCO', 'シリウスシンボリ': 'SSB', 'メジロアルダン': 'MA', 'ヤエノムテキ': 'YM',
+        'ツルマルツヨシ': 'TMT', 'メジロブライト': 'MBR', 'サクラローレル': 'SL', 'ナリタトップロード': 'NTR',
+        'ヤマニンゼファー': 'YZ', 'フリオーソ': 'FRI', 'トランセンド': 'TRC', 'エスポワールシチー': 'ESC',
+        'ノースフライト': 'NFL', 'シンボリクリスエス': 'SKS', 'タニノギムレット': 'TG', 'ダイイチルビー': 'DIR',
+        'メジロラモーヌ': 'MLM', 'アストンマーチャン': 'AM', 'サトノクラウン': 'SCW', 'シュヴァルグラン': 'SVG',
+        'ヴィルシーナ': 'VRS', 'ヴィブロス': 'VIV', 'ダンツフレーム': 'DF', 'ケイエスミラクル': 'KSM',
+        'ジャングルポケット': 'JP', 'ビリーヴ': 'BLV', 'ノーリーズン': 'NR', 'スティルインラブ': 'SIL',
+        'コパノリッキー': 'CPR', 'ホッコータルマエ': 'HT', 'ワンダーアキュート': 'WA', 'サウンズオブアース': 'SOE',
+        'ロイスアンドロイス': 'RAR', 'カツラギエース': 'KA', 'ネオユニヴァース': 'NU', 'ヒシミラクル': 'HM',
+        'タップダンスシチー': 'TDS', 'ドゥラメンテ': 'DRM', 'ラインクラフト': 'RK', 'シーザリオ': 'CZR',
+        'エアメサイア': 'AMS', 'フサイチパンドラ': 'FP', 'ブエナビスタ': 'BV', 'オルフェーヴル': 'ORF',
+        'ジェンティルドンナ': 'GD', 'ウインバリアシオン': 'WV', 'ドリームジャーニー': 'DJ', 'カルストンライトオ': 'CLO',
+        'デュランダル': 'DRD', 'バブルガムフェロー': 'BGF', 'フェノーメノ': 'FNM', 'グランアレグリア': 'GAL',
+        'ラヴズオンリーユー': 'LOY', 'クロノジェネシス': 'CG', 'ステイゴールド': 'STG', 'キセキ': 'KSK',
+        'デアリングタクト': 'DAT', 'デアリングハート': 'DAH', 'アドマイヤグルーヴ': 'AMG', 'サクラチトセオー': 'SCT',
+        'ブラストワンピース': 'BWP', 'アーモンドアイ': 'AAI', 'ラッキーライラック': 'LL', 'カレンブーケドール': 'CBD',
+        'レッドディザイア': 'RD', 'ダーレーアラビアン': 'DLA', 'ゴドルフィンバルブ': 'GOB', 'バイアリーターク': 'BYT',
+        'セントライト': 'SNL', 'スピードシンボリ': 'SPS', 'ハイセイコー': 'HSK', 'モンジュー': 'MNJ',
+        'ハッピーミーク': 'HPM', 'ビターグラッセ': 'BTG', 'リトルココン': 'LCC', 'ライトハロー': 'LH',
+        'ヴェニュスパーク': 'VP', 'リガントーナ': 'RGT', 'ソノンエルフィー': 'SEF', 'シュガーライツ': 'SGL',
+        'タッカーブライン': 'TKB', 'ユノハナブルーム': 'YHB', '駿川たづな': 'HT2', '秋川やよい': 'AY',
+        '乙名史悦子': 'OE', '桐生院葵': 'KA2', '安心沢刺々美': 'ASS', '樫本理子': 'KR', '佐岳メイ': 'SM',
+        '都留岐涼花': 'TR', '保科健子': 'HK', '赤坂美聡': 'AKM', '細江純子': 'HJ'
+    };
+    const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
+
+    function formatText(action) {
+        let text = inputEl.value;
+        if (!text) {
+            showToast('入力テキストがありません');
+            return;
+        }
+
+        switch (action) {
+            case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
+            case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
+            case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
+            case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
+            case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
+            case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
+            case 'toUpperCase': text = text.toUpperCase(); break;
+            case 'toLowerCase': text = text.toLowerCase(); break;
+            case 'toUmaAbbr': text = text.replace(umaRegex, match => umaMap[match]); break;
+        }
+        outputEl.value = text;
+        updateCounts();
+    }
+
+    document.querySelectorAll('.tools-grid .tool-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action')));
+    });
+
+    // 任意文字列の置換ロジック
+    document.getElementById('replaceBtn').addEventListener('click', () => {
+        const source = document.getElementById('replaceSource').value;
+        const target = document.getElementById('replaceTarget').value;
+        let text = inputEl.value;
+
+        if (!text) {
+            showToast('入力テキストがありません');
+            return;
+        }
+        if (!source) {
+            showToast('検索文字列を入力してください');
+            return;
+        }
+
+        // 正規表現のエスケープ処理
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapeRegExp(source), 'g');
+        
+        outputEl.value = text.replace(regex, target);
+        updateCounts();
+        showToast('置換しました');
+    });
+
+    // その他UIボタン
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        inputEl.value = ''; outputEl.value = ''; updateCounts();
+    });
+
+    document.getElementById('applyToInputBtn').addEventListener('click', () => {
+        if (outputEl.value) {
+            inputEl.value = outputEl.value;
+            outputEl.value = '';
+            updateCounts();
+            showToast('入力欄に反映しました');
+        }
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+        if (!outputEl.value) return;
+        try {
+            await navigator.clipboard.writeText(outputEl.value);
+            showToast('コピーしました！');
+        } catch (err) {
+            showToast('コピーに失敗しました');
+        }
+    });
+
+    let toastTimeout;
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+</script>
+</body>
+</html>
