@@ -489,7 +489,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.2</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.3</p>
             </div>
         </main>
     </div>
@@ -688,7 +688,19 @@
             case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
             case 'toUpperCase': text = text.toUpperCase(); break;
             case 'toLowerCase': text = text.toLowerCase(); break;
-            case 'toUmaAbbr': text = text.replace(umaRegex, match => umaMap[match]); break;
+            case 'toUmaAbbr': {
+                const replaced = new Set();
+                text = text.replace(umaRegex, match => {
+                    replaced.add(match);
+                    return umaMap[match];
+                });
+                if (replaced.size > 0) {
+                    // 置換したキャラとその略称の一覧を作成し、文頭に付与
+                    const noteStr = Array.from(replaced).map(name => `${name}(${umaMap[name]})`).join(', ');
+                    text = `※略称: ${noteStr}\n\n${text}`;
+                }
+                break;
+            }
         }
         outputEl.value = text;
         updateCounts();
