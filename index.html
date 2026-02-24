@@ -446,7 +446,6 @@
             <div class="section-header">
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <!-- 追加: クリップボードから貼り付けボタン -->
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
                     <span class="char-count" id="inputCount">0文字</span>
                 </div>
@@ -462,6 +461,8 @@
                 <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
                 <button class="tool-btn" data-action="toUpperCase">大文字化</button>
                 <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                <!-- 追加: セリフ順反転ボタン -->
+                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
                 <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
@@ -511,7 +512,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.6</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.7</p>
             </div>
         </main>
     </div>
@@ -728,6 +729,21 @@
             case 'toLowerCase': 
                 text = text.toLowerCase(); 
                 break;
+            case 'reverseDialogues': {
+                // 「」で囲まれたブロックを抽出し、その出現順序だけを逆転させる
+                const regex = /「[\s\S]*?」/g;
+                const matches = text.match(regex);
+                if (matches && matches.length > 1) {
+                    matches.reverse();
+                    let i = 0;
+                    text = text.replace(regex, () => matches[i++]);
+                    showToast('セリフの順序を反転しました');
+                } else {
+                    showToast('反転するセリフ(「」)が2つ以上ありません');
+                    return; 
+                }
+                break;
+            }
             case 'toUmaAbbr': {
                 const replaced = new Map();
                 let isReplaced = false;
