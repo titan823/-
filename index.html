@@ -461,7 +461,6 @@
                 <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
                 <button class="tool-btn" data-action="toUpperCase">大文字化</button>
                 <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                <!-- 追加: セリフ順反転ボタン -->
                 <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
                 <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
@@ -512,7 +511,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.7</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.0</p>
             </div>
         </main>
     </div>
@@ -730,13 +729,50 @@
                 text = text.toLowerCase(); 
                 break;
             case 'reverseDialogues': {
-                // 「」で囲まれたブロックを抽出し、その出現順序だけを逆転させる
-                const regex = /「[\s\S]*?」/g;
-                const matches = text.match(regex);
-                if (matches && matches.length > 1) {
-                    matches.reverse();
-                    let i = 0;
-                    text = text.replace(regex, () => matches[i++]);
+                // カッコの入れ子（ネスト）に完全対応した抽出ロジック
+                let depth = 0;
+                let startIndex = -1;
+                const dialogues = [];
+                const parsedText = [];
+                let lastEnd = 0;
+
+                // 1文字ずつ順番に確認していく
+                for (let i = 0; i < text.length; i++) {
+                    if (text[i] === '「') {
+                        if (depth === 0) {
+                            startIndex = i; // 一番外側の「 を見つけた位置
+                        }
+                        depth++; // 深さを+1
+                    } else if (text[i] === '」') {
+                        if (depth > 0) {
+                            depth--; // 深さを-1
+                            if (depth === 0) {
+                                // 一番外側の 」 に到達した時だけ、セリフとして切り出す
+                                const endIndex = i;
+                                dialogues.push(text.substring(startIndex, endIndex + 1));
+                                parsedText.push(text.substring(lastEnd, startIndex));
+                                parsedText.push('___DIALOGUE_PLACEHOLDER___'); // 入れ替え用の目印
+                                lastEnd = endIndex + 1;
+                            }
+                        }
+                    }
+                }
+                parsedText.push(text.substring(lastEnd)); // 最後の地の文を追加
+
+                if (dialogues.length > 1) {
+                    dialogues.reverse(); // 抽出したセリフの順序だけをひっくり返す
+                    let finalStr = "";
+                    let dIdx = 0;
+                    
+                    // 地の文と、ひっくり返したセリフを結合する
+                    for (let i = 0; i < parsedText.length; i++) {
+                        if (parsedText[i] === '___DIALOGUE_PLACEHOLDER___') {
+                            finalStr += dialogues[dIdx++];
+                        } else {
+                            finalStr += parsedText[i];
+                        }
+                    }
+                    text = finalStr;
                     showToast('セリフの順序を反転しました');
                 } else {
                     showToast('反転するセリフ(「」)が2つ以上ありません');
