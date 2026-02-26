@@ -461,8 +461,9 @@
                 <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
                 <button class="tool-btn" data-action="toUpperCase">大文字化</button>
                 <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                <!-- 追加: セリフ順反転ボタン -->
                 <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                <!-- 追加: カッコ抽出ボタン -->
+                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
                 <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
@@ -512,7 +513,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.7</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.8</p>
             </div>
         </main>
     </div>
@@ -534,7 +535,7 @@
             start_url: location.href,
             background_color: "#ffffff",
             theme_color: "#4a90e2",
-            icons: [{
+            icons:[{
                 src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",
                 sizes: "192x192",
                 type: "image/svg+xml"
@@ -651,7 +652,7 @@
     };
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ウマ娘略称変換マップ (トレーナーを追加)
+    // ウマ娘略称変換マップ
     const umaMap = {
         'スペシャルウィーク': 'SW', 'サイレンススズカ': 'SSZ', 'トウカイテイオー': 'TT', 'マルゼンスキー': 'MZ',
         'フジキセキ': 'FK', 'オグリキャップ': 'OC', 'ゴールドシップ': 'GS', 'ウオッカ': 'VDK',
@@ -730,7 +731,6 @@
                 text = text.toLowerCase(); 
                 break;
             case 'reverseDialogues': {
-                // 「」で囲まれたブロックを抽出し、その出現順序だけを逆転させる
                 const regex = /「[\s\S]*?」/g;
                 const matches = text.match(regex);
                 if (matches && matches.length > 1) {
@@ -740,6 +740,19 @@
                     showToast('セリフの順序を反転しました');
                 } else {
                     showToast('反転するセリフ(「」)が2つ以上ありません');
+                    return; 
+                }
+                break;
+            }
+            case 'extractBrackets': {
+                // よく使われる括弧とその中身を抽出
+                const regex = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
+                const matches = text.match(regex);
+                if (matches && matches.length > 0) {
+                    text = matches.join('\n');
+                    showToast(`カッコ内の文章を ${matches.length}件 抽出しました`);
+                } else {
+                    showToast('カッコで囲まれた部分が見つかりませんでした');
                     return; 
                 }
                 break;
