@@ -129,7 +129,6 @@
             overflow: hidden;
         }
 
-        /* 画面（スクリーン）の定義 */
         .screen {
             position: absolute;
             top: 0;
@@ -191,11 +190,11 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
 
         /* =========================================
-           メイン画面 (テキスト整形ツール)
+           UIパーツ (テキスト整形ツール)
         ========================================= */
         .section-header {
             display: flex;
@@ -206,7 +205,7 @@
             color: var(--text-secondary);
         }
         
-        .paste-btn {
+        .paste-btn, .highlight-btn {
             background-color: var(--bg-tertiary);
             color: var(--text-primary);
             border: 1px solid var(--border-primary);
@@ -219,18 +218,28 @@
             align-items: center;
             gap: 4px;
         }
-        .paste-btn:active {
-            background-color: var(--bg-secondary);
+        .paste-btn:active, .highlight-btn:active { background-color: var(--bg-secondary); }
+        .highlight-btn.active-mode {
+            background-color: var(--bg-button);
+            color: var(--text-light);
+            border-color: var(--bg-button);
+        }
+
+        .output-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-height: 100px;
+            position: relative;
         }
 
         textarea {
             width: 100%;
             flex-grow: 1;
-            min-height: 120px;
             padding: 12px;
             border: 1px solid var(--border-primary);
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-family: monospace;
             background-color: var(--bg-input);
             color: var(--text-primary);
@@ -238,14 +247,54 @@
             transition: border-color 0.3s, background-color 0.3s, color 0.3s;
         }
         textarea:focus { outline: 2px solid var(--bg-button); border-color: transparent; }
+
+        #outputPreview {
+            display: none;
+            width: 100%;
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+        }
         
+        /* ツールグループ（カテゴリ分け） */
+        .tool-group {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .tool-group-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border-tertiary);
+            padding-bottom: 4px;
+        }
+        .tool-group-summary {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            padding: 2px 0;
+        }
+
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
-            gap: 8px;
+            gap: 6px;
         }
         button.tool-btn {
-            padding: 12px 6px;
+            padding: 10px 6px;
             font-size: 12px;
             font-weight: bold;
             border-radius: 6px;
@@ -257,15 +306,13 @@
         }
         button.tool-btn:active { filter: brightness(0.8); transform: scale(0.98); }
 
-        /* 任意文字列置換用UI */
         .custom-replace-container {
             display: flex;
             align-items: center;
             gap: 8px;
-            background-color: var(--bg-tertiary);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-secondary);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-secondary);
         }
         .custom-replace-container input[type="text"] {
             margin-bottom: 0;
@@ -284,7 +331,7 @@
             white-space: nowrap;
         }
 
-        .action-row { display: flex; gap: 10px; }
+        .action-row { display: flex; gap: 10px; margin-top: 5px; }
         .primary-btn {
             flex-grow: 1;
             padding: 14px;
@@ -309,7 +356,7 @@
         .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); }
 
         /* =========================================
-           メニュー画面
+           設定等
         ========================================= */
         .menu-list { list-style: none; padding: 0; }
         .menu-item {
@@ -328,49 +375,13 @@
             box-shadow: 0 1px 3px var(--shadow-secondary);
         }
         .menu-item:hover { background-color: var(--bg-tertiary); }
-        .menu-item.active {
-            border: 2px solid var(--bg-button);
-            background-color: var(--bg-secondary);
-        }
-        .menu-item.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .menu-desc {
-            font-size: 11px;
-            color: var(--text-secondary);
-            font-weight: normal;
-            display: block;
-            margin-top: 4px;
-        }
+        .menu-item.active { border: 2px solid var(--bg-button); background-color: var(--bg-secondary); }
+        .menu-item.disabled { opacity: 0.5; cursor: not-allowed; }
+        .menu-desc { font-size: 11px; color: var(--text-secondary); font-weight: normal; display: block; margin-top: 4px; }
 
-        /* =========================================
-           設定画面
-        ========================================= */
-        .settings-group {
-            margin-bottom: 25px;
-            padding: 15px;
-            border: 1px solid var(--border-tertiary);
-            border-radius: 8px;
-            background-color: var(--bg-tertiary);
-        }
-        .settings-group h3 {
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: var(--text-link, var(--bg-button));
-            border-bottom: 1px solid var(--border-tertiary);
-            padding-bottom: 5px;
-        }
-        select, input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-primary);
-            border-radius: 5px;
-            font-size: 14px;
-            margin-bottom: 10px;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-        }
+        .settings-group { margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-tertiary); border-radius: 8px; background-color: var(--bg-tertiary); }
+        .settings-group h3 { margin-bottom: 15px; font-size: 16px; color: var(--text-link, var(--bg-button)); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; }
+        select, input[type="text"] { width: 100%; padding: 10px; border: 1px solid var(--border-primary); border-radius: 5px; font-size: 14px; margin-bottom: 10px; background-color: var(--bg-input); color: var(--text-primary); }
 
         /* トースト通知 */
         #toast {
@@ -388,11 +399,7 @@
             transition: 0.3s ease;
             z-index: 1000;
         }
-        #toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
+        #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -423,12 +430,6 @@
                         <span class="menu-desc">（準備中）</span>
                     </div>
                 </li>
-                <li class="menu-item disabled">
-                    <div>
-                        Base64 エンコード/デコード
-                        <span class="menu-desc">（準備中）</span>
-                    </div>
-                </li>
             </ul>
         </main>
     </div>
@@ -452,34 +453,69 @@
             </div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
 
-            <div class="tools-grid">
-                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
-                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
-                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
-                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
-                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
-                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
-                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
-                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                <!-- 追加: カッコ抽出ボタン -->
-                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
-                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
+            <div class="tool-group">
+                <div class="tool-group-title">空白・改行の整理</div>
+                <div class="tools-grid">
+                    <button class="tool-btn" data-action="trimSpace">空白を削除</button>
+                    <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                    <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
+                    <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
+                </div>
             </div>
 
-            <!-- 任意文字列置換 UI -->
-            <div class="custom-replace-container">
-                <input type="text" id="replaceSource" placeholder="検索文字列">
-                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
-                <input type="text" id="replaceTarget" placeholder="置換後">
-                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
+            <div class="tool-group">
+                <div class="tool-group-title">文字種の変換</div>
+                <div class="tools-grid">
+                    <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
+                    <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                    <button class="tool-btn" data-action="toUpperCase">大文字化</button>
+                    <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                </div>
             </div>
+
+            <!-- アコーディオンで特殊機能を隠す -->
+            <details class="tool-group">
+                <summary class="tool-group-summary">高度な処理・カスタム置換</summary>
+                <div style="margin-top: 10px;">
+                    <div class="tool-group-title">特殊抽出・反転</div>
+                    <div class="tools-grid">
+                        <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
+                        <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                        <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
+                    </div>
+                    
+                    <div class="tool-group-title" style="margin-top: 15px;">単語の置換・ハイライト</div>
+                    <div class="custom-replace-container">
+                        <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
+                        <span style="color: var(--text-secondary); font-weight: bold;">→</span>
+                        <input type="text" id="replaceTarget" placeholder="置換後">
+                        <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
+                    </div>
+
+                    <div class="tool-group-title" style="margin-top: 15px;">AI向けプロンプト圧縮 (トークン節約)</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 5px;">
+                        「元の言葉=略称」を改行区切りで入力。変換後、AIに伝えるための対応表(英語)を先頭に自動付与します。<br>
+                        <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
+                    </div>
+                    <textarea id="compressDict" rows="4" style="min-height: 80px; margin-bottom: 5px; font-size: 12px;" placeholder="例:&#10;主人公=MC&#10;幼馴染=CF&#10;魔法少女=MG"></textarea>
+                    <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light); width: 100%;">一括圧縮して対応表を付与</button>
+
+                </div>
+            </details>
 
             <div class="section-header">
                 <label for="outputText">整形結果</label>
-                <span class="char-count" id="outputCount">0文字</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- 追加: ハイライトトグルボタン -->
+                    <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
+                    <span class="char-count" id="outputCount">0文字</span>
+                </div>
             </div>
-            <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
+            
+            <div class="output-wrapper">
+                <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
+                <div id="outputPreview"></div>
+            </div>
 
             <div class="action-row">
                 <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
@@ -513,7 +549,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v1.8</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.4</p>
             </div>
         </main>
     </div>
@@ -630,12 +666,28 @@
     const inputCount = document.getElementById('inputCount');
     const outputCount = document.getElementById('outputCount');
 
+    // モード管理
+    let isHighlightMode = false;
+    const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
+    const outputPreview = document.getElementById('outputPreview');
+
     function updateCounts() {
         inputCount.textContent = inputEl.value.length + "文字";
         outputCount.textContent = outputEl.value.length + "文字";
     }
     inputEl.addEventListener('input', updateCounts);
     outputEl.addEventListener('input', updateCounts);
+
+    // ハイライトモードを解除する関数（編集時などに呼ぶ）
+    function resetHighlightMode() {
+        if (isHighlightMode) {
+            isHighlightMode = false;
+            outputEl.style.display = 'block';
+            outputPreview.style.display = 'none';
+            toggleHighlightBtn.textContent = '🔍 色付け確認';
+            toggleHighlightBtn.classList.remove('active-mode');
+        }
+    }
 
     // 半角カナ→全角カナ変換マップ
     const kanaMap = {
@@ -705,6 +757,8 @@
             return;
         }
 
+        resetHighlightMode();
+
         switch (action) {
             case 'trimSpace': 
                 text = text.replace(/[ 　\t]+/g, ''); 
@@ -745,7 +799,6 @@
                 break;
             }
             case 'extractBrackets': {
-                // よく使われる括弧とその中身を抽出
                 const regex = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
                 const matches = text.match(regex);
                 if (matches && matches.length > 0) {
@@ -761,20 +814,20 @@
                 const replaced = new Map();
                 let isReplaced = false;
 
-                text = text.replace(umaRegex, match => {
-                    replaced.set(match, umaMap[match]);
+                const newText = text.replace(umaRegex, match => {
+                    replaced.set(umaMap[match], match); 
                     isReplaced = true;
                     return umaMap[match];
                 });
 
                 if (isReplaced) {
-                    let noteStr = "【適用された略称一覧】\n";
-                    replaced.forEach((abbr, name) => {
-                        noteStr += `・${name} → ${abbr}\n`;
+                    let header = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
+                    replaced.forEach((original, abbr) => {
+                        header += `${abbr}=${original}, `;
                     });
-                    noteStr += "------------------------\n\n";
-                    text = noteStr + text;
-                    showToast('ウマ娘・トレーナーの略称化を行いました！');
+                    header = header.slice(0, -2) + "\n---\n\n";
+                    text = header + newText;
+                    showToast('AI向けウマ娘略称化を行いました');
                 } else {
                     showToast('略称化できる単語が見つかりませんでした');
                     return; 
@@ -828,6 +881,8 @@
             return;
         }
 
+        resetHighlightMode();
+
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapeRegExp(source), 'g');
         
@@ -836,9 +891,185 @@
         showToast('置換しました');
     });
 
+    // AI向けプロンプト圧縮ロジック
+    const dictArea = document.getElementById('compressDict');
+    const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
+    const savedDict = localStorage.getItem('formatter_compress_dict');
+    dictArea.value = savedDict !== null ? savedDict : defaultDict;
+
+    dictArea.addEventListener('input', (e) => {
+        localStorage.setItem('formatter_compress_dict', e.target.value);
+    });
+
+    document.getElementById('compressBtn').addEventListener('click', () => {
+        const text = inputEl.value;
+        const dictText = dictArea.value;
+        
+        if (!text) {
+            showToast('入力テキストがありません');
+            return;
+        }
+        if (!dictText.trim()) {
+            showToast('圧縮用辞書が空です');
+            return;
+        }
+
+        resetHighlightMode();
+
+        const dict = {};
+        const lines = dictText.split('\n');
+        lines.forEach(line => {
+            const parts = line.split('=');
+            if (parts.length === 2) {
+                const key = parts[0].trim();
+                const val = parts[1].trim();
+                if (key && val) {
+                    dict[key] = val;
+                }
+            }
+        });
+
+        const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+        if (keys.length === 0) {
+            showToast('有効な辞書指定がありません (例: 魔法少女=MG)');
+            return;
+        }
+
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('(' + keys.map(escapeRegExp).join('|') + ')', 'g');
+        
+        const replacedMap = new Map();
+        let isReplaced = false;
+
+        const newText = text.replace(regex, match => {
+            replacedMap.set(dict[match], match); 
+            isReplaced = true;
+            return dict[match];
+        });
+
+        if (isReplaced) {
+            let header = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
+            replacedMap.forEach((original, abbr) => {
+                header += `${abbr}=${original}, `;
+            });
+            header = header.slice(0, -2) + "\n---\n\n";
+            
+            outputEl.value = header + newText;
+            updateCounts();
+            showToast('AI向けに圧縮しました');
+        } else {
+            showToast('変換対象が見つかりませんでした');
+        }
+    });
+
+    // ＝＝＝ 新機能：ハイライト表示 ＝＝＝
+    function getHighlightedHTML(text, searchStr = '') {
+        if (!text) return '';
+        
+        // プレーンテキストを安全にHTML表示するためのエスケープ関数
+        const escapeHtml = (str) => {
+            return str.replace(/[&<>"']/g, function(match) {
+                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return map[match];
+            });
+        };
+
+        if (searchStr) {
+            // 検索文字のハイライト（オレンジ）
+            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapeRegExp(searchStr)})`, 'g');
+            const parts = text.split(regex);
+            let html = '';
+            for (let i = 0; i < parts.length; i++) {
+                if (i % 2 === 1) { 
+                    html += `<mark style="background-color: #ff9800; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">${escapeHtml(parts[i])}</mark>`;
+                } else {
+                    html += escapeHtml(parts[i]);
+                }
+            }
+            return html;
+        } else {
+            // 自動重複ハイライト（水色） - 8文字以上の重複を検出
+            const minLength = 8;
+            if (text.length < minLength) return escapeHtml(text);
+            
+            let highlightMap = new Array(text.length).fill(false);
+            let ngrams = new Map();
+            
+            // N-gramをカウント
+            for (let i = 0; i <= text.length - minLength; i++) {
+                let sub = text.substring(i, i + minLength);
+                // 空白や改行のみの重複は無視
+                if (/^[\s\r\n]+$/.test(sub)) continue;
+                
+                if (ngrams.has(sub)) {
+                    ngrams.get(sub).push(i);
+                } else {
+                    ngrams.set(sub, [i]);
+                }
+            }
+            
+            // 重複箇所をマップに記録
+            for (let [sub, indices] of ngrams.entries()) {
+                if (indices.length > 1) {
+                    for (let idx of indices) {
+                        for (let k = 0; k < minLength; k++) {
+                            highlightMap[idx + k] = true;
+                        }
+                    }
+                }
+            }
+            
+            // マップをもとにHTMLを組み立て
+            let html = '';
+            let inHighlight = false;
+            for (let i = 0; i < text.length; i++) {
+                if (highlightMap[i] && !inHighlight) {
+                    html += `<mark style="background-color: #03a9f4; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">`;
+                    inHighlight = true;
+                } else if (!highlightMap[i] && inHighlight) {
+                    html += `</mark>`;
+                    inHighlight = false;
+                }
+                html += escapeHtml(text[i]);
+            }
+            if (inHighlight) {
+                html += `</mark>`;
+            }
+            return html;
+        }
+    }
+
+    toggleHighlightBtn.addEventListener('click', () => {
+        isHighlightMode = !isHighlightMode;
+        if (isHighlightMode) {
+            const text = outputEl.value;
+            if (!text) {
+                showToast('結果テキストがありません');
+                isHighlightMode = false;
+                return;
+            }
+            const searchStr = document.getElementById('replaceSource').value;
+            
+            outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
+            outputEl.style.display = 'none';
+            outputPreview.style.display = 'block';
+            toggleHighlightBtn.innerHTML = '✏️ 編集に戻る';
+            toggleHighlightBtn.classList.add('active-mode');
+            
+            if (searchStr) {
+                showToast(`「${searchStr}」をハイライトしました`);
+            } else {
+                showToast('8文字以上の重複箇所をハイライトしました');
+            }
+        } else {
+            resetHighlightMode();
+        }
+    });
+
     // その他UIボタン
     document.getElementById('clearBtn').addEventListener('click', () => {
-        inputEl.value = ''; outputEl.value = ''; updateCounts();
+        inputEl.value = ''; outputEl.value = ''; updateCounts(); resetHighlightMode();
     });
 
     document.getElementById('applyToInputBtn').addEventListener('click', () => {
@@ -846,6 +1077,7 @@
             inputEl.value = outputEl.value;
             outputEl.value = '';
             updateCounts();
+            resetHighlightMode();
             showToast('入力欄に反映しました');
         }
     });
