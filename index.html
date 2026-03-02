@@ -505,7 +505,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.8 (Token Est.)</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.9 (Safe Replace)</p>
             </div>
         </main>
     </div>
@@ -627,8 +627,6 @@
     const outputPreview = document.getElementById('outputPreview');
 
     // ★ トークン数の簡易計算アルゴリズム ★
-    // 英語・記号(ASCII)は平均して約3~4文字で1トークン = 0.3倍
-    // 日本語・その他は平均して1文字1.15トークンとして概算
     function estimateTokens(text) {
         if (!text) return 0;
         let asciiCount = 0;
@@ -862,6 +860,55 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
+    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
+    function processAbbreviation(text, regex, dictCallback, successMessage) {
+        const headerPrefix = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
+        // 既存のヘッダーを検出する正規表現（改行の揺れにも対応）
+        const headerRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
+        
+        const match = text.match(headerRegex);
+        const replacedMap = new Map();
+        let bodyText = text;
+
+        // 既存のヘッダーがあれば解読して保存し、本文から切り離す
+        if (match) {
+            const mapStr = match[1];
+            const pairs = mapStr.split(',');
+            pairs.forEach(pair => {
+                const [abbr, original] = pair.split('=').map(s => s.trim());
+                if (abbr && original) {
+                    replacedMap.set(abbr, original);
+                }
+            });
+            bodyText = text.replace(headerRegex, '');
+        }
+
+        let isReplaced = false;
+
+        // 本文のみを対象に置換を実行（既存ヘッダー内の正式名称が誤爆するのを防ぐ）
+        const newText = bodyText.replace(regex, matchStr => {
+            isReplaced = true;
+            return dictCallback(matchStr, replacedMap);
+        });
+
+        // 変更があったか、すでにヘッダーが存在する場合はヘッダーを再構築して出力
+        if (isReplaced || replacedMap.size > 0) {
+            let header = headerPrefix;
+            replacedMap.forEach((originalWord, abbr) => {
+                header += `${abbr}=${originalWord}, `;
+            });
+            header = header.slice(0, -2) + "\n---\n\n";
+            
+            outputEl.value = header + newText;
+            updateCounts();
+            showToast(successMessage);
+        } else {
+            outputEl.value = text;
+            updateCounts();
+            showToast('略称化できる単語が見つかりませんでした');
+        }
+    }
+
     function formatText(action) {
         let text = inputEl.value;
         if (!text) {
@@ -923,32 +970,15 @@
                 break;
             }
             case 'toUmaAbbr': {
-                const replacedMap = new Map();
-                let isReplaced = false;
-
-                const newText = text.replace(umaRegex, match => {
-                    const abbr = umaMap[match];
-                    // 複数マッチした場合は一番長い名前を正式名称として保持する
-                    if (!replacedMap.has(abbr) || match.length > replacedMap.get(abbr).length) {
-                        replacedMap.set(abbr, match);
+                processAbbreviation(text, umaRegex, (matchStr, map) => {
+                    const abbr = umaMap[matchStr];
+                    // マップに無い、または既存登録よりもマッチした名前が長ければ上書き
+                    if (!map.has(abbr) || matchStr.length > map.get(abbr).length) {
+                        map.set(abbr, matchStr);
                     }
-                    isReplaced = true;
                     return abbr;
-                });
-
-                if (isReplaced) {
-                    let header = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
-                    replacedMap.forEach((originalWord, abbr) => {
-                        header += `${abbr}=${originalWord}, `;
-                    });
-                    header = header.slice(0, -2) + "\n---\n\n";
-                    text = header + newText;
-                    showToast('AI向けウマ娘略称化を行いました');
-                } else {
-                    showToast('略称化できる単語が見つかりませんでした');
-                    return; 
-                }
-                break;
+                }, 'AI向けウマ娘略称化を行いました');
+                return; // processAbbreviation内で出力と更新を済ませるので抜ける
             }
         }
         outputEl.value = text;
@@ -1051,28 +1081,11 @@
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp('(' + keys.map(escapeRegExp).join('|') + ')', 'g');
         
-        const replacedMap = new Map();
-        let isReplaced = false;
-
-        const newText = text.replace(regex, match => {
-            replacedMap.set(dict[match], match); 
-            isReplaced = true;
-            return dict[match];
-        });
-
-        if (isReplaced) {
-            let header = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
-            replacedMap.forEach((original, abbr) => {
-                header += `${abbr}=${original}, `;
-            });
-            header = header.slice(0, -2) + "\n---\n\n";
-            
-            outputEl.value = header + newText;
-            updateCounts();
-            showToast('AI向けに圧縮しました');
-        } else {
-            showToast('変換対象が見つかりませんでした');
-        }
+        processAbbreviation(text, regex, (matchStr, map) => {
+            const abbr = dict[matchStr];
+            map.set(abbr, matchStr);
+            return abbr;
+        }, 'AI向けに圧縮しました');
     });
 
     function getHighlightedHTML(text, searchStr = '') {
