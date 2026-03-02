@@ -108,7 +108,7 @@
         }
 
         /* =========================================
-           基本レイアウト & スクリーン（画面遷移）
+           基本レイアウト & スクリーン
         ========================================= */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -190,7 +190,7 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         /* =========================================
@@ -263,34 +263,11 @@
             word-wrap: break-word;
             overflow-y: auto;
         }
-        
-        /* ツールグループ（カテゴリ分け） */
-        .tool-group {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-secondary);
-            border-radius: 8px;
-            padding: 10px;
-        }
-        .tool-group-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            border-bottom: 1px solid var(--border-tertiary);
-            padding-bottom: 4px;
-        }
-        .tool-group-summary {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--text-primary);
-            cursor: pointer;
-            outline: none;
-            padding: 2px 0;
-        }
 
+        /* ツールボタンのグリッド（フラット表示） */
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 6px;
         }
         button.tool-btn {
@@ -310,9 +287,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed var(--border-secondary);
         }
         .custom-replace-container input[type="text"] {
             margin-bottom: 0;
@@ -356,7 +330,7 @@
         .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); }
 
         /* =========================================
-           設定等
+           メニュー＆設定画面
         ========================================= */
         .menu-list { list-style: none; padding: 0; }
         .menu-item {
@@ -448,67 +422,49 @@
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
-                    <span class="char-count" id="inputCount">0文字</span>
+                    <!-- 初期値を更新 -->
+                    <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
 
-            <div class="tool-group">
-                <div class="tool-group-title">空白・改行の整理</div>
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="trimSpace">空白を削除</button>
-                    <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
-                    <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
-                    <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
-                </div>
+            <!-- ▼ 全機能をフラットに配置 ▼ -->
+            <div class="tools-grid">
+                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
+                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
+                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
+                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
+                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
+                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
+                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
-            <div class="tool-group">
-                <div class="tool-group-title">文字種の変換</div>
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
-                    <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
-                    <button class="tool-btn" data-action="toUpperCase">大文字化</button>
-                    <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                </div>
+            <!-- 任意文字列置換 UI -->
+            <div class="custom-replace-container">
+                <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
+                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
+                <input type="text" id="replaceTarget" placeholder="置換後">
+                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
             </div>
 
-            <!-- アコーディオンで特殊機能を隠す -->
-            <details class="tool-group">
-                <summary class="tool-group-summary">高度な処理・カスタム置換</summary>
-                <div style="margin-top: 10px;">
-                    <div class="tool-group-title">特殊抽出・反転</div>
-                    <div class="tools-grid">
-                        <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
-                        <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                        <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
-                    </div>
-                    
-                    <div class="tool-group-title" style="margin-top: 15px;">単語の置換・ハイライト</div>
-                    <div class="custom-replace-container">
-                        <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                        <span style="color: var(--text-secondary); font-weight: bold;">→</span>
-                        <input type="text" id="replaceTarget" placeholder="置換後">
-                        <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
-                    </div>
+            <!-- AI向けプロンプト圧縮 UI -->
+            <div style="margin-top: 5px;">
+                <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary); margin-bottom: 4px;">AI向けプロンプト圧縮 (トークン節約)</div>
+                <textarea id="compressDict" rows="2" style="min-height: 50px; margin-bottom: 5px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
+                <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light); width: 100%;">一括圧縮して対応表を付与</button>
+            </div>
+            <!-- ▲ 全機能をフラットに配置 ここまで ▲ -->
 
-                    <div class="tool-group-title" style="margin-top: 15px;">AI向けプロンプト圧縮 (トークン節約)</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 5px;">
-                        「元の言葉=略称」を改行区切りで入力。変換後、AIに伝えるための対応表(英語)を先頭に自動付与します。<br>
-                        <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
-                    </div>
-                    <textarea id="compressDict" rows="4" style="min-height: 80px; margin-bottom: 5px; font-size: 12px;" placeholder="例:&#10;主人公=MC&#10;幼馴染=CF&#10;魔法少女=MG"></textarea>
-                    <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light); width: 100%;">一括圧縮して対応表を付与</button>
-
-                </div>
-            </details>
-
-            <div class="section-header">
+            <div class="section-header" style="margin-top: 5px;">
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <!-- 追加: ハイライトトグルボタン -->
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <span class="char-count" id="outputCount">0文字</span>
+                    <!-- 初期値を更新 -->
+                    <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
             
@@ -549,7 +505,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.4</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.8 (Token Est.)</p>
             </div>
         </main>
     </div>
@@ -659,26 +615,62 @@
     applyTheme(currentTheme);
 
     // ==========================================
-    // 4. テキスト整形ロジック
+    // 4. テキスト整形ロジック & トークン計算
     // ==========================================
     const inputEl = document.getElementById('inputText');
     const outputEl = document.getElementById('outputText');
     const inputCount = document.getElementById('inputCount');
     const outputCount = document.getElementById('outputCount');
 
-    // モード管理
     let isHighlightMode = false;
     const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
     const outputPreview = document.getElementById('outputPreview');
 
-    function updateCounts() {
-        inputCount.textContent = inputEl.value.length + "文字";
-        outputCount.textContent = outputEl.value.length + "文字";
+    // ★ トークン数の簡易計算アルゴリズム ★
+    // 英語・記号(ASCII)は平均して約3~4文字で1トークン = 0.3倍
+    // 日本語・その他は平均して1文字1.15トークンとして概算
+    function estimateTokens(text) {
+        if (!text) return 0;
+        let asciiCount = 0;
+        let nonAsciiCount = 0;
+        for (let i = 0; i < text.length; i++) {
+            if (text.charCodeAt(i) <= 127) {
+                asciiCount++;
+            } else {
+                nonAsciiCount++;
+            }
+        }
+        return Math.ceil(asciiCount * 0.3 + nonAsciiCount * 1.15);
     }
+
+    // ★ カウントとトークン数のUI更新 ★
+    function updateCounts() {
+        const inTxt = inputEl.value;
+        const outTxt = outputEl.value;
+        
+        const inLen = inTxt.length;
+        const outLen = outTxt.length;
+        
+        const inTok = estimateTokens(inTxt);
+        const outTok = estimateTokens(outTxt);
+
+        inputCount.textContent = `${inLen}文字 (約${inTok}ﾄｰｸﾝ)`;
+        
+        // 差分（節約できたか増加したか）の表示
+        if (outLen > 0 && inTok > outTok) {
+            const diff = inTok - outTok;
+            outputCount.innerHTML = `${outLen}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
+        } else if (outLen > 0 && inTok < outTok) {
+            const diff = outTok - inTok;
+            outputCount.innerHTML = `${outLen}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${diff}増加</span>`;
+        } else {
+            outputCount.textContent = `${outLen}文字 (約${outTok}ﾄｰｸﾝ)`;
+        }
+    }
+    
     inputEl.addEventListener('input', updateCounts);
     outputEl.addEventListener('input', updateCounts);
 
-    // ハイライトモードを解除する関数（編集時などに呼ぶ）
     function resetHighlightMode() {
         if (isHighlightMode) {
             isHighlightMode = false;
@@ -689,7 +681,6 @@
         }
     }
 
-    // 半角カナ→全角カナ変換マップ
     const kanaMap = {
         'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
         'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
@@ -706,46 +697,167 @@
 
     // ウマ娘略称変換マップ
     const umaMap = {
-        'スペシャルウィーク': 'SW', 'サイレンススズカ': 'SSZ', 'トウカイテイオー': 'TT', 'マルゼンスキー': 'MZ',
-        'フジキセキ': 'FK', 'オグリキャップ': 'OC', 'ゴールドシップ': 'GS', 'ウオッカ': 'VDK',
-        'ダイワスカーレット': 'DS', 'タイキシャトル': 'TS', 'グラスワンダー': 'GW', 'ヒシアマゾン': 'HA',
-        'メジロマックイーン': 'MMQ', 'エルコンドルパサー': 'ECP', 'テイエムオペラオー': 'TMO', 'ナリタブライアン': 'NB',
-        'シンボリルドルフ': 'SR', 'エアグルーヴ': 'AG', 'アグネスデジタル': 'AD', 'セイウンスカイ': 'SUS',
-        'タマモクロス': 'TC', 'ファインモーション': 'FM', 'ビワハヤヒデ': 'BHH', 'マヤノトップガン': 'MTG',
-        'マンハッタンカフェ': 'MC', 'ミホノブルボン': 'MB', 'メジロライアン': 'MR', 'ヒシアケボノ': 'HAK',
-        'ユキノビジン': 'YB', 'ライスシャワー': 'RS', 'アイネスフウジン': 'AF', 'アグネスタキオン': 'AT',
-        'アドマイヤベガ': 'AV', 'イナリワン': 'IW', 'ウイニングチケット': 'WT', 'エアシャカール': 'ASK',
-        'エイシンフラッシュ': 'EF', 'カレンチャン': 'CC', 'カワカミプリンセス': 'KP', 'ゴールドシチー': 'GC',
-        'サクラバクシンオー': 'SBO', 'シーキングザパール': 'SZP', 'シンコウウインディ': 'SKW', 'スイープトウショウ': 'SWT',
-        'スーパークリーク': 'SCR', 'スマートファルコン': 'SF', 'ゼンノロブロイ': 'ZRR', 'トーセンジョーダン': 'TJ',
-        'ナカヤマフェスタ': 'NF', 'ナリタタイシン': 'NT', 'ニシノフラワー': 'NIF', 'ハルウララ': 'HU',
-        'バンブーメモリー': 'BM', 'ビコーペガサス': 'BP', 'マーベラスサンデー': 'MVS', 'マチカネフクキタル': 'MFK',
-        'ミスターシービー': 'MCB', 'メイショウドトウ': 'MSD', 'メジロドーベル': 'MD', 'ナイスネイチャ': 'NN',
-        'キングヘイロー': 'KH', 'マチカネタンホイザ': 'MTH', 'イクノディクタス': 'ID', 'メジロパーマー': 'MP',
-        'ダイタクヘリオス': 'DTH', 'ツインターボ': 'TTB', 'サトノダイヤモンド': 'SDD', 'キタサンブラック': 'KB',
-        'サクラチヨノオー': 'SCO', 'シリウスシンボリ': 'SSB', 'メジロアルダン': 'MA', 'ヤエノムテキ': 'YM',
-        'ツルマルツヨシ': 'TMT', 'メジロブライト': 'MBR', 'サクラローレル': 'SL', 'ナリタトップロード': 'NTR',
-        'ヤマニンゼファー': 'YZ', 'フリオーソ': 'FRI', 'トランセンド': 'TRC', 'エスポワールシチー': 'ESC',
-        'ノースフライト': 'NFL', 'シンボリクリスエス': 'SKS', 'タニノギムレット': 'TG', 'ダイイチルビー': 'DIR',
-        'メジロラモーヌ': 'MLM', 'アストンマーチャン': 'AM', 'サトノクラウン': 'SCW', 'シュヴァルグラン': 'SVG',
-        'ヴィルシーナ': 'VRS', 'ヴィブロス': 'VIV', 'ダンツフレーム': 'DF', 'ケイエスミラクル': 'KSM',
-        'ジャングルポケット': 'JP', 'ビリーヴ': 'BLV', 'ノーリーズン': 'NR', 'スティルインラブ': 'SIL',
-        'コパノリッキー': 'CPR', 'ホッコータルマエ': 'HT', 'ワンダーアキュート': 'WA', 'サウンズオブアース': 'SOE',
-        'ロイスアンドロイス': 'RAR', 'カツラギエース': 'KA', 'ネオユニヴァース': 'NU', 'ヒシミラクル': 'HM',
-        'タップダンスシチー': 'TDS', 'ドゥラメンテ': 'DRM', 'ラインクラフト': 'RK', 'シーザリオ': 'CZR',
-        'エアメサイア': 'AMS', 'フサイチパンドラ': 'FP', 'ブエナビスタ': 'BV', 'オルフェーヴル': 'ORF',
-        'ジェンティルドンナ': 'GD', 'ウインバリアシオン': 'WV', 'ドリームジャーニー': 'DJ', 'カルストンライトオ': 'CLO',
-        'デュランダル': 'DRD', 'バブルガムフェロー': 'BGF', 'フェノーメノ': 'FNM', 'グランアレグリア': 'GAL',
-        'ラヴズオンリーユー': 'LOY', 'クロノジェネシス': 'CG', 'ステイゴールド': 'STG', 'キセキ': 'KSK',
-        'デアリングタクト': 'DAT', 'デアリングハート': 'DAH', 'アドマイヤグルーヴ': 'AMG', 'サクラチトセオー': 'SCT',
-        'ブラストワンピース': 'BWP', 'アーモンドアイ': 'AAI', 'ラッキーライラック': 'LL', 'カレンブーケドール': 'CBD',
-        'レッドディザイア': 'RD', 'ダーレーアラビアン': 'DLA', 'ゴドルフィンバルブ': 'GOB', 'バイアリーターク': 'BYT',
-        'セントライト': 'SNL', 'スピードシンボリ': 'SPS', 'ハイセイコー': 'HSK', 'モンジュー': 'MNJ',
-        'ハッピーミーク': 'HPM', 'ビターグラッセ': 'BTG', 'リトルココン': 'LCC', 'ライトハロー': 'LH',
-        'ヴェニュスパーク': 'VP', 'リガントーナ': 'RGT', 'ソノンエルフィー': 'SEF', 'シュガーライツ': 'SGL',
-        'タッカーブライン': 'TKB', 'ユノハナブルーム': 'YHB', '駿川たづな': 'HT2', '秋川やよい': 'AY',
-        '乙名史悦子': 'OE', '桐生院葵': 'KA2', '安心沢刺々美': 'ASS', '樫本理子': 'KR', '佐岳メイ': 'SM',
-        '都留岐涼花': 'TR', '保科健子': 'HK', '赤坂美聡': 'AKM', '細江純子': 'HJ',
+        'スペシャルウィーク': 'SW', 'スペ': 'SP',
+        'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
+        'トウカイテイオー': 'TT', 'テイオー': 'TO',
+        'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
+        'フジキセキ': 'FK', 'フジ': 'FJ',
+        'オグリキャップ': 'OC', 'オグリ': 'OG',
+        'ゴールドシップ': 'GS', 'ゴルシ': 'GOS',
+        'ウオッカ': 'VDK',
+        'ダイワスカーレット': 'DS', 'ダスカ': 'DSK', 'スカーレット': 'SCL',
+        'タイキシャトル': 'TS', 'タイキ': 'TIK', 'シャトル': 'SHT',
+        'グラスワンダー': 'GW', 'グラス': 'GRS',
+        'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
+        'メジロマックイーン': 'MMQ', 'マックイーン': 'MCQ',
+        'エルコンドルパサー': 'ECP', 'エル': 'EL',
+        'テイエムオペラオー': 'TMO', 'オペラオー': 'OPO',
+        'ナリタブライアン': 'NB', 'ブライアン': 'BRI',
+        'シンボリルドルフ': 'SR', 'ルドルフ': 'RDF', '会長': 'KCH',
+        'エアグルーヴ': 'AG', 'グルーヴ': 'GRV',
+        'アグネスデジタル': 'AD', 'デジタル': 'DGT',
+        'セイウンスカイ': 'SUS', 'スカイ': 'SKY',
+        'タマモクロス': 'TC', 'タマモ': 'TMM', 'タマ': 'TMA',
+        'ファインモーション': 'FM', 'ファイン': 'FIN',
+        'ビワハヤヒデ': 'BHH', 'ハヤヒデ': 'HYH',
+        'マヤノトップガン': 'MTG', 'マヤノ': 'MYN', 'マヤ': 'MYA',
+        'マンハッタンカフェ': 'MC', 'カフェ': 'CAF',
+        'ミホノブルボン': 'MB', 'ブルボン': 'BRB',
+        'メジロライアン': 'MR', 'ライアン': 'RYN',
+        'ヒシアケボノ': 'HAK', 'アケボノ': 'AKB',
+        'ユキノビジン': 'YB', 'ユキノ': 'YKN',
+        'ライスシャワー': 'RS', 'ライス': 'RIC',
+        'アイネスフウジン': 'AF', 'アイネス': 'INS',
+        'アグネスタキオン': 'AT', 'タキオン': 'TKO',
+        'アドマイヤベガ': 'AV', 'アヤベ': 'AYB',
+        'イナリワン': 'IW', 'イナリ': 'INR',
+        'ウイニングチケット': 'WT', 'チケゾー': 'TKZ', 'チケット': 'TCK',
+        'エアシャカール': 'ASK', 'シャカール': 'SHK',
+        'エイシンフラッシュ': 'EF', 'フラッシュ': 'FLS',
+        'カレンチャン': 'CC', 'カレン': 'KRN',
+        'カワカミプリンセス': 'KP', 'カワカミ': 'KWK',
+        'ゴールドシチー': 'GC', 'シチー': 'CTY',
+        'サクラバクシンオー': 'SBO', 'バクシンオー': 'BSO', 'バクシン': 'BKS',
+        'シーキングザパール': 'SZP', 'パール': 'PRL',
+        'シンコウウインディ': 'SKW', 'ウインディ': 'WND',
+        'スイープトウショウ': 'SWT', 'スイープ': 'SWP',
+        'スーパークリーク': 'SCR', 'クリーク': 'CRK',
+        'スマートファルコン': 'SF', 'ファル子': 'FLK', 'ファルコン': 'FLC',
+        'ゼンノロブロイ': 'ZRR', 'ロブロイ': 'RBR',
+        'トーセンジョーダン': 'TJ', 'ジョーダン': 'JDN',
+        'ナカヤマフェスタ': 'NF', 'ナカヤマ': 'NKY', 'フェスタ': 'FST',
+        'ナリタタイシン': 'NT', 'タイシン': 'TSN',
+        'ニシノフラワー': 'NIF', 'ニシノ': 'NSN', 'フラワー': 'FLW',
+        'ハルウララ': 'HU', 'ウララ': 'URR',
+        'バンブーメモリー': 'BM', 'バンブー': 'BNB',
+        'ビコーペガサス': 'BP', 'ビコー': 'BKO',
+        'マーベラスサンデー': 'MVS', 'マーベラス': 'MRV',
+        'マチカネフクキタル': 'MFK', 'フクキタル': 'FKK',
+        'ミスターシービー': 'MCB', 'シービー': 'CB',
+        'メイショウドトウ': 'MSD', 'ドトウ': 'DTO',
+        'メジロドーベル': 'MD', 'ドーベル': 'DBL',
+        'ナイスネイチャ': 'NN', 'ネイチャ': 'NTC',
+        'キングヘイロー': 'KH', 'キング': 'KNG',
+        'マチカネタンホイザ': 'MTH', 'タンホイザ': 'THZ', 'マチタン': 'MCT',
+        'イクノディクタス': 'ID', 'イクノ': 'IKN',
+        'メジロパーマー': 'MP', 'パーマー': 'PAM', 'パマ': 'PMA',
+        'ダイタクヘリオス': 'DTH', 'ヘリオス': 'HRO',
+        'ツインターボ': 'TTB', 'ターボ': 'TRB',
+        'サトノダイヤモンド': 'SDD', 'ダイヤ': 'DIA',
+        'キタサンブラック': 'KB', 'キタサン': 'KTS',
+        'サクラチヨノオー': 'SCO', 'チヨノオー': 'CYO',
+        'シリウスシンボリ': 'SSB', 'シリウス': 'SRS',
+        'メジロアルダン': 'MA', 'アルダン': 'ARD',
+        'ヤエノムテキ': 'YM', 'ヤエノ': 'YEN',
+        'ツルマルツヨシ': 'TMT', 'ツヨシ': 'TYS',
+        'メジロブライト': 'MBR', 'ブライト': 'BRT',
+        'サクラローレル': 'SL', 'ローレル': 'LRL',
+        'ナリタトップロード': 'NTR', 'トップロード': 'TPR', 'トプロ': 'TPR2',
+        'ヤマニンゼファー': 'YZ', 'ゼファー': 'ZPH',
+        'フリオーソ': 'FRI',
+        'トランセンド': 'TRC',
+        'エスポワールシチー': 'ESC', 'エスポワール': 'ESP',
+        'ノースフライト': 'NFL', 'フライト': 'FRT',
+        'シンボリクリスエス': 'SKS', 'クリスエス': 'KRS', 'ボリクリ': 'BKR',
+        'タニノギムレット': 'TG', 'ギムレット': 'GMR',
+        'ダイイチルビー': 'DIR', 'ルビー': 'RBY',
+        'メジロラモーヌ': 'MLM', 'ラモーヌ': 'RMN',
+        'アストンマーチャン': 'AM', 'マーチャン': 'MCH',
+        'サトノクラウン': 'SCW', 'クラウン': 'CRW',
+        'シュヴァルグラン': 'SVG', 'シュヴァル': 'CHV',
+        'ヴィルシーナ': 'VRS',
+        'ヴィブロス': 'VIV',
+        'ダンツフレーム': 'DF', 'ダンツ': 'DNT',
+        'ケイエスミラクル': 'KSM', 'ミラクル': 'MRC',
+        'ジャングルポケット': 'JP', 'ポッケ': 'POK',
+        'ビリーヴ': 'BLV',
+        'ノーリーズン': 'NR',
+        'スティルインラブ': 'SIL', 'スティル': 'STL',
+        'コパノリッキー': 'CPR', 'リッキー': 'RCK',
+        'ホッコータルマエ': 'HT', 'タルマエ': 'TRM',
+        'ワンダーアキュート': 'WA', 'アキュート': 'ACT',
+        'サウンズオブアース': 'SOE', 'アース': 'ERS',
+        'ロイスアンドロイス': 'RAR', 'ロイス': 'ROI',
+        'カツラギエース': 'KA', 'エース': 'ACE',
+        'ネオユニヴァース': 'NU', 'ネオユニ': 'NEY',
+        'ヒシミラクル': 'HM', 'ヒシミ': 'HSM',
+        'タップダンスシチー': 'TDS', 'タップ': 'TAP',
+        'ドゥラメンテ': 'DRM', 'ドゥラ': 'DUR',
+        'ラインクラフト': 'RK', 'クラフト': 'CRF',
+        'シーザリオ': 'CZR',
+        'エアメサイア': 'AMS', 'メサイア': 'MSI',
+        'フサイチパンドラ': 'FP', 'パンドラ': 'PND',
+        'ブエナビスタ': 'BV', 'ブエナ': 'BUE',
+        'オルフェーヴル': 'ORF', 'オルフェ': 'ORP',
+        'ジェンティルドンナ': 'GD', 'ジェンティル': 'GNT',
+        'ウインバリアシオン': 'WV', 'バリアシオン': 'VAR',
+        'ドリームジャーニー': 'DJ', 'ジャーニー': 'JRN',
+        'カルストンライトオ': 'CLO', 'ライトオ': 'RTO',
+        'デュランダル': 'DRD',
+        'バブルガムフェロー': 'BGF', 'バブル': 'BBL',
+        'フェノーメノ': 'FNM',
+        'グランアレグリア': 'GAL', 'グラン': 'GRN',
+        'ラヴズオンリーユー': 'LOY', 'ラヴズ': 'LOV',
+        'クロノジェネシス': 'CG', 'クロノ': 'CRN',
+        'ステイゴールド': 'STG', 'ステゴ': 'STG2',
+        'キセキ': 'KSK',
+        'デアリングタクト': 'DAT', 'デアタク': 'DAT2',
+        'デアリングハート': 'DAH',
+        'アドマイヤグルーヴ': 'AMG',
+        'サクラチトセオー': 'SCT', 'チトセオー': 'CTO',
+        'ブラストワンピース': 'BWP', 'ブラスト': 'BLS',
+        'アーモンドアイ': 'AAI',
+        'ラッキーライラック': 'LL', 'ライラック': 'LIL',
+        'カレンブーケドール': 'CBD', 'ブーケドール': 'BKD',
+        'レッドディザイア': 'RD', 'ディザイア': 'DZI',
+        'ダーレーアラビアン': 'DLA', 'ダーレー': 'DRL',
+        'ゴドルフィンバルブ': 'GOB', 'ゴドルフィン': 'GDF',
+        'バイアリーターク': 'BYT', 'バイアリー': 'BYA',
+        'セントライト': 'SNL',
+        'スピードシンボリ': 'SPS',
+        'ハイセイコー': 'HSK',
+        'モンジュー': 'MNJ',
+        'ハッピーミーク': 'HPM', 'ミーク': 'MEK',
+        'ビターグラッセ': 'BTG', 'グラッセ': 'GLS',
+        'リトルココン': 'LCC', 'ココン': 'CCN',
+        'ライトハロー': 'LH', 'ハロー': 'HLO',
+        'ヴェニュスパーク': 'VP', 'ヴェニュス': 'VNS',
+        'リガントーナ': 'RGT', 'リガン': 'RGN',
+        'ソノンエルフィー': 'SEF', 'エルフィー': 'ELF',
+        'シュガーライツ': 'SGL', 'シュガー': 'SGR',
+        'タッカーブライン': 'TKB', 'タッカー': 'TAK',
+        'ユノハナブルーム': 'YHB', 'ユノハナ': 'YNH',
+        '駿川たづな': 'HT2', 'たづな': 'TDN',
+        '秋川やよい': 'AY', '理事長': 'RJC',
+        '乙名史悦子': 'OE', '乙名史': 'OTN', '記者': 'KSH',
+        '桐生院葵': 'KA2', '桐生院': 'KRY',
+        '安心沢刺々美': 'ASS', '安心沢': 'ANS',
+        '樫本理子': 'KR', '樫本': 'KSM2', '代理': 'DIR2',
+        '佐岳メイ': 'SM', 'メイ': 'MEI',
+        '都留岐涼花': 'TR', '都留岐': 'TRG',
+        '保科健子': 'HK', '保科': 'HSN',
+        '赤坂美聡': 'AKM', '赤坂': 'AKS', '実況': 'JKY',
+        '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
         'トレーナー': 'TNR'
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
@@ -811,19 +923,23 @@
                 break;
             }
             case 'toUmaAbbr': {
-                const replaced = new Map();
+                const replacedMap = new Map();
                 let isReplaced = false;
 
                 const newText = text.replace(umaRegex, match => {
-                    replaced.set(umaMap[match], match); 
+                    const abbr = umaMap[match];
+                    // 複数マッチした場合は一番長い名前を正式名称として保持する
+                    if (!replacedMap.has(abbr) || match.length > replacedMap.get(abbr).length) {
+                        replacedMap.set(abbr, match);
+                    }
                     isReplaced = true;
-                    return umaMap[match];
+                    return abbr;
                 });
 
                 if (isReplaced) {
                     let header = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
-                    replaced.forEach((original, abbr) => {
-                        header += `${abbr}=${original}, `;
+                    replacedMap.forEach((originalWord, abbr) => {
+                        header += `${abbr}=${originalWord}, `;
                     });
                     header = header.slice(0, -2) + "\n---\n\n";
                     text = header + newText;
@@ -843,7 +959,6 @@
         btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action')));
     });
 
-    // クリップボードから貼り付け
     document.getElementById('pasteBtn').addEventListener('click', async () => {
         try {
             const text = await navigator.clipboard.readText();
@@ -866,7 +981,6 @@
         }
     });
 
-    // 任意文字列の置換ロジック
     document.getElementById('replaceBtn').addEventListener('click', () => {
         const source = document.getElementById('replaceSource').value;
         const target = document.getElementById('replaceTarget').value;
@@ -891,7 +1005,6 @@
         showToast('置換しました');
     });
 
-    // AI向けプロンプト圧縮ロジック
     const dictArea = document.getElementById('compressDict');
     const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
     const savedDict = localStorage.getItem('formatter_compress_dict');
@@ -962,11 +1075,9 @@
         }
     });
 
-    // ＝＝＝ 新機能：ハイライト表示 ＝＝＝
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
-        // プレーンテキストを安全にHTML表示するためのエスケープ関数
         const escapeHtml = (str) => {
             return str.replace(/[&<>"']/g, function(match) {
                 const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -975,7 +1086,6 @@
         };
 
         if (searchStr) {
-            // 検索文字のハイライト（オレンジ）
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapeRegExp(searchStr)})`, 'g');
             const parts = text.split(regex);
@@ -989,17 +1099,14 @@
             }
             return html;
         } else {
-            // 自動重複ハイライト（水色） - 8文字以上の重複を検出
             const minLength = 8;
             if (text.length < minLength) return escapeHtml(text);
             
             let highlightMap = new Array(text.length).fill(false);
             let ngrams = new Map();
             
-            // N-gramをカウント
             for (let i = 0; i <= text.length - minLength; i++) {
                 let sub = text.substring(i, i + minLength);
-                // 空白や改行のみの重複は無視
                 if (/^[\s\r\n]+$/.test(sub)) continue;
                 
                 if (ngrams.has(sub)) {
@@ -1009,7 +1116,6 @@
                 }
             }
             
-            // 重複箇所をマップに記録
             for (let [sub, indices] of ngrams.entries()) {
                 if (indices.length > 1) {
                     for (let idx of indices) {
@@ -1020,7 +1126,6 @@
                 }
             }
             
-            // マップをもとにHTMLを組み立て
             let html = '';
             let inHighlight = false;
             for (let i = 0; i < text.length; i++) {
@@ -1067,7 +1172,6 @@
         }
     });
 
-    // その他UIボタン
     document.getElementById('clearBtn').addEventListener('click', () => {
         inputEl.value = ''; outputEl.value = ''; updateCounts(); resetHighlightMode();
     });
