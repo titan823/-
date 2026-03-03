@@ -264,7 +264,7 @@
             overflow-y: auto;
         }
 
-        /* ツールボタンのグリッド（フラット表示） */
+        /* ツールボタンのグリッド */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -463,7 +463,6 @@
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -505,7 +504,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.9 (Safe Replace)</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.14 (Optimized Tokens)</p>
             </div>
         </main>
     </div>
@@ -517,7 +516,7 @@
 
 <script>
     // ==========================================
-    // 1. PWA インストール対応 (動的Manifest)
+    // 1. PWA インストール対応
     // ==========================================
     (function initPWA() {
         const manifestJSON = {
@@ -544,7 +543,7 @@
     })();
 
     // ==========================================
-    // 2. 画面遷移 (スクリーン) ロジック
+    // 2. 画面遷移ロジック
     // ==========================================
     const screens = {
         main: document.getElementById('main-screen'),
@@ -626,7 +625,6 @@
     const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
     const outputPreview = document.getElementById('outputPreview');
 
-    // ★ トークン数の簡易計算アルゴリズム ★
     function estimateTokens(text) {
         if (!text) return 0;
         let asciiCount = 0;
@@ -641,7 +639,6 @@
         return Math.ceil(asciiCount * 0.3 + nonAsciiCount * 1.15);
     }
 
-    // ★ カウントとトークン数のUI更新 ★
     function updateCounts() {
         const inTxt = inputEl.value;
         const outTxt = outputEl.value;
@@ -654,7 +651,6 @@
 
         inputCount.textContent = `${inLen}文字 (約${inTok}ﾄｰｸﾝ)`;
         
-        // 差分（節約できたか増加したか）の表示
         if (outLen > 0 && inTok > outTok) {
             const diff = inTok - outTok;
             outputCount.innerHTML = `${outLen}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
@@ -693,13 +689,14 @@
     };
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ウマ娘略称変換マップ
+    // ★ ウマ娘略称・用語変換マップ（無駄になる短い単語を徹底排除） ★
     const umaMap = {
-        'スペシャルウィーク': 'SW', 'スペ': 'SP',
+        // キャラクター（4文字以上、または確実によく使われるもの）
+        'スペシャルウィーク': 'SW',
         'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
         'トウカイテイオー': 'TT', 'テイオー': 'TO',
         'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
-        'フジキセキ': 'FK', 'フジ': 'FJ',
+        'フジキセキ': 'FK',
         'オグリキャップ': 'OC', 'オグリ': 'OG',
         'ゴールドシップ': 'GS', 'ゴルシ': 'GOS',
         'ウオッカ': 'VDK',
@@ -708,17 +705,17 @@
         'グラスワンダー': 'GW', 'グラス': 'GRS',
         'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
         'メジロマックイーン': 'MMQ', 'マックイーン': 'MCQ',
-        'エルコンドルパサー': 'ECP', 'エル': 'EL',
+        'エルコンドルパサー': 'ECP',
         'テイエムオペラオー': 'TMO', 'オペラオー': 'OPO',
         'ナリタブライアン': 'NB', 'ブライアン': 'BRI',
-        'シンボリルドルフ': 'SR', 'ルドルフ': 'RDF', '会長': 'KCH',
+        'シンボリルドルフ': 'SR', 'ルドルフ': 'RDF',
         'エアグルーヴ': 'AG', 'グルーヴ': 'GRV',
         'アグネスデジタル': 'AD', 'デジタル': 'DGT',
         'セイウンスカイ': 'SUS', 'スカイ': 'SKY',
-        'タマモクロス': 'TC', 'タマモ': 'TMM', 'タマ': 'TMA',
+        'タマモクロス': 'TC', 'タマモ': 'TMM',
         'ファインモーション': 'FM', 'ファイン': 'FIN',
         'ビワハヤヒデ': 'BHH', 'ハヤヒデ': 'HYH',
-        'マヤノトップガン': 'MTG', 'マヤノ': 'MYN', 'マヤ': 'MYA',
+        'マヤノトップガン': 'MTG', 'マヤノ': 'MYN',
         'マンハッタンカフェ': 'MC', 'カフェ': 'CAF',
         'ミホノブルボン': 'MB', 'ブルボン': 'BRB',
         'メジロライアン': 'MR', 'ライアン': 'RYN',
@@ -758,7 +755,7 @@
         'キングヘイロー': 'KH', 'キング': 'KNG',
         'マチカネタンホイザ': 'MTH', 'タンホイザ': 'THZ', 'マチタン': 'MCT',
         'イクノディクタス': 'ID', 'イクノ': 'IKN',
-        'メジロパーマー': 'MP', 'パーマー': 'PAM', 'パマ': 'PMA',
+        'メジロパーマー': 'MP', 'パーマー': 'PAM',
         'ダイタクヘリオス': 'DTH', 'ヘリオス': 'HRO',
         'ツインターボ': 'TTB', 'ターボ': 'TRB',
         'サトノダイヤモンド': 'SDD', 'ダイヤ': 'DIA',
@@ -778,7 +775,7 @@
         'ノースフライト': 'NFL', 'フライト': 'FRT',
         'シンボリクリスエス': 'SKS', 'クリスエス': 'KRS', 'ボリクリ': 'BKR',
         'タニノギムレット': 'TG', 'ギムレット': 'GMR',
-        'ダイイチルビー': 'DIR', 'ルビー': 'RBY',
+        'ダイイチルビー': 'DIR',
         'メジロラモーヌ': 'MLM', 'ラモーヌ': 'RMN',
         'アストンマーチャン': 'AM', 'マーチャン': 'MCH',
         'サトノクラウン': 'SCW', 'クラウン': 'CRW',
@@ -817,7 +814,7 @@
         'グランアレグリア': 'GAL', 'グラン': 'GRN',
         'ラヴズオンリーユー': 'LOY', 'ラヴズ': 'LOV',
         'クロノジェネシス': 'CG', 'クロノ': 'CRN',
-        'ステイゴールド': 'STG', 'ステゴ': 'STG2',
+        'ステイゴールド': 'STG',
         'キセキ': 'KSK',
         'デアリングタクト': 'DAT', 'デアタク': 'DAT2',
         'デアリングハート': 'DAH',
@@ -831,7 +828,6 @@
         'ダーレーアラビアン': 'DLA', 'ダーレー': 'DRL',
         'ゴドルフィンバルブ': 'GOB', 'ゴドルフィン': 'GDF',
         'バイアリーターク': 'BYT', 'バイアリー': 'BYA',
-        'セントライト': 'SNL',
         'スピードシンボリ': 'SPS',
         'ハイセイコー': 'HSK',
         'モンジュー': 'MNJ',
@@ -847,57 +843,68 @@
         'ユノハナブルーム': 'YHB', 'ユノハナ': 'YNH',
         '駿川たづな': 'HT2', 'たづな': 'TDN',
         '秋川やよい': 'AY', '理事長': 'RJC',
-        '乙名史悦子': 'OE', '乙名史': 'OTN', '記者': 'KSH',
+        '乙名史悦子': 'OE', '乙名史': 'OTN',
         '桐生院葵': 'KA2', '桐生院': 'KRY',
         '安心沢刺々美': 'ASS', '安心沢': 'ANS',
-        '樫本理子': 'KR', '樫本': 'KSM2', '代理': 'DIR2',
-        '佐岳メイ': 'SM', 'メイ': 'MEI',
+        '樫本理子': 'KR', '樫本': 'KSM2',
         '都留岐涼花': 'TR', '都留岐': 'TRG',
-        '保科健子': 'HK', '保科': 'HSN',
-        '赤坂美聡': 'AKM', '赤坂': 'AKS', '実況': 'JKY',
-        '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
-        'トレーナー': 'TNR'
+        'トレーナー': 'TNR',
+
+        /* --- 用語バリエーション（確実に長くて効果的なもののみ） --- */
+        'トゥインクル': 'TWK', 'シリーズ': 'SRZ', 'トレーニング': 'TRN',
+        'ファンファーレ': 'FNF', 'ヴィクトリア': 'VCT', 'スプリンター': 'SPR', 
+        'フューチャリティ': 'FUT', 'チャンピオン': 'CHP', 'ジャパン': 'JAP', 
+        'ホープフル': 'HPF', 'ジュベナイル': 'JUV', 'エリザベス': 'ELZ'
     };
+    // 長い単語から先に判定するためキーの文字数で降順ソート
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
     // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
-        const headerPrefix = "[System Note: Abbreviations are used below to save tokens. MUST use the full original names in your response.]\n";
-        // 既存のヘッダーを検出する正規表現（改行の揺れにも対応）
-        const headerRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
+        const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
+        const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
+        const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
         
-        const match = text.match(headerRegex);
+        let match = text.match(headerRegex);
+        let oldMatch = text.match(oldHeaderRegex);
         const replacedMap = new Map();
         let bodyText = text;
 
-        // 既存のヘッダーがあれば解読して保存し、本文から切り離す
         if (match) {
             const mapStr = match[1];
             const pairs = mapStr.split(',');
             pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
+                const[abbr, original] = pair.split('=').map(s => s.trim());
                 if (abbr && original) {
                     replacedMap.set(abbr, original);
                 }
             });
             bodyText = text.replace(headerRegex, '');
+        } else if (oldMatch) {
+            const mapStr = oldMatch[1];
+            const pairs = mapStr.split(',');
+            pairs.forEach(pair => {
+                const[abbr, original] = pair.split('=').map(s => s.trim());
+                if (abbr && original) {
+                    replacedMap.set(abbr, original);
+                }
+            });
+            bodyText = text.replace(oldHeaderRegex, '');
         }
 
         let isReplaced = false;
 
-        // 本文のみを対象に置換を実行（既存ヘッダー内の正式名称が誤爆するのを防ぐ）
         const newText = bodyText.replace(regex, matchStr => {
             isReplaced = true;
             return dictCallback(matchStr, replacedMap);
         });
 
-        // 変更があったか、すでにヘッダーが存在する場合はヘッダーを再構築して出力
         if (isReplaced || replacedMap.size > 0) {
             let header = headerPrefix;
             replacedMap.forEach((originalWord, abbr) => {
                 header += `${abbr}=${originalWord}, `;
             });
-            header = header.slice(0, -2) + "\n---\n\n";
+            header = header.slice(0, -2) + "\n</system>\n\n";
             
             outputEl.value = header + newText;
             updateCounts();
@@ -972,13 +979,12 @@
             case 'toUmaAbbr': {
                 processAbbreviation(text, umaRegex, (matchStr, map) => {
                     const abbr = umaMap[matchStr];
-                    // マップに無い、または既存登録よりもマッチした名前が長ければ上書き
                     if (!map.has(abbr) || matchStr.length > map.get(abbr).length) {
                         map.set(abbr, matchStr);
                     }
                     return abbr;
                 }, 'AI向けウマ娘略称化を行いました');
-                return; // processAbbreviation内で出力と更新を済ませるので抜ける
+                return;
             }
         }
         outputEl.value = text;
@@ -1129,7 +1135,7 @@
                 }
             }
             
-            for (let [sub, indices] of ngrams.entries()) {
+            for (let[sub, indices] of ngrams.entries()) {
                 if (indices.length > 1) {
                     for (let idx of indices) {
                         for (let k = 0; k < minLength; k++) {
