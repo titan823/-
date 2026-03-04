@@ -23,13 +23,16 @@
             --bg-button-action: #777777;
             --bg-button-delete: #e53935;
             --bg-button-save: #30d158;
+            --bg-button-update: #1976d2;
             --bg-header: #4a90e2;
             --text-primary: #333333;
             --text-secondary: #777777;
             --text-light: #ffffff;
+            --text-error: #c62828;
             --border-primary: #cccccc;
             --border-secondary: #dddddd;
             --border-tertiary: #eeeeee;
+            --border-danger: #ffcdd2;
             --shadow-secondary: rgba(0, 0, 0, 0.1);
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -43,9 +46,11 @@
             --bg-header: #007aff;
             --text-primary: #e0e0e0;
             --text-secondary: #aaaaaa;
+            --text-error: #ff8a80;
             --border-primary: #444444;
             --border-secondary: #555555;
             --border-tertiary: #333333;
+            --border-danger: #7a2e35;
         }
         body.pastel-pink-mode {
             --bg-primary: #fff5f8;
@@ -184,6 +189,22 @@
         .header-button.left { margin-right: 10px; }
         .header-button.right { margin-left: 10px; }
 
+        .header-save-button {
+            padding: 4px 12px;
+            font-size: 13px;
+            background-color: var(--bg-button-save);
+            color: var(--text-light);
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .header-notice {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-right: 10px;
+        }
+
         .main-content {
             flex-grow: 1;
             overflow-y: auto;
@@ -264,7 +285,6 @@
             overflow-y: auto;
         }
 
-        /* ツールボタンのグリッド */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -341,14 +361,12 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
             box-shadow: 0 1px 3px var(--shadow-secondary);
         }
-        .menu-item:hover { background-color: var(--bg-tertiary); }
         .menu-item.active { border: 2px solid var(--bg-button); background-color: var(--bg-secondary); }
         .menu-item.disabled { opacity: 0.5; cursor: not-allowed; }
         .menu-desc { font-size: 11px; color: var(--text-secondary); font-weight: normal; display: block; margin-top: 4px; }
@@ -356,6 +374,14 @@
         .settings-group { margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-tertiary); border-radius: 8px; background-color: var(--bg-tertiary); }
         .settings-group h3 { margin-bottom: 15px; font-size: 16px; color: var(--text-link, var(--bg-button)); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; }
         select, input[type="text"] { width: 100%; padding: 10px; border: 1px solid var(--border-primary); border-radius: 5px; font-size: 14px; margin-bottom: 10px; background-color: var(--bg-input); color: var(--text-primary); }
+
+        .checkbox-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
+        .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
+
+        .danger-zone { margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-danger); display: flex; flex-direction: column; gap: 10px; }
+        .danger-zone button { width: 100%; padding: 10px; font-size: 14px; border-radius: 5px; border: none; cursor: pointer; color: var(--text-light); }
+        #update-app-btn { background-color: var(--bg-button-update); }
+        #clear-data-btn { background-color: var(--bg-button-delete); }
 
         /* トースト通知 */
         #toast {
@@ -376,58 +402,20 @@
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
         /* ダイアログ装飾 */
-        dialog.custom-dialog {
-            border: 1px solid var(--border-primary);
-            border-radius: 8px;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            padding: 20px;
-            box-shadow: 0 4px 12px var(--shadow-secondary);
-            margin: auto;
-        }
-        dialog.custom-dialog::backdrop {
-            background: rgba(0,0,0,0.5);
-        }
-        .keyword-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-secondary);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .keyword-info {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin-right: 10px;
-        }
-        .keyword-word {
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .keyword-stats {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-        .add-keyword-btn {
-            background: var(--bg-button);
-            color: #fff;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        .add-keyword-btn:disabled {
-            background: var(--text-secondary);
-            cursor: not-allowed;
-        }
+        dialog.custom-dialog { border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); padding: 20px; box-shadow: 0 4px 12px var(--shadow-secondary); margin: auto; }
+        dialog.custom-dialog::backdrop { background: rgba(0,0,0,0.5); }
+        .dialog-message { margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .dialog-actions button { padding: 8px 18px; font-weight: 500; border-radius: 4px; border: none; cursor: pointer; }
+        .dialog-ok-btn { background-color: var(--bg-button); color: #fff; }
+        .dialog-cancel-btn { background-color: var(--bg-button-action); color: #fff; }
+
+        .keyword-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+        .keyword-info { display: flex; flex-direction: column; overflow: hidden; margin-right: 10px; }
+        .keyword-word { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .keyword-stats { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .add-keyword-btn { background: var(--bg-button); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .add-keyword-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -476,55 +464,79 @@
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
 
-            <!-- ▼ 全機能をフラットに配置 ▼ -->
-            <div class="tools-grid">
-                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
-                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
-                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
-                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
-                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
-                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
-                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
-                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
-                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
-            </div>
-
-            <!-- 任意文字列置換 UI -->
-            <div class="custom-replace-container">
-                <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
-                <input type="text" id="replaceTarget" placeholder="置換後">
-                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
-            </div>
-
-            <!-- AI向けプロンプト圧縮 UI -->
-            <div style="margin-top: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
-                    <button id="extractKeywordsBtn" class="paste-btn" style="margin: 0; background-color: var(--bg-secondary);">✨ 頻出ワード抽出</button>
+            <div class="tool-group">
+                <div class="tool-group-title">空白・改行の整理</div>
+                <div class="tools-grid">
+                    <button class="tool-btn" data-action="trimSpace">空白を削除</button>
+                    <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                    <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
+                    <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 5px;">
-                    「元の言葉=略称」を改行区切りで入力。変換後、AIに伝えるための対応表(英語)を先頭に自動付与します。<br>
+            </div>
+
+            <div class="tool-group">
+                <div class="tool-group-title">文字種の変換</div>
+                <div class="tools-grid">
+                    <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
+                    <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                    <button class="tool-btn" data-action="toUpperCase">大文字化</button>
+                    <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                </div>
+            </div>
+
+            <details class="tool-group">
+                <summary class="tool-group-summary">高度な処理・カスタム置換</summary>
+                <div style="margin-top: 10px;">
+                    <div class="tool-group-title">特殊抽出・反転</div>
+                    <div class="tools-grid">
+                        <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
+                        <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                        <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
+                    </div>
+                    
+                    <div class="tool-group-title" style="margin-top: 15px;">単語の置換・ハイライト</div>
+                    <div class="custom-replace-container">
+                        <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
+                        <span style="color: var(--text-secondary); font-weight: bold;">→</span>
+                        <input type="text" id="replaceTarget" placeholder="置換後">
+                        <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- ★★★ 完全自動AI圧縮 UI ★★★ -->
+            <div class="tool-group">
+                <div class="tool-group-title">AI向けプロンプト圧縮 (トークン節約)</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                    本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
-                <textarea id="compressDict" rows="2" style="min-height: 50px; margin-bottom: 5px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
-                <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light); width: 100%;">一括圧縮して対応表を付与</button>
+                <!-- メインの自動圧縮ボタン -->
+                <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
+
+                <!-- 旧仕様の手動辞書は折りたたみに格納 -->
+                <details style="border-top: 1px dashed var(--border-secondary); padding-top: 8px;">
+                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">手動で辞書を指定して圧縮する (こだわり派向け)</summary>
+                    <div style="margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <div style="font-size: 11px; color: var(--text-secondary);">「元の言葉=略称」で入力</div>
+                            <button id="extractKeywordsBtn" class="paste-btn" style="margin: 0; background-color: var(--bg-secondary);">✨ 頻出ワード抽出</button>
+                        </div>
+                        <textarea id="compressDict" rows="2" style="min-height: 50px; margin-bottom: 5px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
+                        <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button-action); color: var(--text-light); width: 100%;">辞書を使って圧縮</button>
+                    </div>
+                </details>
             </div>
-            <!-- ▲ 全機能をフラットに配置 ここまで ▲ -->
 
             <div class="section-header" style="margin-top: 5px;">
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -549,6 +561,8 @@
         <header class="app-header">
             <button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button>
             <h1>設定</h1>
+            <span id="settings-save-notice" class="header-notice">※反映には保存が必要</span>
+            <button id="save-settings-btn" class="header-save-button">保存</button>
         </header>
         <main class="main-content">
             <div class="settings-group">
@@ -565,8 +579,31 @@
                     <option value="turf">ターフモード🌱</option>
                 </select>
             </div>
-            <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.14</p>
+
+            <div class="settings-group">
+                <h3>システム設定</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="auto-save-settings-toggle">
+                    設定を即時反映する（自動保存）
+                </label>
+                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
+                    ※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。
+                </p>
+            </div>
+
+            <div class="danger-zone">
+                <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
+                    バージョン: 4.0 (Auto Compress)
+                </p>
+                <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
+                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
+                    ※ サーバー上の新しいコードを強制的に読み込みたい場合に使用します。
+                </p>
+                
+                <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
+                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
+                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」などを全て削除し、初期状態に戻します。
+                </p>
             </div>
         </main>
     </div>
@@ -580,7 +617,7 @@
 <dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; max-height: 80vh; overflow-y: hidden; display: flex; flex-direction: column;">
     <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
     <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと圧縮辞書に自動入力されます。
+        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
     </p>
     <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
         <!-- JSでアイテムを追加 -->
@@ -590,9 +627,18 @@
     </div>
 </dialog>
 
+<!-- 確認ダイアログ -->
+<dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center;">
+    <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px;"></p>
+    <div class="dialog-actions" style="justify-content: center;">
+        <button id="confirmCancelBtn" class="dialog-cancel-btn">キャンセル</button>
+        <button id="confirmOkBtn" class="dialog-ok-btn">OK</button>
+    </div>
+</dialog>
+
 <script>
     // ==========================================
-    // 1. PWA インストール対応
+    // 1. PWA インストール対応 & ServiceWorker
     // ==========================================
     (function initPWA() {
         const manifestJSON = {
@@ -611,7 +657,23 @@
         const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
         document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-        const swCode = `self.addEventListener('fetch', e => {});`;
+        const swCode = `
+            const CACHE_NAME = 'toolbox-pwa-v1';
+            self.addEventListener('install', e => { self.skipWaiting(); });
+            self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', e => {
+                e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+            });
+            self.addEventListener('message', e => {
+                if (e.data && e.data.action === 'clearCache') {
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    }).then(() => {
+                        e.source.postMessage({action: 'cacheCleared'});
+                    });
+                }
+            });
+        `;
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
@@ -619,12 +681,45 @@
     })();
 
     // ==========================================
-    // HTMLエスケープ共通関数
+    // 共通UIユーティリティ
     // ==========================================
     function escapeHtml(str) {
         return String(str).replace(/[&<>"']/g, function(match) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
             return map[match];
+        });
+    }
+
+    let toastTimeout;
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function showConfirm(message) {
+        return new Promise((resolve) => {
+            const dialog = document.getElementById('confirmDialog');
+            document.getElementById('confirmMessage').textContent = message;
+            
+            const okBtn = document.getElementById('confirmOkBtn');
+            const cancelBtn = document.getElementById('confirmCancelBtn');
+            
+            const cleanup = () => {
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+                dialog.close();
+            };
+            
+            const onOk = () => { cleanup(); resolve(true); };
+            const onCancel = () => { cleanup(); resolve(false); };
+            
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+            
+            dialog.showModal();
         });
     }
 
@@ -675,19 +770,85 @@
     document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
 
     // ==========================================
-    // 3. テーマ設定ロジック
+    // 3. 設定保存・読み込みロジック
     // ==========================================
     const themeSelect = document.getElementById('theme-select');
-    let currentTheme = localStorage.getItem('formatter_theme') || 'light';
+    const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
+    const dictArea = document.getElementById('compressDict');
+    const saveNotice = document.getElementById('settings-save-notice');
+    const saveBtn = document.getElementById('save-settings-btn');
+    
+    const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
+    let appSettings = {
+        theme: 'light',
+        autoSave: false,
+        compressDict: defaultDict
+    };
+
+    function loadSettings() {
+        const saved = localStorage.getItem('toolbox_settings');
+        if (saved) {
+            try {
+                Object.assign(appSettings, JSON.parse(saved));
+            } catch (e) {
+                console.error("設定の読み込みに失敗しました");
+            }
+        }
+        
+        const oldTheme = localStorage.getItem('formatter_theme');
+        if (oldTheme && !saved) appSettings.theme = oldTheme;
+        const oldDict = localStorage.getItem('formatter_compress_dict');
+        if (oldDict && !saved) appSettings.compressDict = oldDict;
+
+        themeSelect.value = appSettings.theme;
+        autoSaveToggle.checked = appSettings.autoSave;
+        dictArea.value = appSettings.compressDict;
+        
+        applyTheme(appSettings.theme);
+        updateSaveUiState();
+    }
+
+    function saveSettings(showMsg = true) {
+        appSettings.theme = themeSelect.value;
+        appSettings.autoSave = autoSaveToggle.checked;
+        appSettings.compressDict = dictArea.value;
+        
+        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+        
+        localStorage.removeItem('formatter_theme');
+        localStorage.removeItem('formatter_compress_dict');
+
+        applyTheme(appSettings.theme);
+        if (showMsg) showToast('設定を保存しました');
+    }
+
+    function updateSaveUiState() {
+        if (autoSaveToggle.checked) {
+            saveNotice.style.display = 'none';
+            saveBtn.style.display = 'none';
+        } else {
+            saveNotice.style.display = 'inline';
+            saveBtn.style.display = 'inline-block';
+        }
+    }
+
+    saveBtn.addEventListener('click', () => saveSettings(true));
+    autoSaveToggle.addEventListener('change', () => {
+        updateSaveUiState();
+        saveSettings(false); 
+    });
+
+    const handleSettingChange = () => {
+        if (autoSaveToggle.checked) saveSettings(false);
+    };
+    themeSelect.addEventListener('change', handleSettingChange);
+    dictArea.addEventListener('input', handleSettingChange);
 
     function applyTheme(themeName) {
         document.body.className = ''; 
         if (themeName !== 'light') {
             document.body.classList.add(themeName + '-mode');
         }
-        localStorage.setItem('formatter_theme', themeName);
-        themeSelect.value = themeName;
-        
         const colors = {
             'light': '#4a90e2', 'dark': '#007aff', 'pastel-pink': '#ff8fab',
             'pastel-blue': '#87cefa', 'pastel-yellow': '#ffd700', 'pastel-purple': '#ab47bc',
@@ -696,8 +857,40 @@
         document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
     }
 
-    themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
-    applyTheme(currentTheme);
+    loadSettings();
+
+    // ==========================================
+    // Danger Zone (キャッシュクリア等)
+    // ==========================================
+    document.getElementById('update-app-btn').addEventListener('click', async () => {
+        const confirmed = await showConfirm("アプリのキャッシュをクリアして最新版を再取得しますか？\n(設定と辞書は保持されます。ページがリロードされます)");
+        if (confirmed) {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.addEventListener('message', function handler(event) {
+                    if (event.data && event.data.action === 'cacheCleared') {
+                        navigator.serviceWorker.removeEventListener('message', handler);
+                        window.location.reload(true);
+                    }
+                });
+                navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+            } else {
+                window.location.reload(true);
+            }
+        }
+    });
+
+    document.getElementById('clear-data-btn').addEventListener('click', async () => {
+        const confirmed = await showConfirm("本当にすべてのデータ（圧縮辞書やテーマ設定など）を削除しますか？\nこの操作は元に戻せません。");
+        if (confirmed) {
+            localStorage.removeItem('toolbox_settings');
+            localStorage.removeItem('formatter_theme');
+            localStorage.removeItem('formatter_compress_dict');
+            showToast("全データをクリアしました。初期状態に戻ります。");
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1500);
+        }
+    });
 
     // ==========================================
     // 4. テキスト整形ロジック & トークン計算
@@ -982,6 +1175,7 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
+    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1006,7 +1200,7 @@
             const mapStr = oldMatch[1];
             const pairs = mapStr.split(',');
             pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
+                const[abbr, original] = pair.split('=').map(s => s.trim());
                 if (abbr && original) {
                     replacedMap.set(abbr, original);
                 }
@@ -1163,15 +1357,9 @@
         showToast('置換しました');
     });
 
-    const dictArea = document.getElementById('compressDict');
-    const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
-    const savedDict = localStorage.getItem('formatter_compress_dict');
-    dictArea.value = savedDict !== null ? savedDict : defaultDict;
-
-    dictArea.addEventListener('input', (e) => {
-        localStorage.setItem('formatter_compress_dict', e.target.value);
-    });
-
+    // ==========================================
+    // AIプロンプト圧縮ロジック (完全自動対応)
+    // ==========================================
     document.getElementById('compressBtn').addEventListener('click', () => {
         const text = inputEl.value;
         const dictText = dictArea.value;
@@ -1216,7 +1404,150 @@
         }, 'AI向けに圧縮しました');
     });
 
-    // ＝＝＝ 新機能：頻出ワード抽出 ＝＝＝
+    // 🚀 完全自動圧縮ボタンの処理
+    document.getElementById('autoCompressBtn').addEventListener('click', () => {
+        const text = inputEl.value;
+        if (!text) {
+            showToast('入力テキストがありません');
+            return;
+        }
+        if (!window.Intl || !Intl.Segmenter) {
+            showToast('お使いのブラウザは自動抽出に非対応です。下の「手動辞書」をお使いください。');
+            return;
+        }
+
+        resetHighlightMode();
+
+        const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
+        const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
+        
+        let match = text.match(headerRegex);
+        let oldMatch = text.match(oldHeaderRegex);
+        const replacedMap = new Map();
+        let bodyText = text;
+
+        if (match) {
+            const mapStr = match[1];
+            const pairs = mapStr.split(',');
+            pairs.forEach(pair => {
+                const[abbr, original] = pair.split('=').map(s => s.trim());
+                if (abbr && original) replacedMap.set(abbr, original);
+            });
+            bodyText = text.replace(headerRegex, '');
+        } else if (oldMatch) {
+            const mapStr = oldMatch[1];
+            const pairs = mapStr.split(',');
+            pairs.forEach(pair => {
+                const [abbr, original] = pair.split('=').map(s => s.trim());
+                if (abbr && original) replacedMap.set(abbr, original);
+            });
+            bodyText = text.replace(oldHeaderRegex, '');
+        }
+
+        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+        const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
+
+        const ngrams = new Map();
+        for (let n = 1; n <= 4; n++) {
+            for (let i = 0; i <= segments.length - n; i++) {
+                let phrase = '';
+                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+                phrase = phrase.trim();
+                if (phrase.length < 3) continue;
+                if (/^[ぁ-ん]+$/.test(phrase)) continue; 
+                if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; 
+                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+            }
+        }
+
+        const results = [];
+        for (let [phrase, count] of ngrams.entries()) {
+            if (count > 1) {
+                const tokenCost = Math.ceil(phrase.length * 1.15);
+                const saving = (tokenCost * count) - (tokenCost + 2 + count);
+                if (saving > 2) {
+                    results.push({ phrase, count, saving });
+                }
+            }
+        }
+
+        results.sort((a, b) => b.phrase.length - a.phrase.length);
+        const filteredResults =[];
+        for (const item of results) {
+            let isSubphrase = false;
+            for (const kept of filteredResults) {
+                if (kept.phrase.includes(item.phrase)) {
+                    if (item.count <= kept.count + 2) {
+                        isSubphrase = true;
+                        break;
+                    }
+                }
+            }
+            if (!isSubphrase) filteredResults.push(item);
+        }
+
+        filteredResults.sort((a, b) => b.saving - a.saving);
+        const targets = filteredResults.slice(0, 20);
+
+        if (targets.length === 0) {
+            showToast('自動圧縮できる頻出ワードがありませんでした');
+            return;
+        }
+
+        let newText = bodyText;
+        let abbrCounter = replacedMap.size + 1; 
+        let isReplaced = false;
+
+        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+
+        for (const target of targets) {
+            const original = target.phrase;
+            
+            let alreadyExists = false;
+            for (const[existingAbbr, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === original) {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+            if (alreadyExists) continue;
+
+            let abbr = `v${abbrCounter}`;
+            while (replacedMap.has(abbr)) {
+                abbrCounter++;
+                abbr = `v${abbrCounter}`;
+            }
+
+            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escapeRegExp(original), 'g');
+            
+            if (regex.test(newText)) {
+                newText = newText.replace(regex, abbr);
+                replacedMap.set(abbr, original);
+                abbrCounter++;
+                isReplaced = true;
+            }
+        }
+
+        if (isReplaced || replacedMap.size > 0) {
+            const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
+            let header = headerPrefix;
+            replacedMap.forEach((originalWord, abbr) => {
+                header += `${abbr}=${originalWord}, `;
+            });
+            header = header.slice(0, -2) + "\n</system>\n\n";
+            
+            outputEl.value = header + newText;
+            updateCounts();
+            showToast('🚀 完全自動でプロンプトを圧縮しました！');
+        } else {
+            outputEl.value = text;
+            updateCounts();
+            showToast('自動圧縮できるワードがありませんでした');
+        }
+    });
+
+    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1229,60 +1560,48 @@
             return;
         }
 
-        // Intl.Segmenterを使って単語単位に分割
         const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
         const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
 
         const ngrams = new Map();
-        // 1単語から最大4単語の連続（N-gram）を生成してカウント
         for (let n = 1; n <= 4; n++) {
             for (let i = 0; i <= segments.length - n; i++) {
                 let phrase = '';
-                for (let j = 0; j < n; j++) {
-                    phrase += segments[i + j].segment;
-                }
-                
+                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
-                if (phrase.length < 3) continue; // 3文字未満は無視
-                if (/^[ぁ-ん]+$/.test(phrase)) continue; // ひらがなのみの助詞の塊などは無視
-                if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; // 記号のみは無視
-
+                if (phrase.length < 3) continue;
+                if (/^[ぁ-ん]+$/.test(phrase)) continue; 
+                if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; 
                 ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
             }
         }
 
         const results =[];
-        for (let [phrase, count] of ngrams.entries()) {
+        for (let[phrase, count] of ngrams.entries()) {
             if (count > 1) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
-                // 節約できるトークンの推定計算 (定義分と略称使用分を差し引く)
-                const saving = (tokenCost * count) - (tokenCost + count);
+                const saving = (tokenCost * count) - (tokenCost + 2 + count);
                 if (saving > 2) {
                     results.push({ phrase, count, saving });
                 }
             }
         }
 
-        // 長いフレーズから順に評価し、完全に包含される短いフレーズ（部分一致）を除外する
         results.sort((a, b) => b.phrase.length - a.phrase.length);
         const filteredResults =[];
         for (const item of results) {
             let isSubphrase = false;
             for (const kept of filteredResults) {
                 if (kept.phrase.includes(item.phrase)) {
-                    // 出現回数が同じくらいなら部分文字列とみなす
                     if (item.count <= kept.count + 2) {
                         isSubphrase = true;
                         break;
                     }
                 }
             }
-            if (!isSubphrase) {
-                filteredResults.push(item);
-            }
+            if (!isSubphrase) filteredResults.push(item);
         }
 
-        // 節約できるトークン数で降順ソート
         filteredResults.sort((a, b) => b.saving - a.saving);
 
         const listContainer = document.getElementById('keywordList');
@@ -1291,13 +1610,11 @@
         if (filteredResults.length === 0) {
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
-            // トップ20件を表示
             const topResults = filteredResults.slice(0, 20);
             topResults.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                // 略称の自動生成 (KW1, KW2...)
                 let autoAbbr = 'KW' + (index + 1);
 
                 const infoDiv = document.createElement('div');
@@ -1333,7 +1650,7 @@
                         dictArea.value = currentDict + '\n' + newEntry;
                     }
                     
-                    localStorage.setItem('formatter_compress_dict', dictArea.value);
+                    if (autoSaveToggle.checked) saveSettings(false);
                     
                     addBtn.textContent = '追加済';
                     addBtn.disabled = true;
@@ -1474,15 +1791,6 @@
             showToast('コピーに失敗しました');
         }
     });
-
-    let toastTimeout;
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
-    }
 </script>
 </body>
 </html>
