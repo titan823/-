@@ -285,6 +285,7 @@
             overflow-y: auto;
         }
 
+        /* ツールボタンのグリッド */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -469,57 +470,61 @@
             </div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
 
-            <div class="tool-group">
-                <div class="tool-group-title">空白・改行の整理</div>
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="trimSpace">空白を削除</button>
-                    <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
-                    <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
-                    <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
-                </div>
+            <!-- ▼ 全機能をフラットに配置 ▼ -->
+            <div class="tools-grid">
+                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
+                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
+                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
+                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
+                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
+                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
+                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
-            <div class="tool-group">
-                <div class="tool-group-title">文字種の変換</div>
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
-                    <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
-                    <button class="tool-btn" data-action="toUpperCase">大文字化</button>
-                    <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                </div>
+            <!-- 任意文字列置換 UI -->
+            <div class="custom-replace-container">
+                <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
+                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
+                <input type="text" id="replaceTarget" placeholder="置換後">
+                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
             </div>
 
-            <details class="tool-group">
-                <summary class="tool-group-summary">高度な処理・カスタム置換</summary>
-                <div style="margin-top: 10px;">
-                    <div class="tool-group-title">特殊抽出・反転</div>
-                    <div class="tools-grid">
-                        <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
-                        <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                        <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
-                    </div>
-                    
-                    <div class="tool-group-title" style="margin-top: 15px;">単語の置換・ハイライト</div>
-                    <div class="custom-replace-container">
-                        <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                        <span style="color: var(--text-secondary); font-weight: bold;">→</span>
-                        <input type="text" id="replaceTarget" placeholder="置換後">
-                        <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
-                    </div>
+            <!-- AI向けプロンプト圧縮 UI -->
+            <div style="margin-top: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
                 </div>
-            </details>
-
-            <!-- ★★★ 完全自動AI圧縮 UI ★★★ -->
-            <div class="tool-group">
-                <div class="tool-group-title">AI向けプロンプト圧縮 (トークン節約)</div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
                     本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
-                <!-- メインの自動圧縮ボタン -->
+                
                 <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
 
-                <!-- 旧仕様の手動辞書は折りたたみに格納 -->
+                <!-- 自動圧縮の詳細設定 -->
+                <details style="margin-bottom: 8px;">
+                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
+                    <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            対象とする最低文字数:
+                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            対象とする最低出現回数:
+                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            置換する最大単語数:
+                            <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
+                        </label>
+                    </div>
+                </details>
+
+                <!-- 旧仕様の手動辞書 -->
                 <details style="border-top: 1px dashed var(--border-secondary); padding-top: 8px;">
                     <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">手動で辞書を指定して圧縮する (こだわり派向け)</summary>
                     <div style="margin-top: 8px;">
@@ -532,6 +537,7 @@
                     </div>
                 </details>
             </div>
+            <!-- ▲ 全機能をフラットに配置 ここまで ▲ -->
 
             <div class="section-header" style="margin-top: 5px;">
                 <label for="outputText">整形結果</label>
@@ -591,9 +597,10 @@
                 </p>
             </div>
 
+            <!-- Danger Zone -->
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.0 (Auto Compress)
+                    バージョン: 4.1 (Auto Compress Adv.)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -778,11 +785,19 @@
     const saveNotice = document.getElementById('settings-save-notice');
     const saveBtn = document.getElementById('save-settings-btn');
     
+    // 自動圧縮用の設定UI
+    const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
+    const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
+    const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
+    
     const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
     let appSettings = {
         theme: 'light',
         autoSave: false,
-        compressDict: defaultDict
+        compressDict: defaultDict,
+        autoCompressMinLen: 3,
+        autoCompressMinCount: 2,
+        autoCompressMaxItems: 20
     };
 
     function loadSettings() {
@@ -804,6 +819,10 @@
         autoSaveToggle.checked = appSettings.autoSave;
         dictArea.value = appSettings.compressDict;
         
+        autoCompressMinLenInput.value = appSettings.autoCompressMinLen;
+        autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
+        autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
+
         applyTheme(appSettings.theme);
         updateSaveUiState();
     }
@@ -813,6 +832,10 @@
         appSettings.autoSave = autoSaveToggle.checked;
         appSettings.compressDict = dictArea.value;
         
+        appSettings.autoCompressMinLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+        appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+        appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+
         localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
         
         localStorage.removeItem('formatter_theme');
@@ -843,6 +866,9 @@
     };
     themeSelect.addEventListener('change', handleSettingChange);
     dictArea.addEventListener('input', handleSettingChange);
+    autoCompressMinLenInput.addEventListener('change', handleSettingChange);
+    autoCompressMinCountInput.addEventListener('change', handleSettingChange);
+    autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
 
     function applyTheme(themeName) {
         document.body.className = ''; 
@@ -1175,7 +1201,6 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1200,7 +1225,7 @@
             const mapStr = oldMatch[1];
             const pairs = mapStr.split(',');
             pairs.forEach(pair => {
-                const[abbr, original] = pair.split('=').map(s => s.trim());
+                const [abbr, original] = pair.split('=').map(s => s.trim());
                 if (abbr && original) {
                     replacedMap.set(abbr, original);
                 }
@@ -1358,8 +1383,10 @@
     });
 
     // ==========================================
-    // AIプロンプト圧縮ロジック (完全自動対応)
+    // 🚀 頻出ワード自動抽出 ＆ プロンプト圧縮
     // ==========================================
+    const dictArea = document.getElementById('compressDict');
+
     document.getElementById('compressBtn').addEventListener('click', () => {
         const text = inputEl.value;
         const dictText = dictArea.value;
@@ -1404,7 +1431,6 @@
         }, 'AI向けに圧縮しました');
     });
 
-    // 🚀 完全自動圧縮ボタンの処理
     document.getElementById('autoCompressBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1412,7 +1438,7 @@
             return;
         }
         if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。下の「手動辞書」をお使いください。');
+            showToast('お使いのブラウザは自動抽出に非対応です。手動辞書をお使いください。');
             return;
         }
 
@@ -1444,16 +1470,24 @@
             bodyText = text.replace(oldHeaderRegex, '');
         }
 
+        // 設定から閾値を読み込む
+        const minLen = parseInt(document.getElementById('autoCompressMinLen').value, 10) || 3;
+        const minCount = parseInt(document.getElementById('autoCompressMinCount').value, 10) || 2;
+        const maxItems = parseInt(document.getElementById('autoCompressMaxItems').value, 10) || 20;
+
         const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
         const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
 
         const ngrams = new Map();
-        for (let n = 1; n <= 4; n++) {
+        // N-gramを長めに取る（最大6単語）
+        for (let n = 1; n <= 6; n++) {
             for (let i = 0; i <= segments.length - n; i++) {
                 let phrase = '';
                 for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
-                if (phrase.length < 3) continue;
+                
+                // 設定された最小文字数でフィルタ
+                if (phrase.length < minLen) continue;
                 if (/^[ぁ-ん]+$/.test(phrase)) continue; 
                 if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; 
                 ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
@@ -1461,8 +1495,9 @@
         }
 
         const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count > 1) {
+        for (let[phrase, count] of ngrams.entries()) {
+            // 設定された最小出現回数でフィルタ
+            if (count >= minCount) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
                 const saving = (tokenCost * count) - (tokenCost + 2 + count);
                 if (saving > 2) {
@@ -1487,10 +1522,12 @@
         }
 
         filteredResults.sort((a, b) => b.saving - a.saving);
-        const targets = filteredResults.slice(0, 20);
+        
+        // 設定された最大抽出件数でスライス
+        const targets = filteredResults.slice(0, maxItems);
 
         if (targets.length === 0) {
-            showToast('自動圧縮できる頻出ワードがありませんでした');
+            showToast('指定条件で自動圧縮できるワードがありませんでした');
             return;
         }
 
@@ -1547,7 +1584,6 @@
         }
     });
 
-    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1560,16 +1596,20 @@
             return;
         }
 
+        const minLen = parseInt(document.getElementById('autoCompressMinLen').value, 10) || 3;
+        const minCount = parseInt(document.getElementById('autoCompressMinCount').value, 10) || 2;
+        const maxItems = parseInt(document.getElementById('autoCompressMaxItems').value, 10) || 20;
+
         const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
         const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
 
         const ngrams = new Map();
-        for (let n = 1; n <= 4; n++) {
+        for (let n = 1; n <= 6; n++) {
             for (let i = 0; i <= segments.length - n; i++) {
                 let phrase = '';
                 for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
-                if (phrase.length < 3) continue;
+                if (phrase.length < minLen) continue;
                 if (/^[ぁ-ん]+$/.test(phrase)) continue; 
                 if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; 
                 ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
@@ -1578,7 +1618,7 @@
 
         const results =[];
         for (let[phrase, count] of ngrams.entries()) {
-            if (count > 1) {
+            if (count >= minCount) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
                 const saving = (tokenCost * count) - (tokenCost + 2 + count);
                 if (saving > 2) {
@@ -1610,7 +1650,7 @@
         if (filteredResults.length === 0) {
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
-            const topResults = filteredResults.slice(0, 20);
+            const topResults = filteredResults.slice(0, maxItems);
             topResults.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
@@ -1671,6 +1711,7 @@
         document.getElementById('keywordDialog').close();
     });
 
+    // ＝＝＝ ハイライト機能 ＝＝＝
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
