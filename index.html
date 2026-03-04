@@ -374,6 +374,60 @@
             z-index: 1000;
         }
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+        /* ダイアログ装飾 */
+        dialog.custom-dialog {
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            box-shadow: 0 4px 12px var(--shadow-secondary);
+            margin: auto;
+        }
+        dialog.custom-dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+        }
+        .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .keyword-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+        .keyword-word {
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .keyword-stats {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .add-keyword-btn {
+            background: var(--bg-button);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .add-keyword-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -422,6 +476,7 @@
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
+                    <!-- 初期値を更新 -->
                     <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -439,10 +494,6 @@
                 <button class="tool-btn" data-action="toLowerCase">小文字化</button>
                 <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
                 <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                
-                <!-- ★ 追加: 叫び・母音圧縮ボタン ★ -->
-                <button class="tool-btn" data-action="compressVowels" style="background-color: var(--bg-button); color: var(--text-light);">叫び・母音圧縮</button>
-                
                 <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
@@ -456,7 +507,14 @@
 
             <!-- AI向けプロンプト圧縮 UI -->
             <div style="margin-top: 5px;">
-                <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary); margin-bottom: 4px;">AI向けプロンプト圧縮 (トークン節約)</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
+                    <button id="extractKeywordsBtn" class="paste-btn" style="margin: 0; background-color: var(--bg-secondary);">✨ 頻出ワード抽出</button>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 5px;">
+                    「元の言葉=略称」を改行区切りで入力。変換後、AIに伝えるための対応表(英語)を先頭に自動付与します。<br>
+                    <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
+                </div>
                 <textarea id="compressDict" rows="2" style="min-height: 50px; margin-bottom: 5px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
                 <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light); width: 100%;">一括圧縮して対応表を付与</button>
             </div>
@@ -466,6 +524,7 @@
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
+                    <!-- 初期値を更新 -->
                     <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -517,6 +576,20 @@
 <!-- 通知用トースト -->
 <div id="toast"></div>
 
+<!-- 頻出ワード抽出ダイアログ -->
+<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; max-height: 80vh; overflow-y: hidden; display: flex; flex-direction: column;">
+    <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
+    <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
+        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと圧縮辞書に自動入力されます。
+    </p>
+    <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
+        <!-- JSでアイテムを追加 -->
+    </div>
+    <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
+        <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
+    </div>
+</dialog>
+
 <script>
     // ==========================================
     // 1. PWA インストール対応
@@ -544,6 +617,16 @@
             navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
         }
     })();
+
+    // ==========================================
+    // HTMLエスケープ共通関数
+    // ==========================================
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function(match) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return map[match];
+        });
+    }
 
     // ==========================================
     // 2. 画面遷移ロジック
@@ -692,7 +775,6 @@
     };
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ウマ娘略称変換マップ
     const umaMap = {
         'スペシャルウィーク': 'SW', 'スペ': 'SP',
         'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
@@ -857,7 +939,6 @@
         '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
         'トレーナー': 'TNR',
 
-        /* --- 一人称バリエーション --- */
         '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
         'あたし': 'ATH', 'アタシ': 'ATK',
         '僕': 'BOK', 'ぼく': 'BKH', 'ボク': 'BKK',
@@ -867,7 +948,6 @@
         'わたくし': 'WTX', 'ワタクシ': 'WTZ',
         '余': 'YOO', '妾': 'WRW',
 
-        /* --- 二人称バリエーション --- */
         'あなた': 'YUA', 'アナタ': 'YUK', '貴方': 'YUJ', '貴女': 'YUW',
         'あんた': 'ANA', 'アンタ': 'ANK',
         'きみ': 'KIM', 'キミ': 'KMK', '君': 'KMJ',
@@ -881,7 +961,6 @@
         'そっち': 'SOC', 'ソッチ': 'SCK',
         'おたく': 'OTA', 'オタク': 'OTK', 'お宅': 'OTJ',
 
-        /* --- 用語バリエーション --- */
         'ウマ娘': 'UMA', 'レース': 'RAC', 'ターフ': 'TRF', 'ダート': 'DRT',
         'ジュニア': 'JNR', 'クラシック': 'CLS', 'シニア': 'SNR', 'ティアラ': 'TIR',
         'コース': 'CRS', 'ゲート': 'GAT', 'コーナー': 'CNR', '重賞': 'JUS',
@@ -903,7 +982,6 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1019,32 +1097,6 @@
                     return; 
                 }
                 break;
-            }
-            case 'compressVowels': {
-                // 母音（大・小・ひらがな・カタカナ）および「ん」「っ」「ー」「w」の2回以上の連続にマッチ
-                const vowelRegex = /(あ{2,}|ア{2,}|ぁ{2,}|ァ{2,}|い{2,}|イ{2,}|ぃ{2,}|ィ{2,}|う{2,}|ウ{2,}|ぅ{2,}|ゥ{2,}|え{2,}|エ{2,}|ぇ{2,}|ェ{2,}|お{2,}|オ{2,}|ぉ{2,}|ォ{2,}|ん{2,}|ン{2,}|っ{2,}|ッ{2,}|ー{2,}|w{2,}|W{2,}|ｗ{2,}|Ｗ{2,})/g;
-                
-                const vowelHeader = "<system>\n[IMPORTANT] The following text uses a compression format for repeated characters (vowels, etc.) to save tokens.\nFormat: `{character:count}`\nExample: `{あ:3}` means \"あああ\", `{ウ:5}` means \"ウウウウウ\".\nYou MUST NEVER output this compression format. Always output the fully expanded repeated characters.\n</system>\n\n";
-
-                // 重複付与を避けるため、既存のヘッダーがあれば一旦削除
-                let bodyText = text.replace(vowelHeader, '');
-
-                let isReplaced = false;
-                const newText = bodyText.replace(vowelRegex, match => {
-                    isReplaced = true;
-                    const char = match[0];
-                    const count = match.length;
-                    return `{${char}:${count}}`;
-                });
-
-                if (isReplaced) {
-                    outputEl.value = vowelHeader + newText;
-                    updateCounts();
-                    showToast('母音の連続をAI向けに圧縮しました');
-                } else {
-                    showToast('圧縮できる連続文字が見つかりませんでした');
-                }
-                return;
             }
             case 'toUmaAbbr': {
                 processAbbreviation(text, umaRegex, (matchStr, map) => {
@@ -1164,6 +1216,144 @@
         }, 'AI向けに圧縮しました');
     });
 
+    // ＝＝＝ 新機能：頻出ワード抽出 ＝＝＝
+    document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
+        const text = inputEl.value;
+        if (!text) {
+            showToast('入力テキストがありません');
+            return;
+        }
+
+        if (!window.Intl || !Intl.Segmenter) {
+            showToast('お使いのブラウザは単語抽出機能に非対応です');
+            return;
+        }
+
+        // Intl.Segmenterを使って単語単位に分割
+        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+        const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
+
+        const ngrams = new Map();
+        // 1単語から最大4単語の連続（N-gram）を生成してカウント
+        for (let n = 1; n <= 4; n++) {
+            for (let i = 0; i <= segments.length - n; i++) {
+                let phrase = '';
+                for (let j = 0; j < n; j++) {
+                    phrase += segments[i + j].segment;
+                }
+                
+                phrase = phrase.trim();
+                if (phrase.length < 3) continue; // 3文字未満は無視
+                if (/^[ぁ-ん]+$/.test(phrase)) continue; // ひらがなのみの助詞の塊などは無視
+                if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; // 記号のみは無視
+
+                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+            }
+        }
+
+        const results =[];
+        for (let [phrase, count] of ngrams.entries()) {
+            if (count > 1) {
+                const tokenCost = Math.ceil(phrase.length * 1.15);
+                // 節約できるトークンの推定計算 (定義分と略称使用分を差し引く)
+                const saving = (tokenCost * count) - (tokenCost + count);
+                if (saving > 2) {
+                    results.push({ phrase, count, saving });
+                }
+            }
+        }
+
+        // 長いフレーズから順に評価し、完全に包含される短いフレーズ（部分一致）を除外する
+        results.sort((a, b) => b.phrase.length - a.phrase.length);
+        const filteredResults =[];
+        for (const item of results) {
+            let isSubphrase = false;
+            for (const kept of filteredResults) {
+                if (kept.phrase.includes(item.phrase)) {
+                    // 出現回数が同じくらいなら部分文字列とみなす
+                    if (item.count <= kept.count + 2) {
+                        isSubphrase = true;
+                        break;
+                    }
+                }
+            }
+            if (!isSubphrase) {
+                filteredResults.push(item);
+            }
+        }
+
+        // 節約できるトークン数で降順ソート
+        filteredResults.sort((a, b) => b.saving - a.saving);
+
+        const listContainer = document.getElementById('keywordList');
+        listContainer.innerHTML = '';
+
+        if (filteredResults.length === 0) {
+            listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
+        } else {
+            // トップ20件を表示
+            const topResults = filteredResults.slice(0, 20);
+            topResults.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'keyword-item';
+
+                // 略称の自動生成 (KW1, KW2...)
+                let autoAbbr = 'KW' + (index + 1);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'keyword-info';
+                
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'keyword-word';
+                wordDiv.textContent = item.phrase;
+
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'keyword-stats';
+                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
+
+                infoDiv.appendChild(wordDiv);
+                infoDiv.appendChild(statsDiv);
+
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-keyword-btn';
+                addBtn.textContent = '+ 辞書へ';
+                
+                addBtn.addEventListener('click', () => {
+                    const currentDict = dictArea.value;
+                    const newEntry = `${item.phrase}=${autoAbbr}`;
+                    
+                    if (currentDict.includes(item.phrase + '=')) {
+                        showToast('既に辞書に登録されています');
+                        return;
+                    }
+
+                    if (currentDict.trim() === '') {
+                        dictArea.value = newEntry;
+                    } else {
+                        dictArea.value = currentDict + '\n' + newEntry;
+                    }
+                    
+                    localStorage.setItem('formatter_compress_dict', dictArea.value);
+                    
+                    addBtn.textContent = '追加済';
+                    addBtn.disabled = true;
+                    showToast(`「${item.phrase}」を辞書に追加しました`);
+                });
+
+                div.appendChild(infoDiv);
+                div.appendChild(addBtn);
+                listContainer.appendChild(div);
+            });
+        }
+
+        const dialog = document.getElementById('keywordDialog');
+        dialog.showModal();
+    });
+
+    document.getElementById('closeKeywordDialog').addEventListener('click', () => {
+        document.getElementById('keywordDialog').close();
+    });
+
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
@@ -1205,7 +1395,7 @@
                 }
             }
             
-            for (let[sub, indices] of ngrams.entries()) {
+            for (let [sub, indices] of ngrams.entries()) {
                 if (indices.length > 1) {
                     for (let idx of indices) {
                         for (let k = 0; k < minLength; k++) {
@@ -1268,7 +1458,7 @@
     document.getElementById('applyToInputBtn').addEventListener('click', () => {
         if (outputEl.value) {
             inputEl.value = outputEl.value;
-            outputEl.value = '';
+            inputEl.value = '';
             updateCounts();
             resetHighlightMode();
             showToast('入力欄に反映しました');
