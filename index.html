@@ -597,7 +597,6 @@
                 </p>
             </div>
 
-            <!-- Danger Zone -->
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
                     バージョン: 4.1 (Auto Compress Adv.)
@@ -621,16 +620,19 @@
 <div id="toast"></div>
 
 <!-- 頻出ワード抽出ダイアログ -->
-<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; max-height: 80vh; overflow-y: hidden; display: flex; flex-direction: column;">
-    <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
-    <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
-    </p>
-    <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
-        <!-- JSでアイテムを追加 -->
-    </div>
-    <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
-        <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
+<!-- ★ 修正ポイント: dialog自体へのdisplay指定を外し、中のdivでレイアウト制御 ★ -->
+<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden; border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary);">
+    <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
+        <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
+            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
+        </p>
+        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
+            <!-- JSでアイテムを追加 -->
+        </div>
+        <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
+            <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
+        </div>
     </div>
 </dialog>
 
@@ -785,7 +787,6 @@
     const saveNotice = document.getElementById('settings-save-notice');
     const saveBtn = document.getElementById('save-settings-btn');
     
-    // 自動圧縮用の設定UI
     const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
     const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
@@ -1201,6 +1202,7 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
+    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1385,8 +1387,6 @@
     // ==========================================
     // 🚀 頻出ワード自動抽出 ＆ プロンプト圧縮
     // ==========================================
-    const dictArea = document.getElementById('compressDict');
-
     document.getElementById('compressBtn').addEventListener('click', () => {
         const text = inputEl.value;
         const dictText = dictArea.value;
@@ -1438,7 +1438,7 @@
             return;
         }
         if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。手動辞書をお使いください。');
+            showToast('お使いのブラウザは自動抽出に非対応です。下の「手動辞書」をお使いください。');
             return;
         }
 
@@ -1584,6 +1584,7 @@
         }
     });
 
+    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1711,7 +1712,6 @@
         document.getElementById('keywordDialog').close();
     });
 
-    // ＝＝＝ ハイライト機能 ＝＝＝
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
