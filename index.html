@@ -422,7 +422,6 @@
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -440,6 +439,10 @@
                 <button class="tool-btn" data-action="toLowerCase">小文字化</button>
                 <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
                 <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                
+                <!-- ★ 追加: 叫び・母音圧縮ボタン ★ -->
+                <button class="tool-btn" data-action="compressVowels" style="background-color: var(--bg-button); color: var(--text-light);">叫び・母音圧縮</button>
+                
                 <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
             </div>
 
@@ -463,7 +466,6 @@
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -505,7 +507,7 @@
                 </select>
             </div>
             <div class="settings-group" style="text-align: center;">
-                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.13</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Toolbox PWA v2.14</p>
             </div>
         </main>
     </div>
@@ -690,7 +692,7 @@
     };
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ★ ウマ娘略称・用語変換マップ ★
+    // ウマ娘略称変換マップ
     const umaMap = {
         'スペシャルウィーク': 'SW', 'スペ': 'SP',
         'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
@@ -899,7 +901,6 @@
         'ニンジン': 'NNJ', '先輩': 'SEN', '後輩': 'KOH', '合宿': 'GSK',
         '練習': 'REN'
     };
-    // 長い単語から先に判定するためキーの文字数で降順ソート
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
     // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
@@ -1018,6 +1019,32 @@
                     return; 
                 }
                 break;
+            }
+            case 'compressVowels': {
+                // 母音（大・小・ひらがな・カタカナ）および「ん」「っ」「ー」「w」の2回以上の連続にマッチ
+                const vowelRegex = /(あ{2,}|ア{2,}|ぁ{2,}|ァ{2,}|い{2,}|イ{2,}|ぃ{2,}|ィ{2,}|う{2,}|ウ{2,}|ぅ{2,}|ゥ{2,}|え{2,}|エ{2,}|ぇ{2,}|ェ{2,}|お{2,}|オ{2,}|ぉ{2,}|ォ{2,}|ん{2,}|ン{2,}|っ{2,}|ッ{2,}|ー{2,}|w{2,}|W{2,}|ｗ{2,}|Ｗ{2,})/g;
+                
+                const vowelHeader = "<system>\n[IMPORTANT] The following text uses a compression format for repeated characters (vowels, etc.) to save tokens.\nFormat: `{character:count}`\nExample: `{あ:3}` means \"あああ\", `{ウ:5}` means \"ウウウウウ\".\nYou MUST NEVER output this compression format. Always output the fully expanded repeated characters.\n</system>\n\n";
+
+                // 重複付与を避けるため、既存のヘッダーがあれば一旦削除
+                let bodyText = text.replace(vowelHeader, '');
+
+                let isReplaced = false;
+                const newText = bodyText.replace(vowelRegex, match => {
+                    isReplaced = true;
+                    const char = match[0];
+                    const count = match.length;
+                    return `{${char}:${count}}`;
+                });
+
+                if (isReplaced) {
+                    outputEl.value = vowelHeader + newText;
+                    updateCounts();
+                    showToast('母音の連続をAI向けに圧縮しました');
+                } else {
+                    showToast('圧縮できる連続文字が見つかりませんでした');
+                }
+                return;
             }
             case 'toUmaAbbr': {
                 processAbbreviation(text, umaRegex, (matchStr, map) => {
