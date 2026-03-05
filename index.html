@@ -613,7 +613,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.2 (Base62 Abbr.)
+                    バージョン: 4.3 (Freq-Optimized Abbr.)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -1510,14 +1510,12 @@
         const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
 
         const ngrams = new Map();
-        // N-gramを長めに取る（最大6単語）
         for (let n = 1; n <= 6; n++) {
             for (let i = 0; i <= segments.length - n; i++) {
                 let phrase = '';
                 for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
                 
-                // 設定された最小文字数でフィルタ
                 if (phrase.length < minLen) continue;
                 if (/^[ぁ-ん]+$/.test(phrase)) continue; 
                 if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue; 
@@ -1527,7 +1525,6 @@
 
         const results = [];
         for (let[phrase, count] of ngrams.entries()) {
-            // 設定された最小出現回数でフィルタ
             if (count >= minCount) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
                 const saving = (tokenCost * count) - (tokenCost + 2 + count);
@@ -1538,7 +1535,7 @@
         }
 
         results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults =[];
+        const filteredResults = [];
         for (const item of results) {
             let isSubphrase = false;
             for (const kept of filteredResults) {
@@ -1554,7 +1551,6 @@
 
         filteredResults.sort((a, b) => b.saving - a.saving);
         
-        // 設定された最大抽出件数でスライス
         const targets = filteredResults.slice(0, maxItems);
 
         if (targets.length === 0) {
@@ -1562,19 +1558,20 @@
             return;
         }
 
-        let newText = bodyText;
-        let abbrCounter = replacedMap.size + 1; 
-        let isReplaced = false;
+        // ★ 略称割り当て: 出現回数が多い順に短い番号を振る ★
+        // まずtargetsを出現回数降順でソートしたコピーを作り、番号を割り当てる
+        const forAbbrAssignment = targets.map(t => ({ ...t }));
+        forAbbrAssignment.sort((a, b) => b.count - a.count);
 
-        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+        let abbrCounter = replacedMap.size + 1;
+        const abbrMap = new Map(); // phrase -> abbr
 
-        for (const target of targets) {
-            const original = target.phrase;
-            
+        for (const item of forAbbrAssignment) {
             let alreadyExists = false;
-            for (const[existingAbbr, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) {
+            for (const [existingAbbr, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === item.phrase) {
                     alreadyExists = true;
+                    abbrMap.set(item.phrase, existingAbbr);
                     break;
                 }
             }
@@ -1585,6 +1582,31 @@
                 abbrCounter++;
                 abbr = generateAbbr(abbrCounter);
             }
+            abbrMap.set(item.phrase, abbr);
+            abbrCounter++;
+        }
+
+        // ★ 置換実行: 文字列長が長い順に置換（部分文字列の衝突回避） ★
+        let newText = bodyText;
+        let isReplaced = false;
+
+        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+
+        for (const target of targets) {
+            const original = target.phrase;
+            const abbr = abbrMap.get(original);
+            
+            if (!abbr) continue; // 既存で割り当て済みだがスキップされたケース
+
+            // 既にreplacedMapに存在する場合はスキップ
+            let alreadyInMap = false;
+            for (const [existingAbbr, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === original) {
+                    alreadyInMap = true;
+                    break;
+                }
+            }
+            if (alreadyInMap) continue;
 
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(escapeRegExp(original), 'g');
@@ -1592,7 +1614,6 @@
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrCounter++;
                 isReplaced = true;
             }
         }
@@ -1648,7 +1669,7 @@
             }
         }
 
-        const results =[];
+        const results = [];
         for (let[phrase, count] of ngrams.entries()) {
             if (count >= minCount) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
@@ -1660,7 +1681,7 @@
         }
 
         results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults =[];
+        const filteredResults = [];
         for (const item of results) {
             let isSubphrase = false;
             for (const kept of filteredResults) {
@@ -1683,11 +1704,20 @@
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
             const topResults = filteredResults.slice(0, maxItems);
+            
+            // ★ 手動抽出ダイアログでも出現回数順に短い略称を割り当て ★
+            const sortedByCount = topResults.map((item, origIdx) => ({ ...item, origIdx }));
+            sortedByCount.sort((a, b) => b.count - a.count);
+            const abbrByOrigIdx = new Map();
+            sortedByCount.forEach((item, rankIdx) => {
+                abbrByOrigIdx.set(item.origIdx, generateAbbr(rankIdx + 1));
+            });
+
             topResults.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                let autoAbbr = generateAbbr(index + 1);
+                let autoAbbr = abbrByOrigIdx.get(index);
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
@@ -1698,7 +1728,7 @@
 
                 const statsDiv = document.createElement('div');
                 statsDiv.className = 'keyword-stats';
-                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
+                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ / 略称: ${autoAbbr}`;
 
                 infoDiv.appendChild(wordDiv);
                 infoDiv.appendChild(statsDiv);
