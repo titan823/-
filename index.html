@@ -374,7 +374,7 @@
 
         .settings-group { margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-tertiary); border-radius: 8px; background-color: var(--bg-tertiary); }
         .settings-group h3 { margin-bottom: 15px; font-size: 16px; color: var(--text-link, var(--bg-button)); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; }
-        select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid var(--border-primary); border-radius: 5px; font-size: 14px; margin-bottom: 10px; background-color: var(--bg-input); color: var(--text-primary); }
+        select, input[type="text"] { width: 100%; padding: 10px; border: 1px solid var(--border-primary); border-radius: 5px; font-size: 14px; margin-bottom: 10px; background-color: var(--bg-input); color: var(--text-primary); }
 
         .checkbox-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
         .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
@@ -403,7 +403,7 @@
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
         /* ダイアログ装飾 */
-        dialog.custom-dialog { border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); padding: 0; box-shadow: 0 4px 12px var(--shadow-secondary); margin: auto; overflow: hidden; }
+        dialog.custom-dialog { border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); padding: 20px; box-shadow: 0 4px 12px var(--shadow-secondary); margin: auto; }
         dialog.custom-dialog::backdrop { background: rgba(0,0,0,0.5); }
         .dialog-message { margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; }
         .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
@@ -465,7 +465,6 @@
                 <label for="inputText">入力テキスト</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
-                    <!-- 初期値を更新 -->
                     <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
                 </div>
             </div>
@@ -500,7 +499,7 @@
                     <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
                 </div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称(v1, va...)に置き換えてAIのトークン消費を抑えます。<br>
+                    本文中の長い頻出単語を自動で検出し、短い略称(a, b...)に置き換えてAIのトークン消費を抑えます。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
                 
@@ -512,16 +511,15 @@
                     <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
                         <label style="display: flex; justify-content: space-between; align-items: center;">
                             対象とする最低文字数:
-                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 70px; padding: 4px; margin: 0;">
+                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
                         </label>
                         <label style="display: flex; justify-content: space-between; align-items: center;">
                             対象とする最低出現回数:
-                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 70px; padding: 4px; margin: 0;">
+                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
                         </label>
                         <label style="display: flex; justify-content: space-between; align-items: center;">
                             置換する最大単語数:
-                            <!-- ★ 実戦用に上限を5000に解放 ★ -->
-                            <input type="number" id="autoCompressMaxItems" min="1" max="5000" value="20" style="width: 70px; padding: 4px; margin: 0;">
+                            <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
                         </label>
                     </div>
                 </details>
@@ -599,9 +597,10 @@
                 </p>
             </div>
 
+            <!-- Danger Zone -->
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.2 (Base62 Compress)
+                    バージョン: 4.2 (Auto Compress Pro)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -622,27 +621,25 @@
 <div id="toast"></div>
 
 <!-- 頻出ワード抽出ダイアログ -->
-<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden; border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary);">
-    <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
-        <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
-        <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
-        </p>
-        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
-            <!-- JSでアイテムを追加 -->
-        </div>
-        <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
-            <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
-        </div>
+<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; max-height: 80vh; overflow-y: hidden; display: flex; flex-direction: column;">
+    <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
+    <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
+        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
+    </p>
+    <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
+        <!-- JSでアイテムを追加 -->
+    </div>
+    <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
+        <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
     </div>
 </dialog>
 
 <!-- 確認ダイアログ -->
-<dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center; padding: 20px; border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary);">
-    <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px; font-size: 15px; line-height: 1.6;"></p>
-    <div class="dialog-actions" style="justify-content: center; display: flex; gap: 10px;">
-        <button id="confirmCancelBtn" class="dialog-cancel-btn" style="padding: 8px 18px; border-radius: 4px; border: none; cursor: pointer; background-color: var(--bg-button-action); color: #fff;">キャンセル</button>
-        <button id="confirmOkBtn" class="dialog-ok-btn" style="padding: 8px 18px; border-radius: 4px; border: none; cursor: pointer; background-color: var(--bg-button); color: #fff;">OK</button>
+<dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center;">
+    <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px;"></p>
+    <div class="dialog-actions" style="justify-content: center;">
+        <button id="confirmCancelBtn" class="dialog-cancel-btn">キャンセル</button>
+        <button id="confirmOkBtn" class="dialog-ok-btn">OK</button>
     </div>
 </dialog>
 
@@ -788,6 +785,7 @@
     const saveNotice = document.getElementById('settings-save-notice');
     const saveBtn = document.getElementById('save-settings-btn');
     
+    // 自動圧縮用の設定UI
     const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
     const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
@@ -931,18 +929,6 @@
     let isHighlightMode = false;
     const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
     const outputPreview = document.getElementById('outputPreview');
-
-    // ★ Base62エンコード関数（トークン超圧縮用） ★
-    const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    function generateBase62Abbr(num) {
-        if (num === 0) return 'v0';
-        let str = '';
-        while (num > 0) {
-            str = BASE62_CHARS[num % 62] + str;
-            num = Math.floor(num / 62);
-        }
-        return 'v' + str;
-    }
 
     function estimateTokens(text) {
         if (!text) return 0;
@@ -1215,7 +1201,6 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
-    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1453,7 +1438,7 @@
             return;
         }
         if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。下の「手動辞書」をお使いください。');
+            showToast('お使いのブラウザは自動抽出に非対応です。手動辞書をお使いください。');
             return;
         }
 
@@ -1547,7 +1532,22 @@
         }
 
         let newText = bodyText;
-        let abbrCounter = 0; 
+        
+        // トークン消費を最小化するための略称生成関数 (a, b ... Z, aa, ab...)
+        function getShortAbbr(index) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const base = chars.length;
+            let result = "";
+            let n = index + 1;
+            while (n > 0) {
+                n--;
+                result = chars[n % base] + result;
+                n = Math.floor(n / base);
+            }
+            return result;
+        }
+
+        let abbrIndex = 0; 
         let isReplaced = false;
 
         targets.sort((a, b) => b.phrase.length - a.phrase.length);
@@ -1564,10 +1564,11 @@
             }
             if (alreadyExists) continue;
 
-            let abbr = generateBase62Abbr(abbrCounter);
+            let abbr = getShortAbbr(abbrIndex);
+            // 既に使われている略称（手動辞書など）と被らないかチェック
             while (replacedMap.has(abbr)) {
-                abbrCounter++;
-                abbr = generateBase62Abbr(abbrCounter);
+                abbrIndex++;
+                abbr = getShortAbbr(abbrIndex);
             }
 
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1576,7 +1577,7 @@
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrCounter++;
+                abbrIndex++;
                 isReplaced = true;
             }
         }
@@ -1599,7 +1600,6 @@
         }
     });
 
-    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1663,14 +1663,19 @@
         const listContainer = document.getElementById('keywordList');
         listContainer.innerHTML = '';
 
-        const currentDictStr = dictArea.value;
-        const existingAbbrs = new Set();
-        currentDictStr.split('\n').forEach(line => {
-            const parts = line.split('=');
-            if (parts.length === 2) existingAbbrs.add(parts[1].trim());
-        });
-
-        let startCounter = 0;
+        // 略称生成関数
+        function getShortAbbr(index) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const base = chars.length;
+            let result = "";
+            let n = index + 1;
+            while (n > 0) {
+                n--;
+                result = chars[n % base] + result;
+                n = Math.floor(n / base);
+            }
+            return result;
+        }
 
         if (filteredResults.length === 0) {
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
@@ -1680,13 +1685,8 @@
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                let autoAbbr = generateBase62Abbr(startCounter);
-                while (existingAbbrs.has(autoAbbr)) {
-                    startCounter++;
-                    autoAbbr = generateBase62Abbr(startCounter);
-                }
-                existingAbbrs.add(autoAbbr); // 次のために追加
-                startCounter++;
+                // 最短の英字略称に変更
+                let autoAbbr = getShortAbbr(index);
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
@@ -1742,6 +1742,7 @@
         document.getElementById('keywordDialog').close();
     });
 
+    // ＝＝＝ ハイライト機能 ＝＝＝
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
@@ -1783,7 +1784,7 @@
                 }
             }
             
-            for (let[sub, indices] of ngrams.entries()) {
+            for (let [sub, indices] of ngrams.entries()) {
                 if (indices.length > 1) {
                     for (let idx of indices) {
                         for (let k = 0; k < minLength; k++) {
@@ -1862,15 +1863,6 @@
             showToast('コピーに失敗しました');
         }
     });
-
-    let toastTimeout;
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
-    }
 </script>
 </body>
 </html>
