@@ -609,18 +609,11 @@
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
                     ※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。
                 </p>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="persist-workspace-toggle" checked>
-                    作業中のテキストを自動保存する
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ 入力欄・出力欄・検索/置換文字列をブラウザに自動保存し、再読み込み時に復元します。
-                </p>
             </div>
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.3 (Full State Persist)
+                    バージョン: 4.3 (Freq-Optimized Abbr.)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -629,7 +622,7 @@
                 
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」「作業中テキスト」などを全て削除し、初期状態に戻します。
+                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」などを全て削除し、初期状態に戻します。
                 </p>
             </div>
         </main>
@@ -821,7 +814,6 @@
     // ==========================================
     const themeSelect = document.getElementById('theme-select');
     const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
-    const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
     const dictArea = document.getElementById('compressDict');
     const saveNotice = document.getElementById('settings-save-notice');
     const saveBtn = document.getElementById('save-settings-btn');
@@ -834,16 +826,10 @@
     let appSettings = {
         theme: 'light',
         autoSave: false,
-        persistWorkspace: true,
         compressDict: defaultDict,
         autoCompressMinLen: 3,
         autoCompressMinCount: 2,
-        autoCompressMaxItems: 20,
-        // 作業状態
-        inputText: '',
-        outputText: '',
-        replaceSource: '',
-        replaceTarget: ''
+        autoCompressMaxItems: 20
     };
 
     function loadSettings() {
@@ -861,54 +847,26 @@
         const oldDict = localStorage.getItem('formatter_compress_dict');
         if (oldDict && !saved) appSettings.compressDict = oldDict;
 
-        // 設定画面のUI復元
         themeSelect.value = appSettings.theme;
         autoSaveToggle.checked = appSettings.autoSave;
-        persistWorkspaceToggle.checked = appSettings.persistWorkspace;
         dictArea.value = appSettings.compressDict;
         
         autoCompressMinLenInput.value = appSettings.autoCompressMinLen;
         autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
         autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
 
-        // 作業状態の復元
-        if (appSettings.persistWorkspace) {
-            document.getElementById('inputText').value = appSettings.inputText || '';
-            document.getElementById('outputText').value = appSettings.outputText || '';
-            document.getElementById('replaceSource').value = appSettings.replaceSource || '';
-            document.getElementById('replaceTarget').value = appSettings.replaceTarget || '';
-        }
-
         applyTheme(appSettings.theme);
         updateSaveUiState();
     }
 
-    function collectCurrentState() {
+    function saveSettings(showMsg = true) {
         appSettings.theme = themeSelect.value;
         appSettings.autoSave = autoSaveToggle.checked;
-        appSettings.persistWorkspace = persistWorkspaceToggle.checked;
         appSettings.compressDict = dictArea.value;
         
         appSettings.autoCompressMinLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
         appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
         appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-
-        // 作業状態
-        if (appSettings.persistWorkspace) {
-            appSettings.inputText = document.getElementById('inputText').value;
-            appSettings.outputText = document.getElementById('outputText').value;
-            appSettings.replaceSource = document.getElementById('replaceSource').value;
-            appSettings.replaceTarget = document.getElementById('replaceTarget').value;
-        } else {
-            appSettings.inputText = '';
-            appSettings.outputText = '';
-            appSettings.replaceSource = '';
-            appSettings.replaceTarget = '';
-        }
-    }
-
-    function saveSettings(showMsg = true) {
-        collectCurrentState();
 
         localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
         
@@ -917,17 +875,6 @@
 
         applyTheme(appSettings.theme);
         if (showMsg) showToast('設定を保存しました');
-    }
-
-    // 作業状態だけを軽量に保存する（デバウンス付き）
-    let workspaceSaveTimer = null;
-    function saveWorkspaceDebounced() {
-        if (!appSettings.persistWorkspace) return;
-        clearTimeout(workspaceSaveTimer);
-        workspaceSaveTimer = setTimeout(() => {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }, 500);
     }
 
     function updateSaveUiState() {
@@ -944,9 +891,6 @@
     autoSaveToggle.addEventListener('change', () => {
         updateSaveUiState();
         saveSettings(false); 
-    });
-    persistWorkspaceToggle.addEventListener('change', () => {
-        saveSettings(false);
     });
 
     const handleSettingChange = () => {
@@ -973,21 +917,6 @@
 
     loadSettings();
 
-    // ページ離脱時に作業状態を保存
-    window.addEventListener('beforeunload', () => {
-        if (appSettings.persistWorkspace) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }
-    });
-    // iOS Safari ではpagehideの方が確実
-    window.addEventListener('pagehide', () => {
-        if (appSettings.persistWorkspace) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }
-    });
-
     // ==========================================
     // Danger Zone (キャッシュクリア等)
     // ==========================================
@@ -1009,7 +938,7 @@
     });
 
     document.getElementById('clear-data-btn').addEventListener('click', async () => {
-        const confirmed = await showConfirm("本当にすべてのデータ（圧縮辞書・テーマ設定・作業中テキストなど）を削除しますか？\nこの操作は元に戻せません。");
+        const confirmed = await showConfirm("本当にすべてのデータ（圧縮辞書やテーマ設定など）を削除しますか？\nこの操作は元に戻せません。");
         if (confirmed) {
             localStorage.removeItem('toolbox_settings');
             localStorage.removeItem('formatter_theme');
@@ -1026,8 +955,6 @@
     // ==========================================
     const inputEl = document.getElementById('inputText');
     const outputEl = document.getElementById('outputText');
-    const replaceSourceEl = document.getElementById('replaceSource');
-    const replaceTargetEl = document.getElementById('replaceTarget');
     const inputCount = document.getElementById('inputCount');
     const outputCount = document.getElementById('outputCount');
 
@@ -1072,13 +999,8 @@
         }
     }
     
-    inputEl.addEventListener('input', () => { updateCounts(); saveWorkspaceDebounced(); });
-    outputEl.addEventListener('input', () => { updateCounts(); saveWorkspaceDebounced(); });
-    replaceSourceEl.addEventListener('input', saveWorkspaceDebounced);
-    replaceTargetEl.addEventListener('input', saveWorkspaceDebounced);
-
-    // 初期表示時のカウント更新
-    updateCounts();
+    inputEl.addEventListener('input', updateCounts);
+    outputEl.addEventListener('input', updateCounts);
 
     function resetHighlightMode() {
         if (isHighlightMode) {
@@ -1360,12 +1282,10 @@
             
             outputEl.value = header + newText;
             updateCounts();
-            saveWorkspaceDebounced();
             showToast(successMessage);
         } else {
             outputEl.value = text;
             updateCounts();
-            saveWorkspaceDebounced();
             showToast('略称化できる単語が見つかりませんでした');
         }
     }
@@ -1443,7 +1363,6 @@
         }
         outputEl.value = text;
         updateCounts();
-        saveWorkspaceDebounced();
     }
 
     document.querySelectorAll('.tools-grid .tool-btn').forEach(btn => {
@@ -1463,7 +1382,6 @@
                 inputEl.focus();
                 
                 updateCounts();
-                saveWorkspaceDebounced();
                 showToast('貼り付けました');
             } else {
                 showToast('クリップボードが空です');
@@ -1474,8 +1392,8 @@
     });
 
     document.getElementById('replaceBtn').addEventListener('click', () => {
-        const source = replaceSourceEl.value;
-        const target = replaceTargetEl.value;
+        const source = document.getElementById('replaceSource').value;
+        const target = document.getElementById('replaceTarget').value;
         let text = inputEl.value;
 
         if (!text) {
@@ -1494,7 +1412,6 @@
         
         outputEl.value = text.replace(regex, target);
         updateCounts();
-        saveWorkspaceDebounced();
         showToast('置換しました');
     });
 
@@ -1618,7 +1535,7 @@
         }
 
         results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults =[];
+        const filteredResults = [];
         for (const item of results) {
             let isSubphrase = false;
             for (const kept of filteredResults) {
@@ -1641,19 +1558,20 @@
             return;
         }
 
-        let newText = bodyText;
-        let abbrCounter = replacedMap.size + 1; 
-        let isReplaced = false;
+        // ★ 略称割り当て: 出現回数が多い順に短い番号を振る ★
+        // まずtargetsを出現回数降順でソートしたコピーを作り、番号を割り当てる
+        const forAbbrAssignment = targets.map(t => ({ ...t }));
+        forAbbrAssignment.sort((a, b) => b.count - a.count);
 
-        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+        let abbrCounter = replacedMap.size + 1;
+        const abbrMap = new Map(); // phrase -> abbr
 
-        for (const target of targets) {
-            const original = target.phrase;
-            
+        for (const item of forAbbrAssignment) {
             let alreadyExists = false;
-            for (const[existingAbbr, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) {
+            for (const [existingAbbr, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === item.phrase) {
                     alreadyExists = true;
+                    abbrMap.set(item.phrase, existingAbbr);
                     break;
                 }
             }
@@ -1664,6 +1582,31 @@
                 abbrCounter++;
                 abbr = generateAbbr(abbrCounter);
             }
+            abbrMap.set(item.phrase, abbr);
+            abbrCounter++;
+        }
+
+        // ★ 置換実行: 文字列長が長い順に置換（部分文字列の衝突回避） ★
+        let newText = bodyText;
+        let isReplaced = false;
+
+        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+
+        for (const target of targets) {
+            const original = target.phrase;
+            const abbr = abbrMap.get(original);
+            
+            if (!abbr) continue; // 既存で割り当て済みだがスキップされたケース
+
+            // 既にreplacedMapに存在する場合はスキップ
+            let alreadyInMap = false;
+            for (const [existingAbbr, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === original) {
+                    alreadyInMap = true;
+                    break;
+                }
+            }
+            if (alreadyInMap) continue;
 
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(escapeRegExp(original), 'g');
@@ -1671,7 +1614,6 @@
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrCounter++;
                 isReplaced = true;
             }
         }
@@ -1686,12 +1628,10 @@
             
             outputEl.value = header + newText;
             updateCounts();
-            saveWorkspaceDebounced();
             showToast('🚀 完全自動でプロンプトを圧縮しました！');
         } else {
             outputEl.value = text;
             updateCounts();
-            saveWorkspaceDebounced();
             showToast('自動圧縮できるワードがありませんでした');
         }
     });
@@ -1729,7 +1669,7 @@
             }
         }
 
-        const results =[];
+        const results = [];
         for (let[phrase, count] of ngrams.entries()) {
             if (count >= minCount) {
                 const tokenCost = Math.ceil(phrase.length * 1.15);
@@ -1741,7 +1681,7 @@
         }
 
         results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults =[];
+        const filteredResults = [];
         for (const item of results) {
             let isSubphrase = false;
             for (const kept of filteredResults) {
@@ -1764,11 +1704,20 @@
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
             const topResults = filteredResults.slice(0, maxItems);
+            
+            // ★ 手動抽出ダイアログでも出現回数順に短い略称を割り当て ★
+            const sortedByCount = topResults.map((item, origIdx) => ({ ...item, origIdx }));
+            sortedByCount.sort((a, b) => b.count - a.count);
+            const abbrByOrigIdx = new Map();
+            sortedByCount.forEach((item, rankIdx) => {
+                abbrByOrigIdx.set(item.origIdx, generateAbbr(rankIdx + 1));
+            });
+
             topResults.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                let autoAbbr = generateAbbr(index + 1);
+                let autoAbbr = abbrByOrigIdx.get(index);
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
@@ -1779,7 +1728,7 @@
 
                 const statsDiv = document.createElement('div');
                 statsDiv.className = 'keyword-stats';
-                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
+                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ / 略称: ${autoAbbr}`;
 
                 infoDiv.appendChild(wordDiv);
                 infoDiv.appendChild(statsDiv);
@@ -1903,7 +1852,7 @@
                 isHighlightMode = false;
                 return;
             }
-            const searchStr = replaceSourceEl.value;
+            const searchStr = document.getElementById('replaceSource').value;
             
             outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
             outputEl.style.display = 'none';
@@ -1922,11 +1871,7 @@
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
-        inputEl.value = '';
-        outputEl.value = '';
-        updateCounts();
-        resetHighlightMode();
-        saveWorkspaceDebounced();
+        inputEl.value = ''; outputEl.value = ''; updateCounts(); resetHighlightMode();
     });
 
     document.getElementById('applyToInputBtn').addEventListener('click', () => {
@@ -1935,7 +1880,6 @@
             outputEl.value = '';
             updateCounts();
             resetHighlightMode();
-            saveWorkspaceDebounced();
             showToast('入力欄に反映しました');
         }
     });
