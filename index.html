@@ -499,7 +499,7 @@
                     <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
                 </div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称(a, b...)に置き換えてAIのトークン消費を抑えます。<br>
+                    本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
                 
@@ -600,7 +600,7 @@
             <!-- Danger Zone -->
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.2 (Auto Compress Pro)
+                    バージョン: 4.1 (Auto Compress Adv.)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -1532,22 +1532,7 @@
         }
 
         let newText = bodyText;
-        
-        // トークン消費を最小化するための略称生成関数 (a, b ... Z, aa, ab...)
-        function getShortAbbr(index) {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const base = chars.length;
-            let result = "";
-            let n = index + 1;
-            while (n > 0) {
-                n--;
-                result = chars[n % base] + result;
-                n = Math.floor(n / base);
-            }
-            return result;
-        }
-
-        let abbrIndex = 0; 
+        let abbrCounter = replacedMap.size + 1; 
         let isReplaced = false;
 
         targets.sort((a, b) => b.phrase.length - a.phrase.length);
@@ -1564,11 +1549,10 @@
             }
             if (alreadyExists) continue;
 
-            let abbr = getShortAbbr(abbrIndex);
-            // 既に使われている略称（手動辞書など）と被らないかチェック
+            let abbr = `v${abbrCounter}`;
             while (replacedMap.has(abbr)) {
-                abbrIndex++;
-                abbr = getShortAbbr(abbrIndex);
+                abbrCounter++;
+                abbr = `v${abbrCounter}`;
             }
 
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1577,7 +1561,7 @@
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrIndex++;
+                abbrCounter++;
                 isReplaced = true;
             }
         }
@@ -1663,20 +1647,6 @@
         const listContainer = document.getElementById('keywordList');
         listContainer.innerHTML = '';
 
-        // 略称生成関数
-        function getShortAbbr(index) {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const base = chars.length;
-            let result = "";
-            let n = index + 1;
-            while (n > 0) {
-                n--;
-                result = chars[n % base] + result;
-                n = Math.floor(n / base);
-            }
-            return result;
-        }
-
         if (filteredResults.length === 0) {
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
@@ -1685,8 +1655,7 @@
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                // 最短の英字略称に変更
-                let autoAbbr = getShortAbbr(index);
+                let autoAbbr = 'KW' + (index + 1);
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
