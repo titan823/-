@@ -8,1067 +8,405 @@
     <title>Toolbox PWA</title>
     <link id="manifest-link" rel="manifest" href="">
     <meta name="theme-color" id="theme-color-meta" content="#4a90e2">
-
     <style>
         :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f0f2f5;
-            --bg-tertiary: #fdfdfd;
-            --bg-input: #ffffff;
-            --bg-button: #4a90e2;
-            --bg-button-hover: #357abd;
-            --bg-button-action: #777777;
-            --bg-button-delete: #e53935;
-            --bg-button-save: #30d158;
-            --bg-button-update: #1976d2;
-            --bg-header: #4a90e2;
-            --text-primary: #333333;
-            --text-secondary: #777777;
-            --text-light: #ffffff;
-            --text-error: #c62828;
-            --border-primary: #cccccc;
-            --border-secondary: #dddddd;
-            --border-tertiary: #eeeeee;
-            --border-danger: #ffcdd2;
-            --shadow-secondary: rgba(0, 0, 0, 0.1);
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --bg-primary:#fff;--bg-secondary:#f0f2f5;--bg-tertiary:#fdfdfd;--bg-input:#fff;
+            --bg-button:#4a90e2;--bg-button-hover:#357abd;--bg-button-action:#777;
+            --bg-button-delete:#e53935;--bg-button-save:#30d158;--bg-button-update:#1976d2;
+            --bg-header:#4a90e2;--text-primary:#333;--text-secondary:#777;--text-light:#fff;
+            --text-error:#c62828;--border-primary:#ccc;--border-secondary:#ddd;--border-tertiary:#eee;
+            --border-danger:#ffcdd2;--shadow-secondary:rgba(0,0,0,0.1);
+            --font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
         }
-        body.dark-mode {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #101010;
-            --bg-tertiary: #252525;
-            --bg-input: #303030;
-            --bg-button: #007aff;
-            --bg-button-action: #666666;
-            --bg-header: #007aff;
-            --text-primary: #e0e0e0;
-            --text-secondary: #aaaaaa;
-            --text-error: #ff8a80;
-            --border-primary: #444444;
-            --border-secondary: #555555;
-            --border-tertiary: #333333;
-            --border-danger: #7a2e35;
-        }
-        body.pastel-pink-mode {
-            --bg-primary: #fff5f8;
-            --bg-secondary: #ffe6ea;
-            --bg-tertiary: #fff0f3;
-            --bg-input: #ffffff;
-            --bg-button: #ff8fab;
-            --bg-button-action: #ffb3c1;
-            --bg-header: #ff8fab;
-            --text-primary: #5c3c45;
-            --text-secondary: #8c6b74;
-            --border-primary: #ffc2d7;
-            --border-secondary: #ffe0e7;
-            --border-tertiary: #fff0f3;
-        }
-        body.pastel-blue-mode {
-            --bg-primary: #f0f8ff;
-            --bg-secondary: #e0f0ff;
-            --bg-tertiary: #eaf5ff;
-            --bg-button: #87cefa;
-            --bg-button-action: #add8e6;
-            --bg-header: #87cefa;
-            --text-primary: #3a5679;
-            --text-secondary: #6b87a9;
-            --border-primary: #b0dfff;
-        }
-        body.pastel-yellow-mode {
-            --bg-primary: #fffefa;
-            --bg-secondary: #fffacd;
-            --bg-button: #ffd700;
-            --bg-button-action: #ffec8b;
-            --bg-header: #ffd700;
-            --text-primary: #5d4037;
-            --border-primary: #fff0b3;
-        }
-        body.pastel-purple-mode {
-            --bg-primary: #f3e5f5;
-            --bg-secondary: #e1bee7;
-            --bg-button: #ab47bc;
-            --bg-button-action: #ba68c8;
-            --bg-header: #ab47bc;
-            --text-primary: #4a148c;
-            --border-primary: #ce93d8;
-        }
-        body.pastel-rainbow-mode {
-            --bg-primary: #fdfdfd;
-            --bg-secondary: #f5f5f5;
-            --bg-button: #ff80c0;
-            --bg-button-action: #80d0ff;
-            --bg-header: linear-gradient(to right, #ffadad, #ffd6a5, #fdffb6, #caffbf, #9bf6ff, #a0c4ff, #bdb2ff, #ffc6ff, #ffadad);
-            --text-primary: #333;
-        }
-        body.turf-mode {
-            --bg-primary: #F6F4F9;
-            --bg-secondary: #e8f5e9;
-            --bg-button: #4CAF50;
-            --bg-button-action: #9ccc65;
-            --bg-header: #4CAF50;
-            --text-primary: #2e7d32;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            height: 100dvh;
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .app-container {
-            position: relative;
-            height: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: var(--bg-primary);
-            box-shadow: 0 0 10px var(--shadow-secondary);
-            overflow: hidden;
-        }
-
-        .screen {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            background-color: var(--bg-primary);
-            transition: transform 0.3s ease-in-out;
-            z-index: 0;
-        }
-        .screen.active { z-index: 1; }
-        .screen.dormant { visibility: hidden; }
-        #menu-screen { transform: translateX(-100%); }
-        #main-screen { transform: translateX(0); }
-        #settings-screen { transform: translateX(100%); }
-
-        .app-header {
-            display: flex; align-items: center;
-            padding: 12px 15px;
-            background: var(--bg-header);
-            color: var(--text-light);
-            flex-shrink: 0; z-index: 10;
-        }
-        .app-header h1 {
-            font-size: 18px; font-weight: bold; margin: 0;
-            flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .header-button {
-            background: transparent; border: none; color: var(--text-light);
-            font-size: 20px; padding: 5px; min-width: 30px; cursor: pointer;
-            transition: background-color 0.2s; border-radius: 4px;
-        }
-        .header-button:active { background-color: rgba(255,255,255,0.2); }
-        .header-button.left { margin-right: 10px; }
-        .header-button.right { margin-left: 10px; }
-        .header-save-button {
-            padding: 4px 12px; font-size: 13px;
-            background-color: var(--bg-button-save); color: var(--text-light);
-            border-radius: 5px; border: none; cursor: pointer; margin-right: 10px;
-        }
-        .header-notice { font-size: 11px; color: rgba(255,255,255,0.8); margin-right: 10px; }
-        .main-content {
-            flex-grow: 1; overflow-y: auto; padding: 15px;
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .section-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            font-size: 14px; font-weight: bold; color: var(--text-secondary);
-        }
-        .paste-btn, .highlight-btn {
-            background-color: var(--bg-tertiary); color: var(--text-primary);
-            border: 1px solid var(--border-primary); border-radius: 4px;
-            padding: 4px 8px; font-size: 12px; cursor: pointer;
-            transition: background-color 0.2s; display: flex; align-items: center; gap: 4px;
-        }
-        .paste-btn:active, .highlight-btn:active { background-color: var(--bg-secondary); }
-        .highlight-btn.active-mode {
-            background-color: var(--bg-button); color: var(--text-light); border-color: var(--bg-button);
-        }
-        .output-wrapper {
-            display: flex; flex-direction: column; flex-grow: 1; min-height: 100px; position: relative;
-        }
-        textarea {
-            width: 100%; flex-grow: 1; padding: 12px;
-            border: 1px solid var(--border-primary); border-radius: 8px;
-            font-size: 14px; font-family: monospace;
-            background-color: var(--bg-input); color: var(--text-primary);
-            resize: none; transition: border-color 0.3s, background-color 0.3s, color 0.3s;
-        }
-        textarea:focus { outline: 2px solid var(--bg-button); border-color: transparent; }
-        #outputPreview {
-            display: none; width: 100%; flex-grow: 1; padding: 12px;
-            border: 1px solid var(--border-primary); border-radius: 8px;
-            font-size: 14px; font-family: monospace;
-            background-color: var(--bg-tertiary); color: var(--text-primary);
-            white-space: pre-wrap; word-wrap: break-word; overflow-y: auto;
-        }
-        .tools-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 6px;
-        }
-        button.tool-btn {
-            padding: 10px 6px; font-size: 12px; font-weight: bold; border-radius: 6px;
-            border: none; background-color: var(--bg-button-action); color: var(--text-light);
-            cursor: pointer; transition: transform 0.1s, filter 0.1s;
-        }
-        button.tool-btn:active { filter: brightness(0.8); transform: scale(0.98); }
-        .custom-replace-container { display: flex; align-items: center; gap: 8px; }
-        .custom-replace-container input[type="text"] {
-            margin-bottom: 0; padding: 8px; font-size: 13px; flex-grow: 1; min-width: 0;
-            border: 1px solid var(--border-primary); border-radius: 4px;
-            background-color: var(--bg-input); color: var(--text-primary);
-        }
-        .custom-replace-container button { margin: 0; padding: 8px 12px; white-space: nowrap; }
-        .action-row { display: flex; gap: 10px; margin-top: 5px; }
-        .primary-btn {
-            flex-grow: 1; padding: 14px; font-size: 16px; font-weight: bold;
-            border: none; border-radius: 8px; background-color: var(--bg-button);
-            color: var(--text-light); cursor: pointer;
-        }
-        .primary-btn:active { filter: brightness(0.8); }
-        .secondary-btn {
-            background-color: var(--bg-button-save); color: var(--text-light);
-            border: none; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer;
-        }
-        .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); }
-        .menu-list { list-style: none; padding: 0; }
-        .menu-item {
-            padding: 15px; border: 1px solid var(--border-secondary); border-radius: 8px;
-            margin-bottom: 10px; background-color: var(--bg-primary); color: var(--text-primary);
-            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            font-weight: bold; box-shadow: 0 1px 3px var(--shadow-secondary);
-        }
-        .menu-item.active { border: 2px solid var(--bg-button); background-color: var(--bg-secondary); }
-        .menu-item.disabled { opacity: 0.5; cursor: not-allowed; }
-        .menu-desc { font-size: 11px; color: var(--text-secondary); font-weight: normal; display: block; margin-top: 4px; }
-        .settings-group {
-            margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-tertiary);
-            border-radius: 8px; background-color: var(--bg-tertiary);
-        }
-        .settings-group h3 {
-            margin-bottom: 15px; font-size: 16px; color: var(--text-link, var(--bg-button));
-            border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px;
-        }
-        select, input[type="text"] {
-            width: 100%; padding: 10px; border: 1px solid var(--border-primary);
-            border-radius: 5px; font-size: 14px; margin-bottom: 10px;
-            background-color: var(--bg-input); color: var(--text-primary);
-        }
-        .checkbox-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
-        .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
-        .danger-zone {
-            margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-danger);
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        .danger-zone button {
-            width: 100%; padding: 10px; font-size: 14px; border-radius: 5px;
-            border: none; cursor: pointer; color: var(--text-light);
-        }
-        #update-app-btn { background-color: var(--bg-button-update); }
-        #clear-data-btn { background-color: var(--bg-button-delete); }
-        #toast {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background-color: rgba(0,0,0,0.8); color: #fff;
-            padding: 10px 20px; border-radius: 20px; font-size: 14px;
-            opacity: 0; visibility: hidden; transition: 0.3s ease; z-index: 1000;
-        }
-        #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-        dialog.custom-dialog {
-            display: none; border: 1px solid var(--border-primary); border-radius: 8px;
-            background-color: var(--bg-primary); color: var(--text-primary);
-            padding: 20px; box-shadow: 0 4px 12px var(--shadow-secondary); margin: auto;
-        }
-        dialog.custom-dialog[open] { display: block; }
-        dialog.custom-dialog::backdrop { background: rgba(0,0,0,0.5); }
-        .dialog-message { margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; }
-        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .dialog-actions button { padding: 8px 18px; font-weight: 500; border-radius: 4px; border: none; cursor: pointer; }
-        .dialog-ok-btn { background-color: var(--bg-button); color: #fff; }
-        .dialog-cancel-btn { background-color: var(--bg-button-action); color: #fff; }
-        .keyword-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--bg-secondary); padding: 8px 12px; border-radius: 6px; font-size: 13px;
-        }
-        .keyword-info { display: flex; flex-direction: column; overflow: hidden; margin-right: 10px; }
-        .keyword-word { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .keyword-stats { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-        .add-keyword-btn {
-            background: var(--bg-button); color: #fff; border: none; padding: 6px 12px;
-            border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap;
-        }
-        .add-keyword-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+        body.dark-mode{--bg-primary:#1a1a1a;--bg-secondary:#101010;--bg-tertiary:#252525;--bg-input:#303030;--bg-button:#007aff;--bg-button-action:#666;--bg-header:#007aff;--text-primary:#e0e0e0;--text-secondary:#aaa;--text-error:#ff8a80;--border-primary:#444;--border-secondary:#555;--border-tertiary:#333;--border-danger:#7a2e35}
+        body.pastel-pink-mode{--bg-primary:#fff5f8;--bg-secondary:#ffe6ea;--bg-tertiary:#fff0f3;--bg-input:#fff;--bg-button:#ff8fab;--bg-button-action:#ffb3c1;--bg-header:#ff8fab;--text-primary:#5c3c45;--text-secondary:#8c6b74;--border-primary:#ffc2d7;--border-secondary:#ffe0e7;--border-tertiary:#fff0f3}
+        body.pastel-blue-mode{--bg-primary:#f0f8ff;--bg-secondary:#e0f0ff;--bg-tertiary:#eaf5ff;--bg-button:#87cefa;--bg-button-action:#add8e6;--bg-header:#87cefa;--text-primary:#3a5679;--text-secondary:#6b87a9;--border-primary:#b0dfff}
+        body.pastel-yellow-mode{--bg-primary:#fffefa;--bg-secondary:#fffacd;--bg-button:#ffd700;--bg-button-action:#ffec8b;--bg-header:#ffd700;--text-primary:#5d4037;--border-primary:#fff0b3}
+        body.pastel-purple-mode{--bg-primary:#f3e5f5;--bg-secondary:#e1bee7;--bg-button:#ab47bc;--bg-button-action:#ba68c8;--bg-header:#ab47bc;--text-primary:#4a148c;--border-primary:#ce93d8}
+        body.pastel-rainbow-mode{--bg-primary:#fdfdfd;--bg-secondary:#f5f5f5;--bg-button:#ff80c0;--bg-button-action:#80d0ff;--bg-header:linear-gradient(to right,#ffadad,#ffd6a5,#fdffb6,#caffbf,#9bf6ff,#a0c4ff,#bdb2ff,#ffc6ff,#ffadad);--text-primary:#333}
+        body.turf-mode{--bg-primary:#F6F4F9;--bg-secondary:#e8f5e9;--bg-button:#4CAF50;--bg-button-action:#9ccc65;--bg-header:#4CAF50;--text-primary:#2e7d32}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:var(--font-family);background-color:var(--bg-secondary);color:var(--text-primary);height:100dvh;overflow:hidden;transition:background-color .3s,color .3s}
+        .app-container{position:relative;height:100%;max-width:800px;margin:0 auto;background-color:var(--bg-primary);box-shadow:0 0 10px var(--shadow-secondary);overflow:hidden}
+        .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;background-color:var(--bg-primary);transition:transform .3s ease-in-out;z-index:0}
+        .screen.active{z-index:1}.screen.dormant{visibility:hidden}
+        #menu-screen{transform:translateX(-100%)}#main-screen{transform:translateX(0)}#settings-screen{transform:translateX(100%)}
+        .app-header{display:flex;align-items:center;padding:12px 15px;background:var(--bg-header);color:var(--text-light);flex-shrink:0;z-index:10}
+        .app-header h1{font-size:18px;font-weight:bold;margin:0;flex-grow:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .header-button{background:transparent;border:none;color:var(--text-light);font-size:20px;padding:5px;min-width:30px;cursor:pointer;transition:background-color .2s;border-radius:4px}
+        .header-button:active{background-color:rgba(255,255,255,.2)}.header-button.left{margin-right:10px}.header-button.right{margin-left:10px}
+        .header-save-button{padding:4px 12px;font-size:13px;background-color:var(--bg-button-save);color:var(--text-light);border-radius:5px;border:none;cursor:pointer;margin-right:10px}
+        .header-notice{font-size:11px;color:rgba(255,255,255,.8);margin-right:10px}
+        .main-content{flex-grow:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
+        .section-header{display:flex;justify-content:space-between;align-items:flex-end;font-size:14px;font-weight:bold;color:var(--text-secondary)}
+        .paste-btn,.highlight-btn{background-color:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-primary);border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;transition:background-color .2s;display:flex;align-items:center;gap:4px}
+        .paste-btn:active,.highlight-btn:active{background-color:var(--bg-secondary)}
+        .highlight-btn.active-mode{background-color:var(--bg-button);color:var(--text-light);border-color:var(--bg-button)}
+        .output-wrapper{display:flex;flex-direction:column;flex-grow:1;min-height:100px;position:relative}
+        textarea{width:100%;flex-grow:1;padding:12px;border:1px solid var(--border-primary);border-radius:8px;font-size:14px;font-family:monospace;background-color:var(--bg-input);color:var(--text-primary);resize:none;transition:border-color .3s,background-color .3s,color .3s}
+        textarea:focus{outline:2px solid var(--bg-button);border-color:transparent}
+        #outputPreview{display:none;width:100%;flex-grow:1;padding:12px;border:1px solid var(--border-primary);border-radius:8px;font-size:14px;font-family:monospace;background-color:var(--bg-tertiary);color:var(--text-primary);white-space:pre-wrap;word-wrap:break-word;overflow-y:auto}
+        .tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px}
+        button.tool-btn{padding:10px 6px;font-size:12px;font-weight:bold;border-radius:6px;border:none;background-color:var(--bg-button-action);color:var(--text-light);cursor:pointer;transition:transform .1s,filter .1s}
+        button.tool-btn:active{filter:brightness(.8);transform:scale(.98)}
+        .custom-replace-container{display:flex;align-items:center;gap:8px}
+        .custom-replace-container input[type="text"]{margin-bottom:0;padding:8px;font-size:13px;flex-grow:1;min-width:0;border:1px solid var(--border-primary);border-radius:4px;background-color:var(--bg-input);color:var(--text-primary)}
+        .custom-replace-container button{margin:0;padding:8px 12px;white-space:nowrap}
+        .action-row{display:flex;gap:10px;margin-top:5px}
+        .primary-btn{flex-grow:1;padding:14px;font-size:16px;font-weight:bold;border:none;border-radius:8px;background-color:var(--bg-button);color:var(--text-light);cursor:pointer}
+        .primary-btn:active{filter:brightness(.8)}
+        .secondary-btn{background-color:var(--bg-button-save);color:var(--text-light);border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer}
+        .char-count{font-size:12px;font-weight:normal;color:var(--text-secondary)}
+        .menu-list{list-style:none;padding:0}
+        .menu-item{padding:15px;border:1px solid var(--border-secondary);border-radius:8px;margin-bottom:10px;background-color:var(--bg-primary);color:var(--text-primary);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:bold;box-shadow:0 1px 3px var(--shadow-secondary)}
+        .menu-item.active{border:2px solid var(--bg-button);background-color:var(--bg-secondary)}.menu-item.disabled{opacity:.5;cursor:not-allowed}
+        .menu-desc{font-size:11px;color:var(--text-secondary);font-weight:normal;display:block;margin-top:4px}
+        .settings-group{margin-bottom:25px;padding:15px;border:1px solid var(--border-tertiary);border-radius:8px;background-color:var(--bg-tertiary)}
+        .settings-group h3{margin-bottom:15px;font-size:16px;color:var(--text-link,var(--bg-button));border-bottom:1px solid var(--border-tertiary);padding-bottom:5px}
+        select,input[type="text"]{width:100%;padding:10px;border:1px solid var(--border-primary);border-radius:5px;font-size:14px;margin-bottom:10px;background-color:var(--bg-input);color:var(--text-primary)}
+        .checkbox-label{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:14px;cursor:pointer}
+        .checkbox-label input[type="checkbox"]{width:auto;margin:0}
+        .danger-zone{margin-top:30px;padding-top:20px;border-top:2px solid var(--border-danger);display:flex;flex-direction:column;gap:10px}
+        .danger-zone button{width:100%;padding:10px;font-size:14px;border-radius:5px;border:none;cursor:pointer;color:var(--text-light)}
+        #update-app-btn{background-color:var(--bg-button-update)}#clear-data-btn{background-color:var(--bg-button-delete)}
+        #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background-color:rgba(0,0,0,.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;opacity:0;visibility:hidden;transition:.3s ease;z-index:1000}
+        #toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+        dialog.custom-dialog{display:none;border:1px solid var(--border-primary);border-radius:8px;background-color:var(--bg-primary);color:var(--text-primary);padding:20px;box-shadow:0 4px 12px var(--shadow-secondary);margin:auto}
+        dialog.custom-dialog[open]{display:block}dialog.custom-dialog::backdrop{background:rgba(0,0,0,.5)}
+        .dialog-message{margin:0 0 20px 0;font-size:15px;line-height:1.6}
+        .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:15px}
+        .dialog-actions button{padding:8px 18px;font-weight:500;border-radius:4px;border:none;cursor:pointer}
+        .dialog-ok-btn{background-color:var(--bg-button);color:#fff}.dialog-cancel-btn{background-color:var(--bg-button-action);color:#fff}
+        .keyword-item{display:flex;justify-content:space-between;align-items:center;background:var(--bg-secondary);padding:8px 12px;border-radius:6px;font-size:13px}
+        .keyword-info{display:flex;flex-direction:column;overflow:hidden;margin-right:10px}
+        .keyword-word{font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .keyword-stats{font-size:11px;color:var(--text-secondary);margin-top:2px}
+        .add-keyword-btn{background:var(--bg-button);color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:bold;white-space:nowrap}
+        .add-keyword-btn:disabled{background:var(--text-secondary);cursor:not-allowed}
     </style>
 </head>
 <body>
-
 <div class="app-container">
     <div id="menu-screen" class="screen dormant">
-        <header class="app-header">
-            <h1 style="text-align: right; padding-right: 10px;">ツール選択</h1>
-            <button id="back-to-main-from-menu" class="header-button right" aria-label="メインに戻る">＞</button>
-        </header>
+        <header class="app-header"><h1 style="text-align:right;padding-right:10px">ツール選択</h1><button id="back-to-main-from-menu" class="header-button right" aria-label="メインに戻る">＞</button></header>
         <main class="main-content">
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">利用するツールを選択してください</p>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">利用するツールを選択してください</p>
             <ul class="menu-list">
-                <li class="menu-item active">
-                    <div>テキスト整形ツール<span class="menu-desc">空白や改行の削除、半角/全角変換など</span></div>
-                    <span>✔️</span>
-                </li>
-                <li class="menu-item disabled">
-                    <div>JSONフォーマッター<span class="menu-desc">（準備中）</span></div>
-                </li>
+                <li class="menu-item active"><div>テキスト整形ツール<span class="menu-desc">空白や改行の削除、半角/全角変換など</span></div><span>✔️</span></li>
+                <li class="menu-item disabled"><div>JSONフォーマッター<span class="menu-desc">（準備中）</span></div></li>
             </ul>
         </main>
     </div>
-
     <div id="main-screen" class="screen active">
-        <header class="app-header">
-            <button id="goto-menu-btn" class="header-button left" aria-label="メニューを開く">☰</button>
-            <h1 id="main-title">テキスト整形</h1>
-            <button id="goto-settings-btn" class="header-button right" aria-label="設定を開く">⚙</button>
-        </header>
+        <header class="app-header"><button id="goto-menu-btn" class="header-button left" aria-label="メニューを開く">☰</button><h1 id="main-title">テキスト整形</h1><button id="goto-settings-btn" class="header-button right" aria-label="設定を開く">⚙</button></header>
         <main class="main-content">
-            <div class="section-header">
-                <label for="inputText">入力テキスト</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="pasteBtn" class="paste-btn">📋 貼り付け</button>
-                    <span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span>
-                </div>
-            </div>
+            <div class="section-header"><label for="inputText">入力テキスト</label><div style="display:flex;align-items:center;gap:10px"><button id="pasteBtn" class="paste-btn">📋 貼り付け</button><span class="char-count" id="inputCount">0文字 (約0ﾄｰｸﾝ)</span></div></div>
             <textarea id="inputText" placeholder="整形したいテキストを貼り付けてください..."></textarea>
             <div class="tools-grid">
-                <button class="tool-btn" data-action="trimSpace">空白を削除</button>
-                <button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
-                <button class="tool-btn" data-action="removeBreaks">改行を削除</button>
-                <button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
-                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button>
-                <button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
-                <button class="tool-btn" data-action="toUpperCase">大文字化</button>
-                <button class="tool-btn" data-action="toLowerCase">小文字化</button>
-                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button>
-                <button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
-                <button class="tool-btn" data-action="toUmaAbbr" style="background-color: var(--bg-button); color: var(--text-light);">ウマ娘略称化</button>
+                <button class="tool-btn" data-action="trimSpace">空白を削除</button><button class="tool-btn" data-action="removeEmptyLines">空行を削除</button>
+                <button class="tool-btn" data-action="removeBreaks">改行を削除</button><button class="tool-btn" data-action="breaksToSpace">改行を空白に</button>
+                <button class="tool-btn" data-action="toHalfWidth">英数→半角</button><button class="tool-btn" data-action="toFullWidthKana">カナ→全角</button>
+                <button class="tool-btn" data-action="toUpperCase">大文字化</button><button class="tool-btn" data-action="toLowerCase">小文字化</button>
+                <button class="tool-btn" data-action="extractBrackets">カッコ抽出</button><button class="tool-btn" data-action="reverseDialogues">セリフ順反転</button>
+                <button class="tool-btn" data-action="toUmaAbbr" style="background-color:var(--bg-button);color:var(--text-light)">ウマ娘略称化</button>
             </div>
             <div class="custom-replace-container">
-                <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                <span style="color: var(--text-secondary); font-weight: bold;">→</span>
-                <input type="text" id="replaceTarget" placeholder="置換後">
-                <button id="replaceBtn" class="tool-btn" style="background-color: var(--bg-button); color: var(--text-light);">置換</button>
+                <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)"><span style="color:var(--text-secondary);font-weight:bold">→</span>
+                <input type="text" id="replaceTarget" placeholder="置換後"><button id="replaceBtn" class="tool-btn" style="background-color:var(--bg-button);color:var(--text-light)">置換</button>
             </div>
-            <div style="margin-top: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
-                </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称に置き換えてAIのトークン消費を抑えます。<br>
-                    略称は出現頻度に応じて最短のものから割り当てられ、収支が赤字になる置換は自動スキップされます。<br>
+            <div style="margin-top:5px">
+                <div style="font-size:12px;font-weight:bold;color:var(--text-secondary);margin-bottom:4px">AI向けプロンプト圧縮 (トークン節約)</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">
+                    頻出語を自動検出→出現頻度順に最短略称を割当→略称衝突チェック→部分文字列の重複比較→逐次再カウント→ヘッダー固定コスト含む実収支で最終判定。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
-                <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
-                <details style="margin-bottom: 8px;">
-                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
-                    <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低文字数:
-                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低出現回数:
-                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            置換する最大単語数:
-                            <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
+                <button id="autoCompressBtn" class="primary-btn" style="width:100%;margin-bottom:10px;padding:12px;font-size:14px">🚀 完全自動で圧縮する (おすすめ)</button>
+                <details style="margin-bottom:8px"><summary style="font-size:12px;cursor:pointer;color:var(--text-secondary);outline:none">⚙️ 自動圧縮の詳細設定</summary>
+                    <div style="margin-top:8px;font-size:12px;display:grid;gap:6px;padding-left:10px">
+                        <label style="display:flex;justify-content:space-between;align-items:center">対象とする最低文字数:<input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width:60px;padding:4px;margin:0"></label>
+                        <label style="display:flex;justify-content:space-between;align-items:center">対象とする最低出現回数:<input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width:60px;padding:4px;margin:0"></label>
+                        <label style="display:flex;justify-content:space-between;align-items:center">置換する最大単語数:<input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width:60px;padding:4px;margin:0"></label>
                     </div>
                 </details>
-                <details style="border-top: 1px dashed var(--border-secondary); padding-top: 8px;">
-                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">手動で辞書を指定して圧縮する (こだわり派向け)</summary>
-                    <div style="margin-top: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <div style="font-size: 11px; color: var(--text-secondary);">「元の言葉=略称」で入力</div>
-                            <button id="extractKeywordsBtn" class="paste-btn" style="margin: 0; background-color: var(--bg-secondary);">✨ 頻出ワード抽出</button>
-                        </div>
-                        <textarea id="compressDict" rows="2" style="min-height: 50px; margin-bottom: 5px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
-                        <button id="compressBtn" class="tool-btn" style="background-color: var(--bg-button-action); color: var(--text-light); width: 100%;">辞書を使って圧縮</button>
+                <details style="border-top:1px dashed var(--border-secondary);padding-top:8px"><summary style="font-size:12px;cursor:pointer;color:var(--text-secondary);outline:none">手動で辞書を指定して圧縮する (こだわり派向け)</summary>
+                    <div style="margin-top:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:11px;color:var(--text-secondary)">「元の言葉=略称」で入力</div><button id="extractKeywordsBtn" class="paste-btn" style="margin:0;background-color:var(--bg-secondary)">✨ 頻出ワード抽出</button></div>
+                        <textarea id="compressDict" rows="2" style="min-height:50px;margin-bottom:5px;font-size:12px;padding:8px" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
+                        <button id="compressBtn" class="tool-btn" style="background-color:var(--bg-button-action);color:var(--text-light);width:100%">辞書を使って圧縮</button>
                     </div>
                 </details>
             </div>
-            <div class="section-header" style="margin-top: 5px;">
-                <label for="outputText">整形結果</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
-                </div>
-            </div>
-            <div class="output-wrapper">
-                <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
-                <div id="outputPreview"></div>
-            </div>
-            <div class="action-row">
-                <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
-                <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 続けて処理</button>
-                <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
-            </div>
+            <div class="section-header" style="margin-top:5px"><label for="outputText">整形結果</label><div style="display:flex;align-items:center;gap:10px"><button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button><span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span></div></div>
+            <div class="output-wrapper"><textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea><div id="outputPreview"></div></div>
+            <div class="action-row"><button id="clearBtn" class="secondary-btn" style="background-color:var(--bg-button-delete)" title="すべてクリア">🗑️</button><button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻す">🔼 続けて処理</button><button id="copyBtn" class="primary-btn">結果をコピー 📋</button></div>
         </main>
     </div>
-
     <div id="settings-screen" class="screen dormant">
-        <header class="app-header">
-            <button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button>
-            <h1>設定</h1>
-            <span id="settings-save-notice" class="header-notice">※反映には保存が必要</span>
-            <button id="save-settings-btn" class="header-save-button">保存</button>
-        </header>
+        <header class="app-header"><button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button><h1>設定</h1><span id="settings-save-notice" class="header-notice">※反映には保存が必要</span><button id="save-settings-btn" class="header-save-button">保存</button></header>
         <main class="main-content">
-            <div class="settings-group">
-                <h3>デザイン</h3>
-                <label for="theme-select">表示テーマ:</label>
-                <select id="theme-select" aria-label="表示テーマ">
-                    <option value="light">ライトモード</option>
-                    <option value="dark">ダークモード</option>
-                    <option value="pastel-pink">パステルモード🩷</option>
-                    <option value="pastel-blue">パステルモード🩵</option>
-                    <option value="pastel-yellow">パステルモード🟡</option>
-                    <option value="pastel-purple">パステルモード🟣</option>
-                    <option value="pastel-rainbow">パステルモード🌈</option>
-                    <option value="turf">ターフモード🌱</option>
-                </select>
+            <div class="settings-group"><h3>デザイン</h3><label for="theme-select">表示テーマ:</label>
+                <select id="theme-select" aria-label="表示テーマ"><option value="light">ライトモード</option><option value="dark">ダークモード</option><option value="pastel-pink">パステルモード🩷</option><option value="pastel-blue">パステルモード🩵</option><option value="pastel-yellow">パステルモード🟡</option><option value="pastel-purple">パステルモード🟣</option><option value="pastel-rainbow">パステルモード🌈</option><option value="turf">ターフモード🌱</option></select>
             </div>
-            <div class="settings-group">
-                <h3>システム設定</h3>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="auto-save-settings-toggle">
-                    設定を即時反映する（自動保存）
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。
-                </p>
+            <div class="settings-group"><h3>システム設定</h3>
+                <label class="checkbox-label"><input type="checkbox" id="auto-save-settings-toggle">設定を即時反映する（自動保存）</label>
+                <p style="font-size:11px;color:var(--text-secondary);margin-top:-5px;margin-bottom:10px">※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。</p>
             </div>
             <div class="danger-zone">
-                <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 5.0 (Greedy-Optimal Abbr.)
-                </p>
-                <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ サーバー上の新しいコードを強制的に読み込みたい場合に使用します。
-                </p>
-                <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」などを全て削除し、初期状態に戻します。
-                </p>
+                <p style="text-align:center;color:var(--text-secondary);font-size:12px;margin-bottom:10px">バージョン: 5.1 (Iterative-Optimal)</p>
+                <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button><p style="font-size:11px;color:var(--text-secondary);margin-top:-5px;margin-bottom:10px;text-align:center">※ サーバー上の新しいコードを強制的に読み込みたい場合に使用します。</p>
+                <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button><p style="font-size:11px;color:var(--text-secondary);margin-top:-5px;margin-bottom:10px;text-align:center">※ ブラウザに保存されている設定を全て削除します。</p>
             </div>
         </main>
     </div>
 </div>
-
 <div id="toast"></div>
-
-<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden;">
-    <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
-        <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
-        <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
-        </p>
-        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;"></div>
-        <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
-            <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
-        </div>
+<dialog id="keywordDialog" class="custom-dialog" style="width:90%;max-width:450px;padding:0;overflow:hidden">
+    <div style="display:flex;flex-direction:column;max-height:80vh;padding:20px">
+        <h3 style="margin-top:0;font-size:16px;border-bottom:1px solid var(--border-secondary);padding-bottom:10px">頻出ワード抽出結果</h3>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">トークン削減効果が高い順に表示。「+ 辞書へ」で手動辞書に追加。</p>
+        <div id="keywordList" style="flex-grow:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:5px;margin-bottom:15px"></div>
+        <div style="text-align:right;flex-shrink:0;padding-top:10px;border-top:1px solid var(--border-secondary)"><button id="closeKeywordDialog" class="secondary-btn" style="background-color:var(--bg-button-action)">閉じる</button></div>
     </div>
 </dialog>
-
-<dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center;">
-    <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px;"></p>
-    <div class="dialog-actions" style="justify-content: center;">
-        <button id="confirmCancelBtn" class="dialog-cancel-btn">キャンセル</button>
-        <button id="confirmOkBtn" class="dialog-ok-btn">OK</button>
-    </div>
+<dialog id="confirmDialog" class="custom-dialog" style="max-width:300px;text-align:center">
+    <p id="confirmMessage" class="dialog-message" style="margin-bottom:20px"></p>
+    <div class="dialog-actions" style="justify-content:center"><button id="confirmCancelBtn" class="dialog-cancel-btn">キャンセル</button><button id="confirmOkBtn" class="dialog-ok-btn">OK</button></div>
 </dialog>
-
 <script>
-(function initPWA() {
-    const manifestJSON = {
-        name: "Toolbox PWA", short_name: "Toolbox", display: "standalone",
-        start_url: location.href, background_color: "#ffffff", theme_color: "#4a90e2",
-        icons:[{ src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=", sizes: "192x192", type: "image/svg+xml" }]
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
-    document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
-    const swCode = `
-        self.addEventListener('install', e => { self.skipWaiting(); });
-        self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-        self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });
-        self.addEventListener('message', e => {
-            if (e.data && e.data.action === 'clearCache') {
-                caches.keys().then(names => { for (let name of names) caches.delete(name); }).then(() => { e.source.postMessage({action: 'cacheCleared'}); });
-            }
-        });
-    `;
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'}))).catch(()=>{});
-    }
+// === PWA ===
+(function(){
+    const m={name:"Toolbox PWA",short_name:"Toolbox",display:"standalone",start_url:location.href,background_color:"#fff",theme_color:"#4a90e2",icons:[{src:"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",sizes:"192x192",type:"image/svg+xml"}]};
+    document.getElementById('manifest-link').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
+    const sw=`self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(clients.claim())});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});self.addEventListener('message',e=>{if(e.data&&e.data.action==='clearCache'){caches.keys().then(n=>{for(let k of n)caches.delete(k)}).then(()=>{e.source.postMessage({action:'cacheCleared'})})}})`;
+    if('serviceWorker'in navigator)navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
 })();
 
-// ==========================================
-// Base62 エンコーダ & 略称コスト計算
-// ==========================================
-const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+// === Base62 ===
+const B62='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function toB62(n){if(n===0)return B62[0];let r='';while(n>0){r=B62[n%62]+r;n=Math.floor(n/62)}return r}
+function genAbbr(i){return 'v'+toB62(i)}
 
-function toBase62(num) {
-    if (num === 0) return BASE62_CHARS[0];
-    let result = '';
-    while (num > 0) {
-        result = BASE62_CHARS[num % 62] + result;
-        num = Math.floor(num / 62);
-    }
-    return result;
+// === Token cost helpers ===
+function tokCost(s){let c=0;for(let i=0;i<s.length;i++)c+=(s.charCodeAt(i)<=127)?0.3:1.15;return Math.ceil(c)}
+function abbrTokCost(s){return Math.ceil(s.length*0.3)}
+function headerEntryCost(abbr,orig){return tokCost(abbr+'='+orig+', ')}
+const HEADER_FIXED_COST=55; // 固定ヘッダー説明文の推定トークン数
+
+// === Escapes ===
+const escH=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const escR=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+// === UI ===
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2500)}
+function showConfirm(msg){return new Promise(r=>{const d=document.getElementById('confirmDialog');document.getElementById('confirmMessage').textContent=msg;const ok=document.getElementById('confirmOkBtn'),ca=document.getElementById('confirmCancelBtn');const cl=()=>{ok.removeEventListener('click',y);ca.removeEventListener('click',n);d.close()};const y=()=>{cl();r(true)};const n=()=>{cl();r(false)};ok.addEventListener('click',y);ca.addEventListener('click',n);d.showModal()})}
+
+// === Screen nav ===
+const scr={main:document.getElementById('main-screen'),menu:document.getElementById('menu-screen'),settings:document.getElementById('settings-screen')};
+function showScreen(t){Object.values(scr).forEach(s=>{s.classList.remove('active','dormant')});if(t==='main'){scr.main.style.transform='translateX(0)';scr.menu.style.transform='translateX(-100%)';scr.settings.style.transform='translateX(100%)';scr.main.classList.add('active')}else if(t==='menu'){scr.main.style.transform='translateX(100%)';scr.menu.style.transform='translateX(0)';scr.settings.style.transform='translateX(200%)';scr.menu.classList.add('active')}else{scr.main.style.transform='translateX(-100%)';scr.menu.style.transform='translateX(-200%)';scr.settings.style.transform='translateX(0)';scr.settings.classList.add('active')}setTimeout(()=>{Object.values(scr).forEach(s=>{if(!s.classList.contains('active'))s.classList.add('dormant')})},350)}
+document.getElementById('goto-menu-btn').addEventListener('click',()=>showScreen('menu'));
+document.getElementById('goto-settings-btn').addEventListener('click',()=>showScreen('settings'));
+document.getElementById('back-to-main-from-menu').addEventListener('click',()=>showScreen('main'));
+document.getElementById('back-to-main-from-settings').addEventListener('click',()=>showScreen('main'));
+
+// === Settings ===
+const themeSelect=document.getElementById('theme-select'),autoSaveToggle=document.getElementById('auto-save-settings-toggle'),dictArea=document.getElementById('compressDict'),saveNotice=document.getElementById('settings-save-notice'),saveBtn=document.getElementById('save-settings-btn');
+const mcMinLen=document.getElementById('autoCompressMinLen'),mcMinCnt=document.getElementById('autoCompressMinCount'),mcMaxItm=document.getElementById('autoCompressMaxItems');
+let cfg={theme:'light',autoSave:false,compressDict:"主人公=MC\n幼馴染=CF\n魔法少女=MG",autoCompressMinLen:3,autoCompressMinCount:2,autoCompressMaxItems:20};
+function loadCfg(){const s=localStorage.getItem('toolbox_settings');if(s)try{Object.assign(cfg,JSON.parse(s))}catch(e){}const ot=localStorage.getItem('formatter_theme');if(ot&&!s)cfg.theme=ot;const od=localStorage.getItem('formatter_compress_dict');if(od&&!s)cfg.compressDict=od;themeSelect.value=cfg.theme;autoSaveToggle.checked=cfg.autoSave;dictArea.value=cfg.compressDict;mcMinLen.value=cfg.autoCompressMinLen;mcMinCnt.value=cfg.autoCompressMinCount;mcMaxItm.value=cfg.autoCompressMaxItems;applyTheme(cfg.theme);updSaveUI()}
+function saveCfg(msg=true){cfg.theme=themeSelect.value;cfg.autoSave=autoSaveToggle.checked;cfg.compressDict=dictArea.value;cfg.autoCompressMinLen=parseInt(mcMinLen.value,10)||3;cfg.autoCompressMinCount=parseInt(mcMinCnt.value,10)||2;cfg.autoCompressMaxItems=parseInt(mcMaxItm.value,10)||20;localStorage.setItem('toolbox_settings',JSON.stringify(cfg));localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');applyTheme(cfg.theme);if(msg)showToast('設定を保存しました')}
+function updSaveUI(){if(autoSaveToggle.checked){saveNotice.style.display='none';saveBtn.style.display='none'}else{saveNotice.style.display='inline';saveBtn.style.display='inline-block'}}
+saveBtn.addEventListener('click',()=>saveCfg(true));
+autoSaveToggle.addEventListener('change',()=>{updSaveUI();saveCfg(false)});
+const hsc=()=>{if(autoSaveToggle.checked)saveCfg(false)};
+themeSelect.addEventListener('change',hsc);dictArea.addEventListener('input',hsc);mcMinLen.addEventListener('change',hsc);mcMinCnt.addEventListener('change',hsc);mcMaxItm.addEventListener('change',hsc);
+function applyTheme(t){document.body.className='';if(t!=='light')document.body.classList.add(t+'-mode');const c={'light':'#4a90e2','dark':'#007aff','pastel-pink':'#ff8fab','pastel-blue':'#87cefa','pastel-yellow':'#ffd700','pastel-purple':'#ab47bc','pastel-rainbow':'#ffadad','turf':'#4CAF50'};document.getElementById('theme-color-meta').content=c[t]||'#4a90e2'}
+loadCfg();
+
+// Danger
+document.getElementById('update-app-btn').addEventListener('click',async()=>{if(await showConfirm("キャッシュをクリアして最新版を再取得しますか？")){if('serviceWorker'in navigator&&navigator.serviceWorker.controller){navigator.serviceWorker.addEventListener('message',function h(e){if(e.data&&e.data.action==='cacheCleared'){navigator.serviceWorker.removeEventListener('message',h);window.location.reload(true)}});navigator.serviceWorker.controller.postMessage({action:'clearCache'})}else window.location.reload(true)}});
+document.getElementById('clear-data-btn').addEventListener('click',async()=>{if(await showConfirm("全データを削除しますか？元に戻せません。")){localStorage.removeItem('toolbox_settings');localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');showToast("全データをクリアしました");setTimeout(()=>window.location.reload(true),1500)}});
+
+// === Core ===
+const inEl=document.getElementById('inputText'),outEl=document.getElementById('outputText'),inCnt=document.getElementById('inputCount'),outCnt=document.getElementById('outputCount');
+let hlMode=false;const hlBtn=document.getElementById('toggleHighlightBtn'),outPrev=document.getElementById('outputPreview');
+
+function estTok(t){if(!t)return 0;let a=0,n=0;for(let i=0;i<t.length;i++)t.charCodeAt(i)<=127?a++:n++;return Math.ceil(a*0.3+n*1.15)}
+function updCnts(){const iT=inEl.value,oT=outEl.value,iK=estTok(iT),oK=estTok(oT);inCnt.textContent=`${iT.length}文字 (約${iK}ﾄｰｸﾝ)`;if(oT.length>0&&iK>oK)outCnt.innerHTML=`${oT.length}文字 (約${oK}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${iK-oK}節約</span>`;else if(oT.length>0&&iK<oK)outCnt.innerHTML=`${oT.length}文字 (約${oK}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${oK-iK}増加</span>`;else outCnt.textContent=`${oT.length}文字 (約${oK}ﾄｰｸﾝ)`}
+inEl.addEventListener('input',updCnts);outEl.addEventListener('input',updCnts);
+function resetHL(){if(hlMode){hlMode=false;outEl.style.display='block';outPrev.style.display='none';hlBtn.textContent='🔍 色付け確認';hlBtn.classList.remove('active-mode')}}
+
+const kanaMap={'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ','ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ','ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ','ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ','ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト','ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ','ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ','ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン','ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ','｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'};
+const kanaRx=new RegExp('('+Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|')+')','g');
+const umaMap={'スペシャルウィーク':'SW','スペ':'SP','サイレンススズカ':'SSZ','スズカ':'SZK','トウカイテイオー':'TT','テイオー':'TO','マルゼンスキー':'MZ','マルゼン':'MRZ','フジキセキ':'FK','フジ':'FJ','オグリキャップ':'OC','オグリ':'OG','ゴールドシップ':'GS','ゴルシ':'GOS','ウオッカ':'VDK','ダイワスカーレット':'DS','ダスカ':'DSK','スカーレット':'SCL','タイキシャトル':'TS','タイキ':'TIK','シャトル':'SHT','グラスワンダー':'GW','グラス':'GRS','ヒシアマゾン':'HA','アマゾン':'AMZ','メジロマックイーン':'MMQ','マックイーン':'MCQ','エルコンドルパサー':'ECP','エル':'EL','テイエムオペラオー':'TMO','オペラオー':'OPO','ナリタブライアン':'NB','ブライアン':'BRI','シンボリルドルフ':'SR','ルドルフ':'RDF','会長':'KCH','エアグルーヴ':'AG','グルーヴ':'GRV','アグネスデジタル':'AD','デジタル':'DGT','セイウンスカイ':'SUS','スカイ':'SKY','タマモクロス':'TC','タマモ':'TMM','タマ':'TMA','ファインモーション':'FM','ファイン':'FIN','ビワハヤヒデ':'BHH','ハヤヒデ':'HYH','マヤノトップガン':'MTG','マヤノ':'MYN','マヤ':'MYA','マンハッタンカフェ':'MC','カフェ':'CAF','ミホノブルボン':'MB','ブルボン':'BRB','メジロライアン':'MR','ライアン':'RYN','ヒシアケボノ':'HAK','アケボノ':'AKB','ユキノビジン':'YB','ユキノ':'YKN','ライスシャワー':'RS','ライス':'RIC','アイネスフウジン':'AF','アイネス':'INS','アグネスタキオン':'AT','タキオン':'TKO','アドマイヤベガ':'AV','アヤベ':'AYB','イナリワン':'IW','イナリ':'INR','ウイニングチケット':'WT','チケゾー':'TKZ','チケット':'TCK','エアシャカール':'ASK','シャカール':'SHK','エイシンフラッシュ':'EF','フラッシュ':'FLS','カレンチャン':'CC','カレン':'KRN','カワカミプリンセス':'KP','カワカミ':'KWK','ゴールドシチー':'GC','シチー':'CTY','サクラバクシンオー':'SBO','バクシンオー':'BSO','バクシン':'BKS','シーキングザパール':'SZP','パール':'PRL','シンコウウインディ':'SKW','ウインディ':'WND','スイープトウショウ':'SWT','スイープ':'SWP','スーパークリーク':'SCR','クリーク':'CRK','スマートファルコン':'SF','ファル子':'FLK','ファルコン':'FLC','ゼンノロブロイ':'ZRR','ロブロイ':'RBR','トーセンジョーダン':'TJ','ジョーダン':'JDN','ナカヤマフェスタ':'NF','ナカヤマ':'NKY','フェスタ':'FST','ナリタタイシン':'NT','タイシン':'TSN','ニシノフラワー':'NIF','ニシノ':'NSN','フラワー':'FLW','ハルウララ':'HU','ウララ':'URR','バンブーメモリー':'BM','バンブー':'BNB','ビコーペガサス':'BP','ビコー':'BKO','マーベラスサンデー':'MVS','マーベラス':'MRV','マチカネフクキタル':'MFK','フクキタル':'FKK','ミスターシービー':'MCB','シービー':'CB','メイショウドトウ':'MSD','ドトウ':'DTO','メジロドーベル':'MD','ドーベル':'DBL','ナイスネイチャ':'NN','ネイチャ':'NTC','キングヘイロー':'KH','キング':'KNG','マチカネタンホイザ':'MTH','タンホイザ':'THZ','マチタン':'MCT','イクノディクタス':'ID','イクノ':'IKN','メジロパーマー':'MP','パーマー':'PAM','パマ':'PMA','ダイタクヘリオス':'DTH','ヘリオス':'HRO','ツインターボ':'TTB','ターボ':'TRB','サトノダイヤモンド':'SDD','ダイヤ':'DIA','キタサンブラック':'KB','キタサン':'KTS','サクラチヨノオー':'SCO','チヨノオー':'CYO','シリウスシンボリ':'SSB','シリウス':'SRS','メジロアルダン':'MA','アルダン':'ARD','ヤエノムテキ':'YM','ヤエノ':'YEN','ツルマルツヨシ':'TMT','ツヨシ':'TYS','メジロブライト':'MBR','ブライト':'BRT','サクラローレル':'SL','ローレル':'LRL','ナリタトップロード':'NTR','トップロード':'TPR','トプロ':'TPR2','ヤマニンゼファー':'YZ','ゼファー':'ZPH','フリオーソ':'FRI','トランセンド':'TRC','エスポワールシチー':'ESC','エスポワール':'ESP','ノースフライト':'NFL','フライト':'FRT','シンボリクリスエス':'SKS','クリスエス':'KRS','ボリクリ':'BKR','タニノギムレット':'TG','ギムレット':'GMR','ダイイチルビー':'DIR','ルビー':'RBY','メジロラモーヌ':'MLM','ラモーヌ':'RMN','アストンマーチャン':'AM','マーチャン':'MCH','サトノクラウン':'SCW','クラウン':'CRW','シュヴァルグラン':'SVG','シュヴァル':'CHV','ヴィルシーナ':'VRS','ヴィブロス':'VIV','ダンツフレーム':'DF','ダンツ':'DNT','ケイエスミラクル':'KSM','ミラクル':'MRC','ジャングルポケット':'JP','ポッケ':'POK','ビリーヴ':'BLV','ノーリーズン':'NR','スティルインラブ':'SIL','スティル':'STL','コパノリッキー':'CPR','リッキー':'RCK','ホッコータルマエ':'HT','タルマエ':'TRM','ワンダーアキュート':'WA','アキュート':'ACT','サウンズオブアース':'SOE','アース':'ERS','ロイスアンドロイス':'RAR','ロイス':'ROI','カツラギエース':'KA','エース':'ACE','ネオユニヴァース':'NU','ネオユニ':'NEY','ヒシミラクル':'HM','ヒシミ':'HSM','タップダンスシチー':'TDS','タップ':'TAP','ドゥラメンテ':'DRM','ドゥラ':'DUR','ラインクラフト':'RK','クラフト':'CRF','シーザリオ':'CZR','エアメサイア':'AMS','メサイア':'MSI','フサイチパンドラ':'FP','パンドラ':'PND','ブエナビスタ':'BV','ブエナ':'BUE','オルフェーヴル':'ORF','オルフェ':'ORP','ジェンティルドンナ':'GD','ジェンティル':'GNT','ウインバリアシオン':'WV','バリアシオン':'VAR','ドリームジャーニー':'DJ','ジャーニー':'JRN','カルストンライトオ':'CLO','ライトオ':'RTO','デュランダル':'DRD','バブルガムフェロー':'BGF','バブル':'BBL','フェノーメノ':'FNM','グランアレグリア':'GAL','グラン':'GRN','ラヴズオンリーユー':'LOY','ラヴズ':'LOV','クロノジェネシス':'CG','クロノ':'CRN','ステイゴールド':'STG','ステゴ':'STG2','キセキ':'KSK','デアリングタクト':'DAT','デアタク':'DAT2','デアリングハート':'DAH','アドマイヤグルーヴ':'AMG','サクラチトセオー':'SCT','チトセオー':'CTO','ブラストワンピース':'BWP','ブラスト':'BLS','アーモンドアイ':'AAI','ラッキーライラック':'LL','ライラック':'LIL','カレンブーケドール':'CBD','ブーケドール':'BKD','レッドディザイア':'RD','ディザイア':'DZI','ダーレーアラビアン':'DLA','ダーレー':'DRL','ゴドルフィンバルブ':'GOB','ゴドルフィン':'GDF','バイアリーターク':'BYT','バイアリー':'BYA','セントライト':'SNL','スピードシンボリ':'SPS','ハイセイコー':'HSK','モンジュー':'MNJ','ハッピーミーク':'HPM','ミーク':'MEK','ビターグラッセ':'BTG','グラッセ':'GLS','リトルココン':'LCC','ココン':'CCN','ライトハロー':'LH','ハロー':'HLO','ヴェニュスパーク':'VP','ヴェニュス':'VNS','リガントーナ':'RGT','リガン':'RGN','ソノンエルフィー':'SEF','エルフィー':'ELF','シュガーライツ':'SGL','シュガー':'SGR','タッカーブライン':'TKB','タッカー':'TAK','ユノハナブルーム':'YHB','ユノハナ':'YNH','駿川たづな':'HT2','たづな':'TDN','秋川やよい':'AY','理事長':'RJC','乙名史悦子':'OE','乙名史':'OTN','記者':'KSH','桐生院葵':'KA2','桐生院':'KRY','安心沢刺々美':'ASS','安心沢':'ANS','樫本理子':'KR','樫本':'KSM2','代理':'DIR2','佐岳メイ':'SM','メイ':'MEI','都留岐涼花':'TR','都留岐':'TRG','保科健子':'HK','保科':'HSN','赤坂美聡':'AKM','赤坂':'AKS','実況':'JKY','細江純子':'HJ','細江':'HSE','解説':'KAI','トレーナー':'TNR','私':'WAT','わたし':'WTH','ワタシ':'WTK','あたし':'ATH','アタシ':'ATK','僕':'BOK','ぼく':'BKH','ボク':'BKK','俺':'ORE','おれ':'ORH','オレ':'ORK','自分':'JBN','じぶん':'JBH','ジブン':'JBK','ウチ':'UCK','うち':'UCH','わたくし':'WTX','ワタクシ':'WTZ','余':'YOO','妾':'WRW','あなた':'YUA','アナタ':'YUK','貴方':'YUJ','貴女':'YUW','あんた':'ANA','アンタ':'ANK','きみ':'KIM','キミ':'KMK','君':'KMJ','おまえ':'OMA','オマエ':'OMK','お前':'OMJ','てめえ':'TME','テメエ':'TMK','てめぇ':'TMm','手前':'TMJ','きさま':'KSA','キサマ':'KSK2','貴様':'KSJ','おのれ':'ONO','オノレ':'ONK','己':'ONJ','おぬし':'ONU','オヌシ':'ONK2','お主':'ONZ','なんじ':'NAN','ナンジ':'NNK','汝':'NNZ','そなた':'SNT','ソナタ':'SNK','其方':'SNJ','そっち':'SOC','ソッチ':'SCK','おたく':'OTA','オタク':'OTK','お宅':'OTJ','ウマ娘':'UMA','レース':'RAC','ターフ':'TRF','ダート':'DRT','ジュニア':'JNR','クラシック':'CLS','シニア':'SNR','ティアラ':'TIR','コース':'CRS','ゲート':'GAT','コーナー':'CNR','重賞':'JUS','マイル':'MIL','短距離':'SRT','中距離':'MID','長距離':'LNG','勝負服':'SBF','ダービー':'DRB','有馬':'ARM','宝塚':'TKR','安田':'YSD','記念':'KIN','菊花賞':'KIK','皐月賞':'SAT','桜花賞':'OKA','天皇賞':'TEN','ヴィクトリア':'VCT','オークス':'OAK','スプリンター':'SPR','秋華賞':'SYU','エリザベス':'ELZ','女王':'JOU','フューチャリティ':'FUT','チャンピオン':'CHP','ジャパン':'JAP','カップ':'CUP','ホープフル':'HPF','ジュベナイル':'JUV','日本':'NIH','福岡':'FUK','札幌':'SAP','新潟':'NIG','船橋':'FNB','大井':'OOI','小倉':'KOK','大阪':'OSK','阪神':'HAN','東京':'TKY','トゥインクル':'TWK','シリーズ':'SRZ','トレーニング':'TRN','トレセン':'TRS','パドック':'PDK','感謝祭':'KAN','ハロン':'FRL','ファンファーレ':'FNF','併走':'HEI','本格化':'HNK','マイラー':'MLR','デビュー':'DBY','ライブ':'LIV','レッスン':'LSN','蹄鉄':'TEI','にんじん':'NIN','ニンジン':'NNJ','先輩':'SEN','後輩':'KOH','合宿':'GSK','練習':'REN'};
+const umaRx=new RegExp('('+Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|')+')','g');
+
+// === Header parse/build ===
+const HP="<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
+const HRx=/^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
+const OHRx=/^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
+function parseHdr(t){const m=new Map;let b=t,mt=t.match(HRx),om=t.match(OHRx);if(mt){mt[1].split(',').forEach(p=>{const[a,o]=(p.split('=')).map(s=>s.trim());if(a&&o)m.set(a,o)});b=t.replace(HRx,'')}else if(om){om[1].split(',').forEach(p=>{const[a,o]=(p.split('=')).map(s=>s.trim());if(a&&o)m.set(a,o)});b=t.replace(OHRx,'')}return{map:m,body:b}}
+function buildHdr(m){let h=HP;m.forEach((o,a)=>{h+=`${a}=${o}, `});return h.slice(0,-2)+"\n</system>\n\n"}
+
+function procAbbr(text,rx,cb,msg){const{map,body}=parseHdr(text);let hit=false;const nw=body.replace(rx,s=>{hit=true;return cb(s,map)});if(hit||map.size>0){outEl.value=buildHdr(map)+nw;updCnts();showToast(msg)}else{outEl.value=text;updCnts();showToast('略称化できる単語が見つかりませんでした')}}
+
+function fmtText(a){let t=inEl.value;if(!t){showToast('入力テキストがありません');return}resetHL();switch(a){
+case'trimSpace':t=t.replace(/[ 　\t]+/g,'');break;case'removeEmptyLines':t=t.replace(/^\s*[\r\n]/gm,'');break;
+case'removeBreaks':t=t.replace(/[\r\n]+/g,'');break;case'breaksToSpace':t=t.replace(/[\r\n]+/g,' ').trim();break;
+case'toHalfWidth':t=t.replace(/[Ａ-Ｚａ-ｚ０-９]/g,s=>String.fromCharCode(s.charCodeAt(0)-0xFEE0));break;
+case'toFullWidthKana':t=t.replace(kanaRx,m=>kanaMap[m]);break;case'toUpperCase':t=t.toUpperCase();break;case'toLowerCase':t=t.toLowerCase();break;
+case'reverseDialogues':{const rx=/「[\s\S]*?」/g,ms=t.match(rx);if(ms&&ms.length>1){ms.reverse();let i=0;t=t.replace(rx,()=>ms[i++]);showToast('セリフの順序を反転しました')}else{showToast('反転するセリフが2つ以上ありません');return}break}
+case'extractBrackets':{const rx=/(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;const ms=t.match(rx);if(ms&&ms.length>0){t=ms.join('\n');showToast(`${ms.length}件 抽出`)}else{showToast('カッコが見つかりませんでした');return}break}
+case'toUmaAbbr':{procAbbr(t,umaRx,(s,m)=>{const ab=umaMap[s];if(!m.has(ab)||s.length>m.get(ab).length)m.set(ab,s);return ab},'ウマ娘略称化を行いました');return}
+}outEl.value=t;updCnts()}
+document.querySelectorAll('.tools-grid .tool-btn').forEach(b=>{b.addEventListener('click',e=>fmtText(e.target.getAttribute('data-action')))});
+
+document.getElementById('pasteBtn').addEventListener('click',async()=>{try{const t=await navigator.clipboard.readText();if(t){const s=inEl.selectionStart,e=inEl.selectionEnd,c=inEl.value;inEl.value=c.substring(0,s)+t+c.substring(e);inEl.selectionStart=inEl.selectionEnd=s+t.length;inEl.focus();updCnts();showToast('貼り付けました')}else showToast('クリップボードが空です')}catch(e){showToast('貼り付けが許可されていません')}});
+document.getElementById('replaceBtn').addEventListener('click',()=>{const src=document.getElementById('replaceSource').value,tgt=document.getElementById('replaceTarget').value;let t=inEl.value;if(!t){showToast('入力テキストがありません');return}if(!src){showToast('検索文字列を入力してください');return}resetHL();outEl.value=t.replace(new RegExp(escR(src),'g'),tgt);updCnts();showToast('置換しました')});
+
+// === Manual dict compress ===
+document.getElementById('compressBtn').addEventListener('click',()=>{const t=inEl.value,dt=dictArea.value;if(!t){showToast('入力テキストがありません');return}if(!dt.trim()){showToast('圧縮用辞書が空です');return}resetHL();const d={};dt.split('\n').forEach(l=>{const p=l.split('=');if(p.length===2){const k=p[0].trim(),v=p[1].trim();if(k&&v)d[k]=v}});const ks=Object.keys(d).sort((a,b)=>b.length-a.length);if(!ks.length){showToast('有効な辞書指定がありません');return}const rx=new RegExp('('+ks.map(escR).join('|')+')','g');procAbbr(t,rx,(s,m)=>{const ab=d[s];m.set(ab,s);return ab},'AI向けに圧縮しました')});
+
+// === N-gram extraction ===
+function extractCands(body,minL,minC,maxI){
+    if(!window.Intl||!Intl.Segmenter)return null;
+    const seg=new Intl.Segmenter('ja',{granularity:'word'});
+    const segs=Array.from(seg.segment(body)).filter(s=>s.segment.trim().length>0);
+    const ng=new Map();
+    for(let n=1;n<=6;n++)for(let i=0;i<=segs.length-n;i++){let p='';for(let j=0;j<n;j++)p+=segs[i+j].segment;p=p.trim();if(p.length<minL||/^[ぁ-ん]+$/.test(p)||/^[!-/:-@[-`{-~]+$/.test(p))continue;ng.set(p,(ng.get(p)||0)+1)}
+    const res=[];for(let[p,c]of ng.entries())if(c>=minC){const tc=Math.ceil(p.length*1.15),sv=(tc*c)-(tc+2+c);if(sv>2)res.push({phrase:p,count:c,saving:sv})}
+    res.sort((a,b)=>b.phrase.length-a.phrase.length);
+    const flt=[];for(const it of res){let sub=false;for(const k of flt)if(k.phrase.includes(it.phrase)&&it.count<=k.count+2){sub=true;break}if(!sub)flt.push(it)}
+    flt.sort((a,b)=>b.saving-a.saving);
+    return flt.slice(0,maxI);
 }
 
-function generateAbbr(index) {
-    return 'v' + toBase62(index);
-}
+// =============================================
+// 🚀 Iterative-Optimal Auto Compress
+// =============================================
+// 1. 候補抽出 (N-gram + saving filter)
+// 2. 出現回数降順ソート → 短い略称から仮割り当て
+// 3. 略称が本文中に存在 → その番号をスキップ (衝突回避)
+// 4. 実収支計算 (略称長に応じた動的コスト) → 赤字ならスキップ (番号を消費しない)
+// 5. 長い語から1つずつ置換実行 → 置換ごとに残り候補の出現回数を本文から再カウント
+// 6. 再カウント後に出現0 or 赤字転落 → その候補を除外
+// 7. 全置換完了後、ヘッダー固定コストを含む総収支を最終チェック
+//    赤字なら置換を全撤回
+document.getElementById('autoCompressBtn').addEventListener('click',()=>{
+    const text=inEl.value;
+    if(!text){showToast('入力テキストがありません');return}
+    if(!window.Intl||!Intl.Segmenter){showToast('お使いのブラウザは自動抽出に非対応です');return}
+    resetHL();
+    const{map:existMap,body:origBody}=parseHdr(text);
+    const minL=parseInt(mcMinLen.value,10)||3,minC=parseInt(mcMinCnt.value,10)||2,maxI=parseInt(mcMaxItm.value,10)||20;
+    const cands=extractCands(origBody,minL,minC,maxI);
+    if(!cands||!cands.length){showToast('圧縮できるワードがありませんでした');return}
 
-// 略称文字列のトークンコスト見積もり (ASCII文字なので約0.3tok/char)
-function estimateAbbrTokens(abbrStr) {
-    return Math.ceil(abbrStr.length * 0.3);
-}
+    // Step 2: 出現回数降順 → 略称割り当て (衝突チェック付き)
+    const sorted=cands.map(c=>({...c}));
+    sorted.sort((a,b)=>b.count-a.count);
+    let abbrIdx=existMap.size+1;
+    const plan=[]; // {phrase, count, abbr, abbrTok, origTok, headerCost}
 
-// ヘッダーにマッピング1件追加した時のトークンコスト見積もり
-// 形式: "v1=元の単語, " → 略称 + "=" + 元の単語 + ", "
-function estimateHeaderEntryCost(abbrStr, originalStr) {
-    let cost = 0;
-    for (let i = 0; i < abbrStr.length; i++) cost += (abbrStr.charCodeAt(i) <= 127) ? 0.3 : 1.15;
-    cost += 0.3; // "="
-    for (let i = 0; i < originalStr.length; i++) cost += (originalStr.charCodeAt(i) <= 127) ? 0.3 : 1.15;
-    cost += 0.6; // ", "
-    return Math.ceil(cost);
-}
+    for(const item of sorted){
+        // 既にmapにある?
+        let exists=false;
+        for(const[,o]of existMap.entries())if(o===item.phrase){exists=true;break}
+        if(exists)continue;
 
-// 元の単語のトークンコスト見積もり
-function estimateOriginalTokens(str) {
-    let cost = 0;
-    for (let i = 0; i < str.length; i++) cost += (str.charCodeAt(i) <= 127) ? 0.3 : 1.15;
-    return Math.ceil(cost);
-}
+        // 略称生成 + 衝突回避
+        let abbr=genAbbr(abbrIdx);
+        while(existMap.has(abbr)||origBody.includes(abbr)){abbrIdx++;abbr=genAbbr(abbrIdx)}
 
-// ==========================================
-// 貪欲最適割り当てアルゴリズム
-// ==========================================
-// 候補リスト [{phrase, count, saving}] と既存マップから
-// 「出現回数順に短い略称を仮割り当て → 実収支を再計算 → 赤字ならスキップして番号を次候補に譲る」
-// を繰り返す
-function greedyOptimalAssignment(candidates, existingMap) {
-    // 出現回数降順でソート
-    const sorted = candidates.map(c => ({ ...c }));
-    sorted.sort((a, b) => b.count - a.count);
+        const aT=abbrTokCost(abbr);
+        const oT=tokCost(item.phrase);
+        const hC=headerEntryCost(abbr,item.phrase);
+        const net=item.count*(oT-aT)-hC;
 
-    let abbrCounter = existingMap.size + 1;
-    const assignments = []; // {phrase, count, abbr, netSaving}
-
-    for (const item of sorted) {
-        // 既にマップに存在するかチェック
-        let alreadyExists = false;
-        for (const [, existingOriginal] of existingMap.entries()) {
-            if (existingOriginal === item.phrase) { alreadyExists = true; break; }
+        if(net>0){
+            plan.push({phrase:item.phrase,count:item.count,abbr,abbrTok:aT,origTok:oT,headerCost:hC,netSaving:net});
+            abbrIdx++;
         }
-        if (alreadyExists) continue;
-
-        // 次の空き略称を取得
-        let abbr = generateAbbr(abbrCounter);
-        while (existingMap.has(abbr)) {
-            abbrCounter++;
-            abbr = generateAbbr(abbrCounter);
-        }
-
-        // この略称を使った場合の実収支を計算
-        const tokOrig = estimateOriginalTokens(item.phrase);
-        const tokAbbr = estimateAbbrTokens(abbr);
-        const headerCost = estimateHeaderEntryCost(abbr, item.phrase);
-        const netSaving = item.count * (tokOrig - tokAbbr) - headerCost;
-
-        if (netSaving > 0) {
-            // 黒字 → 採用
-            assignments.push({ phrase: item.phrase, count: item.count, abbr, netSaving });
-            abbrCounter++;
-        }
-        // 赤字 → この略称番号は消費せず、次の候補に渡す（番号を無駄にしない）
+        // 赤字→番号消費せず次へ
     }
 
-    return assignments;
-}
+    if(!plan.length){showToast('収支計算の結果、置換すべきワードがありませんでした');return}
 
-// ==========================================
-// 共通UIユーティリティ
-// ==========================================
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+    // Step 5: 長い語から逐次置換 + 再カウント
+    plan.sort((a,b)=>b.phrase.length-a.phrase.length);
+    let curText=origBody;
+    const accepted=[];
+    let totalEntryCost=0;
 
-let toastTimeout;
-function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
-}
+    for(const item of plan){
+        // 現在のテキストで実出現回数を再カウント
+        const rx=new RegExp(escR(item.phrase),'g');
+        const matches=curText.match(rx);
+        const realCount=matches?matches.length:0;
 
-function showConfirm(message) {
-    return new Promise((resolve) => {
-        const dialog = document.getElementById('confirmDialog');
-        document.getElementById('confirmMessage').textContent = message;
-        const okBtn = document.getElementById('confirmOkBtn');
-        const cancelBtn = document.getElementById('confirmCancelBtn');
-        const cleanup = () => { okBtn.removeEventListener('click', onOk); cancelBtn.removeEventListener('click', onCancel); dialog.close(); };
-        const onOk = () => { cleanup(); resolve(true); };
-        const onCancel = () => { cleanup(); resolve(false); };
-        okBtn.addEventListener('click', onOk);
-        cancelBtn.addEventListener('click', onCancel);
-        dialog.showModal();
-    });
-}
+        if(realCount===0)continue; // 上位の長い語の置換で消滅した
 
-// ==========================================
-// 画面遷移
-// ==========================================
-const screens = { main: document.getElementById('main-screen'), menu: document.getElementById('menu-screen'), settings: document.getElementById('settings-screen') };
+        // 実出現回数での再収支計算
+        const realNet=realCount*(item.origTok-item.abbrTok)-item.headerCost;
+        if(realNet<=0)continue; // 赤字転落
 
-function showScreen(targetScreen) {
-    Object.values(screens).forEach(s => { s.classList.remove('active'); s.classList.remove('dormant'); });
-    if (targetScreen === 'main') {
-        screens.main.style.transform = 'translateX(0)'; screens.menu.style.transform = 'translateX(-100%)'; screens.settings.style.transform = 'translateX(100%)'; screens.main.classList.add('active');
-    } else if (targetScreen === 'menu') {
-        screens.main.style.transform = 'translateX(100%)'; screens.menu.style.transform = 'translateX(0)'; screens.settings.style.transform = 'translateX(200%)'; screens.menu.classList.add('active');
-    } else if (targetScreen === 'settings') {
-        screens.main.style.transform = 'translateX(-100%)'; screens.menu.style.transform = 'translateX(-200%)'; screens.settings.style.transform = 'translateX(0)'; screens.settings.classList.add('active');
+        // 置換実行
+        curText=curText.replace(rx,item.abbr);
+        existMap.set(item.abbr,item.phrase);
+        accepted.push({...item,count:realCount,netSaving:realNet});
+        totalEntryCost+=item.headerCost;
     }
-    setTimeout(() => { Object.values(screens).forEach(s => { if (!s.classList.contains('active')) s.classList.add('dormant'); }); }, 350);
-}
 
-document.getElementById('goto-menu-btn').addEventListener('click', () => showScreen('menu'));
-document.getElementById('goto-settings-btn').addEventListener('click', () => showScreen('settings'));
-document.getElementById('back-to-main-from-menu').addEventListener('click', () => showScreen('main'));
-document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
+    if(!accepted.length){showToast('逐次再計算の結果、置換すべきワードがありませんでした');return}
 
-// ==========================================
-// 設定保存・読み込み
-// ==========================================
-const themeSelect = document.getElementById('theme-select');
-const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
-const dictArea = document.getElementById('compressDict');
-const saveNotice = document.getElementById('settings-save-notice');
-const saveBtn = document.getElementById('save-settings-btn');
-const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
-const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
-const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
+    // Step 7: ヘッダー固定コストを含む最終チェック
+    const totalGross=accepted.reduce((s,a)=>s+a.count*(a.origTok-a.abbrTok),0);
+    const totalNet=totalGross-totalEntryCost-HEADER_FIXED_COST;
 
-const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
-let appSettings = { theme: 'light', autoSave: false, compressDict: defaultDict, autoCompressMinLen: 3, autoCompressMinCount: 2, autoCompressMaxItems: 20 };
-
-function loadSettings() {
-    const saved = localStorage.getItem('toolbox_settings');
-    if (saved) { try { Object.assign(appSettings, JSON.parse(saved)); } catch(e) {} }
-    const oldTheme = localStorage.getItem('formatter_theme');
-    if (oldTheme && !saved) appSettings.theme = oldTheme;
-    const oldDict = localStorage.getItem('formatter_compress_dict');
-    if (oldDict && !saved) appSettings.compressDict = oldDict;
-    themeSelect.value = appSettings.theme;
-    autoSaveToggle.checked = appSettings.autoSave;
-    dictArea.value = appSettings.compressDict;
-    autoCompressMinLenInput.value = appSettings.autoCompressMinLen;
-    autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
-    autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
-    applyTheme(appSettings.theme);
-    updateSaveUiState();
-}
-
-function saveSettings(showMsg = true) {
-    appSettings.theme = themeSelect.value;
-    appSettings.autoSave = autoSaveToggle.checked;
-    appSettings.compressDict = dictArea.value;
-    appSettings.autoCompressMinLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-    appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-    appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-    localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-    localStorage.removeItem('formatter_theme');
-    localStorage.removeItem('formatter_compress_dict');
-    applyTheme(appSettings.theme);
-    if (showMsg) showToast('設定を保存しました');
-}
-
-function updateSaveUiState() {
-    if (autoSaveToggle.checked) { saveNotice.style.display = 'none'; saveBtn.style.display = 'none'; }
-    else { saveNotice.style.display = 'inline'; saveBtn.style.display = 'inline-block'; }
-}
-
-saveBtn.addEventListener('click', () => saveSettings(true));
-autoSaveToggle.addEventListener('change', () => { updateSaveUiState(); saveSettings(false); });
-const handleSettingChange = () => { if (autoSaveToggle.checked) saveSettings(false); };
-themeSelect.addEventListener('change', handleSettingChange);
-dictArea.addEventListener('input', handleSettingChange);
-autoCompressMinLenInput.addEventListener('change', handleSettingChange);
-autoCompressMinCountInput.addEventListener('change', handleSettingChange);
-autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
-
-function applyTheme(themeName) {
-    document.body.className = '';
-    if (themeName !== 'light') document.body.classList.add(themeName + '-mode');
-    const colors = { 'light':'#4a90e2','dark':'#007aff','pastel-pink':'#ff8fab','pastel-blue':'#87cefa','pastel-yellow':'#ffd700','pastel-purple':'#ab47bc','pastel-rainbow':'#ffadad','turf':'#4CAF50' };
-    document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
-}
-loadSettings();
-
-// Danger Zone
-document.getElementById('update-app-btn').addEventListener('click', async () => {
-    if (await showConfirm("アプリのキャッシュをクリアして最新版を再取得しますか？\n(設定と辞書は保持されます)")) {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.addEventListener('message', function handler(event) { if (event.data && event.data.action === 'cacheCleared') { navigator.serviceWorker.removeEventListener('message', handler); window.location.reload(true); } });
-            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
-        } else { window.location.reload(true); }
+    if(totalNet<=0){
+        showToast(`ヘッダーコスト(≈${HEADER_FIXED_COST}tok)を含めると赤字のため圧縮を中止しました`);
+        return;
     }
-});
-document.getElementById('clear-data-btn').addEventListener('click', async () => {
-    if (await showConfirm("本当にすべてのデータを削除しますか？\nこの操作は元に戻せません。")) {
-        localStorage.removeItem('toolbox_settings'); localStorage.removeItem('formatter_theme'); localStorage.removeItem('formatter_compress_dict');
-        showToast("全データをクリアしました。"); setTimeout(() => { window.location.reload(true); }, 1500);
-    }
+
+    outEl.value=buildHdr(existMap)+curText;
+    updCnts();
+    showToast(`🚀 ${accepted.length}語を最適圧縮 (実効≈${totalNet}ﾄｰｸﾝ節約, 固定コスト${HEADER_FIXED_COST}tok含む)`);
 });
 
-// ==========================================
-// テキスト整形ロジック
-// ==========================================
-const inputEl = document.getElementById('inputText');
-const outputEl = document.getElementById('outputText');
-const inputCount = document.getElementById('inputCount');
-const outputCount = document.getElementById('outputCount');
-let isHighlightMode = false;
-const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
-const outputPreview = document.getElementById('outputPreview');
-
-function estimateTokens(text) {
-    if (!text) return 0;
-    let a = 0, n = 0;
-    for (let i = 0; i < text.length; i++) { if (text.charCodeAt(i) <= 127) a++; else n++; }
-    return Math.ceil(a * 0.3 + n * 1.15);
-}
-
-function updateCounts() {
-    const inTxt = inputEl.value, outTxt = outputEl.value;
-    const inTok = estimateTokens(inTxt), outTok = estimateTokens(outTxt);
-    inputCount.textContent = `${inTxt.length}文字 (約${inTok}ﾄｰｸﾝ)`;
-    if (outTxt.length > 0 && inTok > outTok) {
-        outputCount.innerHTML = `${outTxt.length}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${inTok - outTok}節約</span>`;
-    } else if (outTxt.length > 0 && inTok < outTok) {
-        outputCount.innerHTML = `${outTxt.length}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${outTok - inTok}増加</span>`;
-    } else {
-        outputCount.textContent = `${outTxt.length}文字 (約${outTok}ﾄｰｸﾝ)`;
-    }
-}
-inputEl.addEventListener('input', updateCounts);
-outputEl.addEventListener('input', updateCounts);
-
-function resetHighlightMode() {
-    if (isHighlightMode) {
-        isHighlightMode = false; outputEl.style.display = 'block'; outputPreview.style.display = 'none';
-        toggleHighlightBtn.textContent = '🔍 色付け確認'; toggleHighlightBtn.classList.remove('active-mode');
-    }
-}
-
-const kanaMap = {'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ','ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ','ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ','ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ','ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト','ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ','ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ','ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン','ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ','｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'};
-const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-const umaMap = {'スペシャルウィーク':'SW','スペ':'SP','サイレンススズカ':'SSZ','スズカ':'SZK','トウカイテイオー':'TT','テイオー':'TO','マルゼンスキー':'MZ','マルゼン':'MRZ','フジキセキ':'FK','フジ':'FJ','オグリキャップ':'OC','オグリ':'OG','ゴールドシップ':'GS','ゴルシ':'GOS','ウオッカ':'VDK','ダイワスカーレット':'DS','ダスカ':'DSK','スカーレット':'SCL','タイキシャトル':'TS','タイキ':'TIK','シャトル':'SHT','グラスワンダー':'GW','グラス':'GRS','ヒシアマゾン':'HA','アマゾン':'AMZ','メジロマックイーン':'MMQ','マックイーン':'MCQ','エルコンドルパサー':'ECP','エル':'EL','テイエムオペラオー':'TMO','オペラオー':'OPO','ナリタブライアン':'NB','ブライアン':'BRI','シンボリルドルフ':'SR','ルドルフ':'RDF','会長':'KCH','エアグルーヴ':'AG','グルーヴ':'GRV','アグネスデジタル':'AD','デジタル':'DGT','セイウンスカイ':'SUS','スカイ':'SKY','タマモクロス':'TC','タマモ':'TMM','タマ':'TMA','ファインモーション':'FM','ファイン':'FIN','ビワハヤヒデ':'BHH','ハヤヒデ':'HYH','マヤノトップガン':'MTG','マヤノ':'MYN','マヤ':'MYA','マンハッタンカフェ':'MC','カフェ':'CAF','ミホノブルボン':'MB','ブルボン':'BRB','メジロライアン':'MR','ライアン':'RYN','ヒシアケボノ':'HAK','アケボノ':'AKB','ユキノビジン':'YB','ユキノ':'YKN','ライスシャワー':'RS','ライス':'RIC','アイネスフウジン':'AF','アイネス':'INS','アグネスタキオン':'AT','タキオン':'TKO','アドマイヤベガ':'AV','アヤベ':'AYB','イナリワン':'IW','イナリ':'INR','ウイニングチケット':'WT','チケゾー':'TKZ','チケット':'TCK','エアシャカール':'ASK','シャカール':'SHK','エイシンフラッシュ':'EF','フラッシュ':'FLS','カレンチャン':'CC','カレン':'KRN','カワカミプリンセス':'KP','カワカミ':'KWK','ゴールドシチー':'GC','シチー':'CTY','サクラバクシンオー':'SBO','バクシンオー':'BSO','バクシン':'BKS','シーキングザパール':'SZP','パール':'PRL','シンコウウインディ':'SKW','ウインディ':'WND','スイープトウショウ':'SWT','スイープ':'SWP','スーパークリーク':'SCR','クリーク':'CRK','スマートファルコン':'SF','ファル子':'FLK','ファルコン':'FLC','ゼンノロブロイ':'ZRR','ロブロイ':'RBR','トーセンジョーダン':'TJ','ジョーダン':'JDN','ナカヤマフェスタ':'NF','ナカヤマ':'NKY','フェスタ':'FST','ナリタタイシン':'NT','タイシン':'TSN','ニシノフラワー':'NIF','ニシノ':'NSN','フラワー':'FLW','ハルウララ':'HU','ウララ':'URR','バンブーメモリー':'BM','バンブー':'BNB','ビコーペガサス':'BP','ビコー':'BKO','マーベラスサンデー':'MVS','マーベラス':'MRV','マチカネフクキタル':'MFK','フクキタル':'FKK','ミスターシービー':'MCB','シービー':'CB','メイショウドトウ':'MSD','ドトウ':'DTO','メジロドーベル':'MD','ドーベル':'DBL','ナイスネイチャ':'NN','ネイチャ':'NTC','キングヘイロー':'KH','キング':'KNG','マチカネタンホイザ':'MTH','タンホイザ':'THZ','マチタン':'MCT','イクノディクタス':'ID','イクノ':'IKN','メジロパーマー':'MP','パーマー':'PAM','パマ':'PMA','ダイタクヘリオス':'DTH','ヘリオス':'HRO','ツインターボ':'TTB','ターボ':'TRB','サトノダイヤモンド':'SDD','ダイヤ':'DIA','キタサンブラック':'KB','キタサン':'KTS','サクラチヨノオー':'SCO','チヨノオー':'CYO','シリウスシンボリ':'SSB','シリウス':'SRS','メジロアルダン':'MA','アルダン':'ARD','ヤエノムテキ':'YM','ヤエノ':'YEN','ツルマルツヨシ':'TMT','ツヨシ':'TYS','メジロブライト':'MBR','ブライト':'BRT','サクラローレル':'SL','ローレル':'LRL','ナリタトップロード':'NTR','トップロード':'TPR','トプロ':'TPR2','ヤマニンゼファー':'YZ','ゼファー':'ZPH','フリオーソ':'FRI','トランセンド':'TRC','エスポワールシチー':'ESC','エスポワール':'ESP','ノースフライト':'NFL','フライト':'FRT','シンボリクリスエス':'SKS','クリスエス':'KRS','ボリクリ':'BKR','タニノギムレット':'TG','ギムレット':'GMR','ダイイチルビー':'DIR','ルビー':'RBY','メジロラモーヌ':'MLM','ラモーヌ':'RMN','アストンマーチャン':'AM','マーチャン':'MCH','サトノクラウン':'SCW','クラウン':'CRW','シュヴァルグラン':'SVG','シュヴァル':'CHV','ヴィルシーナ':'VRS','ヴィブロス':'VIV','ダンツフレーム':'DF','ダンツ':'DNT','ケイエスミラクル':'KSM','ミラクル':'MRC','ジャングルポケット':'JP','ポッケ':'POK','ビリーヴ':'BLV','ノーリーズン':'NR','スティルインラブ':'SIL','スティル':'STL','コパノリッキー':'CPR','リッキー':'RCK','ホッコータルマエ':'HT','タルマエ':'TRM','ワンダーアキュート':'WA','アキュート':'ACT','サウンズオブアース':'SOE','アース':'ERS','ロイスアンドロイス':'RAR','ロイス':'ROI','カツラギエース':'KA','エース':'ACE','ネオユニヴァース':'NU','ネオユニ':'NEY','ヒシミラクル':'HM','ヒシミ':'HSM','タップダンスシチー':'TDS','タップ':'TAP','ドゥラメンテ':'DRM','ドゥラ':'DUR','ラインクラフト':'RK','クラフト':'CRF','シーザリオ':'CZR','エアメサイア':'AMS','メサイア':'MSI','フサイチパンドラ':'FP','パンドラ':'PND','ブエナビスタ':'BV','ブエナ':'BUE','オルフェーヴル':'ORF','オルフェ':'ORP','ジェンティルドンナ':'GD','ジェンティル':'GNT','ウインバリアシオン':'WV','バリアシオン':'VAR','ドリームジャーニー':'DJ','ジャーニー':'JRN','カルストンライトオ':'CLO','ライトオ':'RTO','デュランダル':'DRD','バブルガムフェロー':'BGF','バブル':'BBL','フェノーメノ':'FNM','グランアレグリア':'GAL','グラン':'GRN','ラヴズオンリーユー':'LOY','ラヴズ':'LOV','クロノジェネシス':'CG','クロノ':'CRN','ステイゴールド':'STG','ステゴ':'STG2','キセキ':'KSK','デアリングタクト':'DAT','デアタク':'DAT2','デアリングハート':'DAH','アドマイヤグルーヴ':'AMG','サクラチトセオー':'SCT','チトセオー':'CTO','ブラストワンピース':'BWP','ブラスト':'BLS','アーモンドアイ':'AAI','ラッキーライラック':'LL','ライラック':'LIL','カレンブーケドール':'CBD','ブーケドール':'BKD','レッドディザイア':'RD','ディザイア':'DZI','ダーレーアラビアン':'DLA','ダーレー':'DRL','ゴドルフィンバルブ':'GOB','ゴドルフィン':'GDF','バイアリーターク':'BYT','バイアリー':'BYA','セントライト':'SNL','スピードシンボリ':'SPS','ハイセイコー':'HSK','モンジュー':'MNJ','ハッピーミーク':'HPM','ミーク':'MEK','ビターグラッセ':'BTG','グラッセ':'GLS','リトルココン':'LCC','ココン':'CCN','ライトハロー':'LH','ハロー':'HLO','ヴェニュスパーク':'VP','ヴェニュス':'VNS','リガントーナ':'RGT','リガン':'RGN','ソノンエルフィー':'SEF','エルフィー':'ELF','シュガーライツ':'SGL','シュガー':'SGR','タッカーブライン':'TKB','タッカー':'TAK','ユノハナブルーム':'YHB','ユノハナ':'YNH','駿川たづな':'HT2','たづな':'TDN','秋川やよい':'AY','理事長':'RJC','乙名史悦子':'OE','乙名史':'OTN','記者':'KSH','桐生院葵':'KA2','桐生院':'KRY','安心沢刺々美':'ASS','安心沢':'ANS','樫本理子':'KR','樫本':'KSM2','代理':'DIR2','佐岳メイ':'SM','メイ':'MEI','都留岐涼花':'TR','都留岐':'TRG','保科健子':'HK','保科':'HSN','赤坂美聡':'AKM','赤坂':'AKS','実況':'JKY','細江純子':'HJ','細江':'HSE','解説':'KAI','トレーナー':'TNR','私':'WAT','わたし':'WTH','ワタシ':'WTK','あたし':'ATH','アタシ':'ATK','僕':'BOK','ぼく':'BKH','ボク':'BKK','俺':'ORE','おれ':'ORH','オレ':'ORK','自分':'JBN','じぶん':'JBH','ジブン':'JBK','ウチ':'UCK','うち':'UCH','わたくし':'WTX','ワタクシ':'WTZ','余':'YOO','妾':'WRW','あなた':'YUA','アナタ':'YUK','貴方':'YUJ','貴女':'YUW','あんた':'ANA','アンタ':'ANK','きみ':'KIM','キミ':'KMK','君':'KMJ','おまえ':'OMA','オマエ':'OMK','お前':'OMJ','てめえ':'TME','テメエ':'TMK','てめぇ':'TMm','手前':'TMJ','きさま':'KSA','キサマ':'KSK2','貴様':'KSJ','おのれ':'ONO','オノレ':'ONK','己':'ONJ','おぬし':'ONU','オヌシ':'ONK2','お主':'ONZ','なんじ':'NAN','ナンジ':'NNK','汝':'NNZ','そなた':'SNT','ソナタ':'SNK','其方':'SNJ','そっち':'SOC','ソッチ':'SCK','おたく':'OTA','オタク':'OTK','お宅':'OTJ','ウマ娘':'UMA','レース':'RAC','ターフ':'TRF','ダート':'DRT','ジュニア':'JNR','クラシック':'CLS','シニア':'SNR','ティアラ':'TIR','コース':'CRS','ゲート':'GAT','コーナー':'CNR','重賞':'JUS','マイル':'MIL','短距離':'SRT','中距離':'MID','長距離':'LNG','勝負服':'SBF','ダービー':'DRB','有馬':'ARM','宝塚':'TKR','安田':'YSD','記念':'KIN','菊花賞':'KIK','皐月賞':'SAT','桜花賞':'OKA','天皇賞':'TEN','ヴィクトリア':'VCT','オークス':'OAK','スプリンター':'SPR','秋華賞':'SYU','エリザベス':'ELZ','女王':'JOU','フューチャリティ':'FUT','チャンピオン':'CHP','ジャパン':'JAP','カップ':'CUP','ホープフル':'HPF','ジュベナイル':'JUV','日本':'NIH','福岡':'FUK','札幌':'SAP','新潟':'NIG','船橋':'FNB','大井':'OOI','小倉':'KOK','大阪':'OSK','阪神':'HAN','東京':'TKY','トゥインクル':'TWK','シリーズ':'SRZ','トレーニング':'TRN','トレセン':'TRS','パドック':'PDK','感謝祭':'KAN','ハロン':'FRL','ファンファーレ':'FNF','併走':'HEI','本格化':'HNK','マイラー':'MLR','デビュー':'DBY','ライブ':'LIV','レッスン':'LSN','蹄鉄':'TEI','にんじん':'NIN','ニンジン':'NNJ','先輩':'SEN','後輩':'KOH','合宿':'GSK','練習':'REN'};
-const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-// ヘッダー解析共通
-const HEADER_PREFIX = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
-const HEADER_REGEX = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
-const OLD_HEADER_REGEX = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
-
-function parseExistingHeader(text) {
-    const replacedMap = new Map();
-    let bodyText = text;
-    let match = text.match(HEADER_REGEX);
-    let oldMatch = text.match(OLD_HEADER_REGEX);
-    if (match) {
-        match[1].split(',').forEach(pair => { const [a, o] = pair.split('=').map(s => s.trim()); if (a && o) replacedMap.set(a, o); });
-        bodyText = text.replace(HEADER_REGEX, '');
-    } else if (oldMatch) {
-        oldMatch[1].split(',').forEach(pair => { const [a, o] = pair.split('=').map(s => s.trim()); if (a && o) replacedMap.set(a, o); });
-        bodyText = text.replace(OLD_HEADER_REGEX, '');
-    }
-    return { replacedMap, bodyText };
-}
-
-function buildHeader(replacedMap) {
-    let header = HEADER_PREFIX;
-    replacedMap.forEach((orig, abbr) => { header += `${abbr}=${orig}, `; });
-    return header.slice(0, -2) + "\n</system>\n\n";
-}
-
-function processAbbreviation(text, regex, dictCallback, successMessage) {
-    const { replacedMap, bodyText } = parseExistingHeader(text);
-    let isReplaced = false;
-    const newText = bodyText.replace(regex, matchStr => { isReplaced = true; return dictCallback(matchStr, replacedMap); });
-    if (isReplaced || replacedMap.size > 0) {
-        outputEl.value = buildHeader(replacedMap) + newText;
-        updateCounts(); showToast(successMessage);
-    } else {
-        outputEl.value = text; updateCounts(); showToast('略称化できる単語が見つかりませんでした');
-    }
-}
-
-function formatText(action) {
-    let text = inputEl.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    resetHighlightMode();
-    switch (action) {
-        case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
-        case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
-        case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
-        case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
-        case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
-        case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
-        case 'toUpperCase': text = text.toUpperCase(); break;
-        case 'toLowerCase': text = text.toLowerCase(); break;
-        case 'reverseDialogues': {
-            const rx = /「[\s\S]*?」/g, matches = text.match(rx);
-            if (matches && matches.length > 1) { matches.reverse(); let i = 0; text = text.replace(rx, () => matches[i++]); showToast('セリフの順序を反転しました'); }
-            else { showToast('反転するセリフ(「」)が2つ以上ありません'); return; }
-            break;
-        }
-        case 'extractBrackets': {
-            const rx = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
-            const matches = text.match(rx);
-            if (matches && matches.length > 0) { text = matches.join('\n'); showToast(`カッコ内の文章を ${matches.length}件 抽出しました`); }
-            else { showToast('カッコで囲まれた部分が見つかりませんでした'); return; }
-            break;
-        }
-        case 'toUmaAbbr': {
-            processAbbreviation(text, umaRegex, (matchStr, map) => { const abbr = umaMap[matchStr]; if (!map.has(abbr) || matchStr.length > map.get(abbr).length) map.set(abbr, matchStr); return abbr; }, 'AI向けウマ娘略称化を行いました');
-            return;
-        }
-    }
-    outputEl.value = text; updateCounts();
-}
-
-document.querySelectorAll('.tools-grid .tool-btn').forEach(btn => { btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action'))); });
-
-document.getElementById('pasteBtn').addEventListener('click', async () => {
-    try {
-        const text = await navigator.clipboard.readText();
-        if (text) { const s = inputEl.selectionStart, e = inputEl.selectionEnd, c = inputEl.value; inputEl.value = c.substring(0, s) + text + c.substring(e); inputEl.selectionStart = inputEl.selectionEnd = s + text.length; inputEl.focus(); updateCounts(); showToast('貼り付けました'); }
-        else showToast('クリップボードが空です');
-    } catch(err) { showToast('貼り付けが許可されていません'); }
-});
-
-document.getElementById('replaceBtn').addEventListener('click', () => {
-    const source = document.getElementById('replaceSource').value, target = document.getElementById('replaceTarget').value;
-    let text = inputEl.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    if (!source) { showToast('検索文字列を入力してください'); return; }
-    resetHighlightMode();
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    outputEl.value = text.replace(new RegExp(esc(source), 'g'), target); updateCounts(); showToast('置換しました');
-});
-
-// ==========================================
-// 手動辞書圧縮
-// ==========================================
-document.getElementById('compressBtn').addEventListener('click', () => {
-    const text = inputEl.value, dictText = dictArea.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    if (!dictText.trim()) { showToast('圧縮用辞書が空です'); return; }
-    resetHighlightMode();
-    const dict = {};
-    dictText.split('\n').forEach(line => { const p = line.split('='); if (p.length === 2) { const k = p[0].trim(), v = p[1].trim(); if (k && v) dict[k] = v; } });
-    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-    if (keys.length === 0) { showToast('有効な辞書指定がありません'); return; }
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp('(' + keys.map(esc).join('|') + ')', 'g');
-    processAbbreviation(text, regex, (matchStr, map) => { const abbr = dict[matchStr]; map.set(abbr, matchStr); return abbr; }, 'AI向けに圧縮しました');
-});
-
-// ==========================================
-// 🚀 完全自動圧縮 (貪欲最適アルゴリズム)
-// ==========================================
-function extractCandidates(bodyText, minLen, minCount, maxItems) {
-    if (!window.Intl || !Intl.Segmenter) return null;
-    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-    const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
-    const ngrams = new Map();
-    for (let n = 1; n <= 6; n++) {
-        for (let i = 0; i <= segments.length - n; i++) {
-            let phrase = '';
-            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-            phrase = phrase.trim();
-            if (phrase.length < minLen) continue;
-            if (/^[ぁ-ん]+$/.test(phrase)) continue;
-            if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;
-            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-        }
-    }
-    const results = [];
-    for (let [phrase, count] of ngrams.entries()) {
-        if (count >= minCount) {
-            const tokenCost = Math.ceil(phrase.length * 1.15);
-            const saving = (tokenCost * count) - (tokenCost + 2 + count);
-            if (saving > 2) results.push({ phrase, count, saving });
-        }
-    }
-    results.sort((a, b) => b.phrase.length - a.phrase.length);
-    const filtered = [];
-    for (const item of results) {
-        let isSub = false;
-        for (const kept of filtered) { if (kept.phrase.includes(item.phrase) && item.count <= kept.count + 2) { isSub = true; break; } }
-        if (!isSub) filtered.push(item);
-    }
-    filtered.sort((a, b) => b.saving - a.saving);
-    return filtered.slice(0, maxItems);
-}
-
-document.getElementById('autoCompressBtn').addEventListener('click', () => {
-    const text = inputEl.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは自動抽出に非対応です。'); return; }
-    resetHighlightMode();
-
-    const { replacedMap, bodyText } = parseExistingHeader(text);
-    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-
-    const candidates = extractCandidates(bodyText, minLen, minCount, maxItems);
-    if (!candidates || candidates.length === 0) { showToast('指定条件で自動圧縮できるワードがありませんでした'); return; }
-
-    // ★ 貪欲最適割り当て ★
-    const assignments = greedyOptimalAssignment(candidates, replacedMap);
-
-    if (assignments.length === 0) { showToast('収支計算の結果、置換すべきワードがありませんでした'); return; }
-
-    // 置換実行: 文字列長が長い順
-    let newText = bodyText;
-    let isReplaced = false;
-    assignments.sort((a, b) => b.phrase.length - a.phrase.length);
-
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    for (const item of assignments) {
-        const regex = new RegExp(esc(item.phrase), 'g');
-        if (regex.test(newText)) {
-            newText = newText.replace(regex, item.abbr);
-            replacedMap.set(item.abbr, item.phrase);
-            isReplaced = true;
-        }
-    }
-
-    if (isReplaced || replacedMap.size > 0) {
-        outputEl.value = buildHeader(replacedMap) + newText;
-        updateCounts();
-        const totalSaved = assignments.reduce((sum, a) => sum + a.netSaving, 0);
-        showToast(`🚀 ${assignments.length}語を最適圧縮 (実効約${totalSaved}ﾄｰｸﾝ節約)`);
-    } else {
-        outputEl.value = text; updateCounts(); showToast('自動圧縮できるワードがありませんでした');
-    }
-});
-
-// ==========================================
-// 頻出ワード抽出（手動用ダイアログ）
-// ==========================================
-document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
-    const text = inputEl.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出機能に非対応です'); return; }
-
-    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-
-    const candidates = extractCandidates(text, minLen, minCount, maxItems);
-    const listContainer = document.getElementById('keywordList');
-    listContainer.innerHTML = '';
-
-    if (!candidates || candidates.length === 0) {
-        listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
-    } else {
-        // 出現回数順に短い略称を割り当て
-        const sortedByCount = candidates.map((item, idx) => ({ ...item, origIdx: idx }));
-        sortedByCount.sort((a, b) => b.count - a.count);
-        const abbrByIdx = new Map();
-        sortedByCount.forEach((item, rank) => { abbrByIdx.set(item.origIdx, generateAbbr(rank + 1)); });
-
-        candidates.forEach((item, index) => {
-            const div = document.createElement('div'); div.className = 'keyword-item';
-            const autoAbbr = abbrByIdx.get(index);
-            const infoDiv = document.createElement('div'); infoDiv.className = 'keyword-info';
-            const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
-            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats';
-            statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ / 略称: ${autoAbbr}`;
-            infoDiv.appendChild(wordDiv); infoDiv.appendChild(statsDiv);
-            const addBtn = document.createElement('button'); addBtn.className = 'add-keyword-btn'; addBtn.textContent = '+ 辞書へ';
-            addBtn.addEventListener('click', () => {
-                const currentDict = dictArea.value;
-                if (currentDict.includes(item.phrase + '=')) { showToast('既に辞書に登録されています'); return; }
-                dictArea.value = currentDict.trim() === '' ? `${item.phrase}=${autoAbbr}` : currentDict + '\n' + `${item.phrase}=${autoAbbr}`;
-                if (autoSaveToggle.checked) saveSettings(false);
-                addBtn.textContent = '追加済'; addBtn.disabled = true;
-                showToast(`「${item.phrase}」を辞書に追加しました`);
-            });
-            div.appendChild(infoDiv); div.appendChild(addBtn); listContainer.appendChild(div);
+// === Keyword extract dialog ===
+document.getElementById('extractKeywordsBtn').addEventListener('click',()=>{
+    const t=inEl.value;if(!t){showToast('入力テキストがありません');return}
+    if(!window.Intl||!Intl.Segmenter){showToast('非対応ブラウザです');return}
+    const minL=parseInt(mcMinLen.value,10)||3,minC=parseInt(mcMinCnt.value,10)||2,maxI=parseInt(mcMaxItm.value,10)||20;
+    const cands=extractCands(t,minL,minC,maxI);
+    const lc=document.getElementById('keywordList');lc.innerHTML='';
+    if(!cands||!cands.length){lc.innerHTML='<p style="color:var(--text-secondary);text-align:center;padding:20px">抽出できるキーワードがありませんでした。</p>'}
+    else{
+        const byC=cands.map((c,i)=>({...c,oi:i}));byC.sort((a,b)=>b.count-a.count);
+        const am=new Map();byC.forEach((c,r)=>{am.set(c.oi,genAbbr(r+1))});
+        cands.forEach((it,i)=>{
+            const d=document.createElement('div');d.className='keyword-item';const aa=am.get(i);
+            const inf=document.createElement('div');inf.className='keyword-info';
+            const w=document.createElement('div');w.className='keyword-word';w.textContent=it.phrase;
+            const s=document.createElement('div');s.className='keyword-stats';s.textContent=`出現:${it.count}回 / 節約≈${it.saving}tok / 略称:${aa}`;
+            inf.appendChild(w);inf.appendChild(s);
+            const b=document.createElement('button');b.className='add-keyword-btn';b.textContent='+ 辞書へ';
+            b.addEventListener('click',()=>{const cd=dictArea.value;if(cd.includes(it.phrase+'=')){showToast('既に登録済み');return}dictArea.value=cd.trim()===''?`${it.phrase}=${aa}`:cd+'\n'+`${it.phrase}=${aa}`;if(autoSaveToggle.checked)saveCfg(false);b.textContent='追加済';b.disabled=true;showToast(`「${it.phrase}」を追加`)});
+            d.appendChild(inf);d.appendChild(b);lc.appendChild(d);
         });
     }
     document.getElementById('keywordDialog').showModal();
 });
+document.getElementById('closeKeywordDialog').addEventListener('click',()=>{document.getElementById('keywordDialog').close()});
 
-document.getElementById('closeKeywordDialog').addEventListener('click', () => { document.getElementById('keywordDialog').close(); });
+// === Highlight ===
+function getHL(t,ss=''){if(!t)return'';if(ss){const ps=t.split(new RegExp(`(${escR(ss)})`,'g'));let h='';for(let i=0;i<ps.length;i++)h+=(i%2===1)?`<mark style="background:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">${escH(ps[i])}</mark>`:escH(ps[i]);return h}else{const ml=8;if(t.length<ml)return escH(t);let hm=new Array(t.length).fill(false),ng=new Map();for(let i=0;i<=t.length-ml;i++){let s=t.substring(i,i+ml);if(/^[\s\r\n]+$/.test(s))continue;if(ng.has(s))ng.get(s).push(i);else ng.set(s,[i])}for(let[,ix]of ng.entries())if(ix.length>1)for(let i of ix)for(let k=0;k<ml;k++)hm[i+k]=true;let h='',ih=false;for(let i=0;i<t.length;i++){if(hm[i]&&!ih){h+=`<mark style="background:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`;ih=true}else if(!hm[i]&&ih){h+=`</mark>`;ih=false}h+=escH(t[i])}if(ih)h+=`</mark>`;return h}}
 
-// ==========================================
-// ハイライト
-// ==========================================
-function getHighlightedHTML(text, searchStr = '') {
-    if (!text) return '';
-    const esc = (s) => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    if (searchStr) {
-        const escR = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const parts = text.split(new RegExp(`(${escR(searchStr)})`, 'g'));
-        let html = '';
-        for (let i = 0; i < parts.length; i++) html += (i % 2 === 1) ? `<mark style="background-color:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px;">${esc(parts[i])}</mark>` : esc(parts[i]);
-        return html;
-    } else {
-        const minLength = 8;
-        if (text.length < minLength) return esc(text);
-        let hm = new Array(text.length).fill(false);
-        let ng = new Map();
-        for (let i = 0; i <= text.length - minLength; i++) { let sub = text.substring(i, i + minLength); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }
-        for (let [, indices] of ng.entries()) { if (indices.length > 1) for (let idx of indices) for (let k = 0; k < minLength; k++) hm[idx + k] = true; }
-        let html = '', inH = false;
-        for (let i = 0; i < text.length; i++) {
-            if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px;">`; inH = true; }
-            else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
-            html += esc(text[i]);
-        }
-        if (inH) html += `</mark>`;
-        return html;
-    }
-}
+hlBtn.addEventListener('click',()=>{hlMode=!hlMode;if(hlMode){const t=outEl.value;if(!t){showToast('結果テキストがありません');hlMode=false;return}const ss=document.getElementById('replaceSource').value;outPrev.innerHTML=getHL(t,ss);outEl.style.display='none';outPrev.style.display='block';hlBtn.innerHTML='✏️ 編集に戻る';hlBtn.classList.add('active-mode');showToast(ss?`「${ss}」をハイライト`:'8文字以上の重複をハイライト')}else resetHL()});
 
-toggleHighlightBtn.addEventListener('click', () => {
-    isHighlightMode = !isHighlightMode;
-    if (isHighlightMode) {
-        const text = outputEl.value;
-        if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }
-        const searchStr = document.getElementById('replaceSource').value;
-        outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
-        outputEl.style.display = 'none'; outputPreview.style.display = 'block';
-        toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');
-        showToast(searchStr ? `「${searchStr}」をハイライトしました` : '8文字以上の重複箇所をハイライトしました');
-    } else { resetHighlightMode(); }
-});
-
-document.getElementById('clearBtn').addEventListener('click', () => { inputEl.value = ''; outputEl.value = ''; updateCounts(); resetHighlightMode(); });
-document.getElementById('applyToInputBtn').addEventListener('click', () => { if (outputEl.value) { inputEl.value = outputEl.value; outputEl.value = ''; updateCounts(); resetHighlightMode(); showToast('入力欄に反映しました'); } });
-document.getElementById('copyBtn').addEventListener('click', async () => { if (!outputEl.value) return; try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); } catch(e) { showToast('コピーに失敗しました'); } });
+document.getElementById('clearBtn').addEventListener('click',()=>{inEl.value='';outEl.value='';updCnts();resetHL()});
+document.getElementById('applyToInputBtn').addEventListener('click',()=>{if(outEl.value){inEl.value=outEl.value;outEl.value='';updCnts();resetHL();showToast('入力欄に反映しました')}});
+document.getElementById('copyBtn').addEventListener('click',async()=>{if(!outEl.value)return;try{await navigator.clipboard.writeText(outEl.value);showToast('コピーしました！')}catch(e){showToast('コピーに失敗しました')}});
 </script>
 </body>
 </html>
