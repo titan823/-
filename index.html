@@ -402,8 +402,22 @@
         }
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
-        /* ダイアログ装飾 */
-        dialog.custom-dialog { border: 1px solid var(--border-primary); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); padding: 20px; box-shadow: 0 4px 12px var(--shadow-secondary); margin: auto; }
+        /* =========================================
+           ダイアログ装飾 (dialog要素の表示制御)
+        ========================================= */
+        dialog.custom-dialog {
+            display: none;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            box-shadow: 0 4px 12px var(--shadow-secondary);
+            margin: auto;
+        }
+        dialog.custom-dialog[open] {
+            display: block;
+        }
         dialog.custom-dialog::backdrop { background: rgba(0,0,0,0.5); }
         .dialog-message { margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; }
         .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
@@ -499,7 +513,7 @@
                     <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
                 </div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称(a, b...z, A...Z, aa...)に置き換えてAIのトークン消費を抑えます。<br>
+                    本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。<br>
                     <strong style="color:var(--text-error)">※AIに「返答では正式名称を使え」と指示する文言が含まれます。</strong>
                 </div>
                 
@@ -597,10 +611,9 @@
                 </p>
             </div>
 
-            <!-- Danger Zone -->
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.2 (Auto Compress Excel-Style)
+                    バージョン: 4.2 (Base62 Abbr.)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -621,16 +634,17 @@
 <div id="toast"></div>
 
 <!-- 頻出ワード抽出ダイアログ -->
-<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; max-height: 80vh; overflow-y: hidden; display: flex; flex-direction: column;">
-    <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
-    <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-        入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
-    </p>
-    <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
-        <!-- JSでアイテムを追加 -->
-    </div>
-    <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
-        <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
+<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden;">
+    <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
+        <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
+            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
+        </p>
+        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
+        </div>
+        <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
+            <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
+        </div>
     </div>
 </dialog>
 
@@ -686,6 +700,25 @@
             navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
         }
     })();
+
+    // ==========================================
+    // Base62 エンコーダ（略称生成用）
+    // ==========================================
+    const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    function toBase62(num) {
+        if (num === 0) return BASE62_CHARS[0];
+        let result = '';
+        while (num > 0) {
+            result = BASE62_CHARS[num % 62] + result;
+            num = Math.floor(num / 62);
+        }
+        return result;
+    }
+
+    function generateAbbr(index) {
+        return 'v' + toBase62(index);
+    }
 
     // ==========================================
     // 共通UIユーティリティ
@@ -785,7 +818,6 @@
     const saveNotice = document.getElementById('settings-save-notice');
     const saveBtn = document.getElementById('save-settings-btn');
     
-    // 自動圧縮用の設定UI
     const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
     const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
@@ -1201,6 +1233,7 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
+    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const headerPrefix = "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n\n[Mapping]\n";
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
@@ -1385,8 +1418,6 @@
     // ==========================================
     // 🚀 頻出ワード自動抽出 ＆ プロンプト圧縮
     // ==========================================
-    const dictArea = document.getElementById('compressDict');
-
     document.getElementById('compressBtn').addEventListener('click', () => {
         const text = inputEl.value;
         const dictText = dictArea.value;
@@ -1438,7 +1469,7 @@
             return;
         }
         if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。手動辞書をお使いください。');
+            showToast('お使いのブラウザは自動抽出に非対応です。下の「手動辞書」をお使いください。');
             return;
         }
 
@@ -1531,22 +1562,8 @@
             return;
         }
 
-        // トークン消費を最小化するための略称生成関数 (a, b ... Z, aa, ab...)
-        function getShortAbbr(index) {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const base = chars.length;
-            let result = "";
-            let n = index + 1;
-            while (n > 0) {
-                n--;
-                result = chars[n % base] + result;
-                n = Math.floor(n / base);
-            }
-            return result;
-        }
-
         let newText = bodyText;
-        let abbrIndex = 0; 
+        let abbrCounter = replacedMap.size + 1; 
         let isReplaced = false;
 
         targets.sort((a, b) => b.phrase.length - a.phrase.length);
@@ -1563,11 +1580,10 @@
             }
             if (alreadyExists) continue;
 
-            let abbr = getShortAbbr(abbrIndex);
-            // 既に使われている略称（手動辞書など）と被らないかチェック
+            let abbr = generateAbbr(abbrCounter);
             while (replacedMap.has(abbr)) {
-                abbrIndex++;
-                abbr = getShortAbbr(abbrIndex);
+                abbrCounter++;
+                abbr = generateAbbr(abbrCounter);
             }
 
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1576,7 +1592,7 @@
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrIndex++;
+                abbrCounter++;
                 isReplaced = true;
             }
         }
@@ -1599,6 +1615,7 @@
         }
     });
 
+    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         const text = inputEl.value;
         if (!text) {
@@ -1662,20 +1679,6 @@
         const listContainer = document.getElementById('keywordList');
         listContainer.innerHTML = '';
 
-        // 略称生成関数を追加
-        function getShortAbbr(index) {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const base = chars.length;
-            let result = "";
-            let n = index + 1;
-            while (n > 0) {
-                n--;
-                result = chars[n % base] + result;
-                n = Math.floor(n / base);
-            }
-            return result;
-        }
-
         if (filteredResults.length === 0) {
             listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
         } else {
@@ -1684,8 +1687,7 @@
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
 
-                // 最短の英字略称に変更
-                let autoAbbr = getShortAbbr(index);
+                let autoAbbr = generateAbbr(index + 1);
 
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
@@ -1741,7 +1743,6 @@
         document.getElementById('keywordDialog').close();
     });
 
-    // ＝＝＝ ハイライト機能 ＝＝＝
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
         
@@ -1846,7 +1847,7 @@
     document.getElementById('applyToInputBtn').addEventListener('click', () => {
         if (outputEl.value) {
             inputEl.value = outputEl.value;
-            inputEl.value = '';
+            outputEl.value = '';
             updateCounts();
             resetHighlightMode();
             showToast('入力欄に反映しました');
