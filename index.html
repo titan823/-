@@ -1,2293 +1,294 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Toolbox PWA</title>
-    <link id="manifest-link" rel="manifest" href="">
-    <meta name="theme-color" id="theme-color-meta" content="#4a90e2">
-
-    <style>
-        /* =========================================
-           カラーテーマ定義
-        ========================================= */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f0f2f5;
-            --bg-tertiary: #fdfdfd;
-            --bg-input: #ffffff;
-            --bg-button: #4a90e2;
-            --bg-button-hover: #357abd;
-            --bg-button-action: #777777;
-            --bg-button-delete: #e53935;
-            --bg-button-save: #30d158;
-            --bg-button-update: #1976d2;
-            --bg-header: #4a90e2;
-            --text-primary: #333333;
-            --text-secondary: #777777;
-            --text-light: #ffffff;
-            --text-error: #c62828;
-            --border-primary: #cccccc;
-            --border-secondary: #dddddd;
-            --border-tertiary: #eeeeee;
-            --border-danger: #ffcdd2;
-            --shadow-secondary: rgba(0, 0, 0, 0.1);
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        body.dark-mode {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #101010;
-            --bg-tertiary: #252525;
-            --bg-input: #303030;
-            --bg-button: #007aff;
-            --bg-button-action: #666666;
-            --bg-header: #007aff;
-            --text-primary: #e0e0e0;
-            --text-secondary: #aaaaaa;
-            --text-error: #ff8a80;
-            --border-primary: #444444;
-            --border-secondary: #555555;
-            --border-tertiary: #333333;
-            --border-danger: #7a2e35;
-        }
-        body.pastel-pink-mode {
-            --bg-primary: #fff5f8;
-            --bg-secondary: #ffe6ea;
-            --bg-tertiary: #fff0f3;
-            --bg-input: #ffffff;
-            --bg-button: #ff8fab;
-            --bg-button-action: #ffb3c1;
-            --bg-header: #ff8fab;
-            --text-primary: #5c3c45;
-            --text-secondary: #8c6b74;
-            --border-primary: #ffc2d7;
-            --border-secondary: #ffe0e7;
-            --border-tertiary: #fff0f3;
-        }
-        body.pastel-blue-mode {
-            --bg-primary: #f0f8ff;
-            --bg-secondary: #e0f0ff;
-            --bg-tertiary: #eaf5ff;
-            --bg-button: #87cefa;
-            --bg-button-action: #add8e6;
-            --bg-header: #87cefa;
-            --text-primary: #3a5679;
-            --text-secondary: #6b87a9;
-            --border-primary: #b0dfff;
-        }
-        body.pastel-yellow-mode {
-            --bg-primary: #fffefa;
-            --bg-secondary: #fffacd;
-            --bg-button: #ffd700;
-            --bg-button-action: #ffec8b;
-            --bg-header: #ffd700;
-            --text-primary: #5d4037;
-            --border-primary: #fff0b3;
-        }
-        body.pastel-purple-mode {
-            --bg-primary: #f3e5f5;
-            --bg-secondary: #e1bee7;
-            --bg-button: #ab47bc;
-            --bg-button-action: #ba68c8;
-            --bg-header: #ab47bc;
-            --text-primary: #4a148c;
-            --border-primary: #ce93d8;
-        }
-        body.pastel-rainbow-mode {
-            --bg-primary: #fdfdfd;
-            --bg-secondary: #f5f5f5;
-            --bg-button: #ff80c0;
-            --bg-button-action: #80d0ff;
-            --bg-header: linear-gradient(to right, #ffadad, #ffd6a5, #fdffb6, #caffbf, #9bf6ff, #a0c4ff, #bdb2ff, #ffc6ff, #ffadad);
-            --text-primary: #333;
-        }
-        body.turf-mode {
-            --bg-primary: #F6F4F9;
-            --bg-secondary: #e8f5e9;
-            --bg-button: #4CAF50;
-            --bg-button-action: #9ccc65;
-            --bg-header: #4CAF50;
-            --text-primary: #2e7d32;
-        }
-
-        /* =========================================
-           基本レイアウト & スクリーン
-        ========================================= */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            height: 100dvh;
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .app-container {
-            position: relative;
-            height: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: var(--bg-primary);
-            box-shadow: 0 0 10px var(--shadow-secondary);
-            overflow: hidden;
-        }
-
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-primary);
-            transition: transform 0.3s ease-in-out;
-            z-index: 0;
-        }
-        .screen.active { z-index: 1; }
-        .screen.dormant { visibility: hidden; }
-
-        #menu-screen { transform: translateX(-100%); }
-        #main-screen { transform: translateX(0); }
-        #settings-screen { transform: translateX(100%); }
-
-        /* =========================================
-           ヘッダー
-        ========================================= */
-        .app-header {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            background: var(--bg-header);
-            color: var(--text-light);
-            flex-shrink: 0;
-            z-index: 10;
-        }
-        .app-header h1 {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 0;
-            flex-grow: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .header-button {
-            background: transparent;
-            border: none;
-            color: var(--text-light);
-            font-size: 20px;
-            padding: 5px;
-            min-width: 30px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border-radius: 4px;
-        }
-        .header-button:active { background-color: rgba(255,255,255,0.2); }
-        .header-button.left { margin-right: 10px; }
-        .header-button.right { margin-left: 10px; }
-
-        .header-save-button {
-            padding: 4px 12px;
-            font-size: 13px;
-            background-color: var(--bg-button-save);
-            color: var(--text-light);
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .header-notice {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-right: 10px;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        /* =========================================
-           UIパーツ
-        ========================================= */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-secondary);
-            gap: 8px;
-        }
-
-        .paste-btn, .highlight-btn {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-primary);
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .paste-btn:active, .highlight-btn:active { background-color: var(--bg-secondary); }
-        .highlight-btn.active-mode {
-            background-color: var(--bg-button);
-            color: var(--text-light);
-            border-color: var(--bg-button);
-        }
-
-        .tiny-action-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .output-wrapper {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            min-height: 100px;
-            position: relative;
-        }
-
-        textarea {
-            width: 100%;
-            flex-grow: 1;
-            padding: 12px;
-            border: 1px solid var(--border-primary);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: monospace;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-            resize: none;
-            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
-        }
-        textarea:focus { outline: 2px solid var(--bg-button); border-color: transparent; }
-
-        #outputPreview {
-            display: none;
-            width: 100%;
-            flex-grow: 1;
-            padding: 12px;
-            border: 1px solid var(--border-primary);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: monospace;
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-y: auto;
-        }
-
-        /* ツールボタンのグリッド */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 6px;
-        }
-        button.tool-btn {
-            padding: 10px 6px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 6px;
-            border: none;
-            background-color: var(--bg-button-action);
-            color: var(--text-light);
-            cursor: pointer;
-            transition: transform 0.1s, filter 0.1s;
-        }
-        button.tool-btn:active { filter: brightness(0.8); transform: scale(0.98); }
-
-        .action-row { display: flex; gap: 10px; margin-top: 5px; }
-        .primary-btn {
-            flex-grow: 1;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--bg-button);
-            color: var(--text-light);
-            cursor: pointer;
-        }
-        .primary-btn:active { filter: brightness(0.8); }
-        .secondary-btn {
-            background-color: var(--bg-button-save);
-            color: var(--text-light);
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); }
-
-        /* =========================================
-           分割入力欄
-        ========================================= */
-        .split-inputs {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .split-input-block {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .split-input-block textarea {
-            min-height: 120px;
-        }
-
-        /* =========================================
-           ドラム選択UI
-        ========================================= */
-        .operation-card {
-            border: 1px solid var(--border-secondary);
-            border-radius: 10px;
-            background-color: var(--bg-tertiary);
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .drum-select {
-            width: 100%;
-            padding: 14px 40px 14px 12px;
-            border: 1px solid var(--border-primary);
-            border-radius: 10px;
-            font-size: 15px;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image:
-                linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
-                linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
-            background-position:
-                calc(100% - 18px) calc(50% - 3px),
-                calc(100% - 12px) calc(50% - 3px);
-            background-size: 6px 6px, 6px 6px;
-            background-repeat: no-repeat;
-        }
-
-        .drum-select:focus {
-            outline: 2px solid var(--bg-button);
-            border-color: transparent;
-        }
-
-        .operation-fields {
-            display: grid;
-            gap: 8px;
-        }
-
-        .operation-fields.hidden {
-            display: none;
-        }
-
-        #runSelectedActionBtn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .mode-notice {
-            font-size: 11px;
-            color: var(--text-secondary);
-            background: var(--bg-tertiary);
-            border: 1px dashed var(--border-secondary);
-            border-radius: 8px;
-            padding: 8px 10px;
-        }
-
-        /* =========================================
-           メニュー＆設定画面
-        ========================================= */
-        .menu-list { list-style: none; padding: 0; }
-        .menu-item {
-            padding: 15px;
-            border: 1px solid var(--border-secondary);
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            box-shadow: 0 1px 3px var(--shadow-secondary);
-        }
-        .menu-item.active { border: 2px solid var(--bg-button); background-color: var(--bg-secondary); }
-        .menu-item.disabled { opacity: 0.5; cursor: not-allowed; }
-        .menu-desc { font-size: 11px; color: var(--text-secondary); font-weight: normal; display: block; margin-top: 4px; }
-
-        .settings-group { margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-tertiary); border-radius: 8px; background-color: var(--bg-tertiary); }
-        .settings-group h3 { margin-bottom: 15px; font-size: 16px; color: var(--text-link, var(--bg-button)); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; }
-        select, input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-primary);
-            border-radius: 5px;
-            font-size: 14px;
-            margin-bottom: 10px;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-        }
-
-        .checkbox-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; cursor: pointer; }
-        .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
-
-        .danger-zone { margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-danger); display: flex; flex-direction: column; gap: 10px; }
-        .danger-zone button { width: 100%; padding: 10px; font-size: 14px; border-radius: 5px; border: none; cursor: pointer; color: var(--text-light); }
-        #update-app-btn { background-color: var(--bg-button-update); }
-        #clear-data-btn { background-color: var(--bg-button-delete); }
-
-        /* トースト通知 */
-        #toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background-color: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.3s ease;
-            z-index: 1000;
-        }
-        #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-
-        /* =========================================
-           ダイアログ装飾
-        ========================================= */
-        dialog.custom-dialog {
-            display: none;
-            border: 1px solid var(--border-primary);
-            border-radius: 8px;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            padding: 20px;
-            box-shadow: 0 4px 12px var(--shadow-secondary);
-            margin: auto;
-        }
-        dialog.custom-dialog[open] {
-            display: block;
-        }
-        dialog.custom-dialog::backdrop { background: rgba(0,0,0,0.5); }
-        .dialog-message { margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; }
-        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .dialog-actions button { padding: 8px 18px; font-weight: 500; border-radius: 4px; border: none; cursor: pointer; }
-        .dialog-ok-btn { background-color: var(--bg-button); color: #fff; }
-        .dialog-cancel-btn { background-color: var(--bg-button-action); color: #fff; }
-
-        .keyword-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
-        .keyword-info { display: flex; flex-direction: column; overflow: hidden; margin-right: 10px; }
-        .keyword-word { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .keyword-stats { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-        .add-keyword-btn { background: var(--bg-button); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-        .add-keyword-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
-    </style>
-</head>
-<body>
-
-<div class="app-container">
-
-    <!-- ==========================================
-         左パネル: ツール選択メニュー
-    =========================================== -->
-    <div id="menu-screen" class="screen dormant">
-        <header class="app-header">
-            <h1 style="text-align: right; padding-right: 10px;">ツール選択</h1>
-            <button id="back-to-main-from-menu" class="header-button right" aria-label="メインに戻る">＞</button>
-        </header>
-        <main class="main-content">
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">利用するツールを選択してください</p>
-            <ul class="menu-list">
-                <li class="menu-item active">
-                    <div>
-                        テキスト整形ツール
-                        <span class="menu-desc">空白や改行の削除、半角/全角変換など</span>
-                    </div>
-                    <span>✔️</span>
-                </li>
-                <li class="menu-item disabled">
-                    <div>
-                        JSONフォーマッター
-                        <span class="menu-desc">（準備中）</span>
-                    </div>
-                </li>
-            </ul>
-        </main>
-    </div>
-
-    <!-- ==========================================
-         中央パネル: メイン画面
-    =========================================== -->
-    <div id="main-screen" class="screen active">
-        <header class="app-header">
-            <button id="goto-menu-btn" class="header-button left" aria-label="メニューを開く">☰</button>
-            <h1 id="main-title">テキスト整形</h1>
-            <button id="goto-settings-btn" class="header-button right" aria-label="設定を開く">⚙</button>
-        </header>
-        <main class="main-content">
-
-            <div class="section-header">
-                <label>入力テキスト（前半＋後半を結合して処理）</label>
-                <div class="tiny-action-row">
-                    <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
-                    <span class="char-count" id="inputCount">合計0文字 (約0ﾄｰｸﾝ)</span>
-                </div>
-            </div>
-
-            <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
-                処理時は「前半」→「後半」の順に連結されます。
-            </p>
-
-            <div class="split-inputs">
-                <div class="split-input-block">
-                    <div class="section-header">
-                        <label for="inputTextPart1">前半</label>
-                        <div class="tiny-action-row">
-                            <button id="clearPart1Btn" class="paste-btn" type="button">🗑 前半のみ削除</button>
-                            <span class="char-count" id="inputCountPart1">0文字</span>
-                        </div>
-                    </div>
-                    <textarea id="inputTextPart1" placeholder="前半のテキストを入力..."></textarea>
-                </div>
-
-                <div class="split-input-block">
-                    <div class="section-header">
-                        <label for="inputTextPart2">後半</label>
-                        <div class="tiny-action-row">
-                            <button id="clearPart2Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
-                            <span class="char-count" id="inputCountPart2">0文字</span>
-                        </div>
-                    </div>
-                    <textarea id="inputTextPart2" placeholder="後半のテキストを入力..."></textarea>
-                </div>
-            </div>
-
-            <!-- 既存ロジック用の内部テキスト -->
-            <textarea id="inputText" hidden aria-hidden="true" tabindex="-1"></textarea>
-
-            <!-- AI向けプロンプト圧縮 UI -->
-            <div style="margin-top: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
-                </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。
-                </div>
-
-                <div id="responseModeStatus" class="mode-notice" style="margin-bottom: 8px;"></div>
-                
-                <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
-
-                <!-- 自動圧縮の詳細設定 -->
-                <details style="margin-bottom: 8px;">
-                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
-                    <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低文字数:
-                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低出現回数:
-                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            置換する最大単語数:
-                            <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>英数字を含む候補を除外:</span>
-                            <input type="checkbox" id="autoCompressExcludeAlnum">
-                        </label>
-                    </div>
-                </details>
-            </div>
-
-            <!-- その他の処理をドラム選択式に統合 -->
-            <div class="operation-card">
-                <div class="section-header">
-                    <label for="actionPicker">その他の処理</label>
-                    <span class="char-count">iPhoneではドラム式で選択</span>
-                </div>
-
-                <select id="actionPicker" class="drum-select" aria-label="処理選択">
-                    <option value="">処理を選択してください</option>
-
-                    <optgroup label="基本整形">
-                        <option value="trimSpace">空白を削除</option>
-                        <option value="removeEmptyLines">空行を削除</option>
-                        <option value="removeBreaks">改行を削除</option>
-                        <option value="breaksToSpace">改行を空白に</option>
-                    </optgroup>
-
-                    <optgroup label="文字変換">
-                        <option value="toHalfWidth">英数→半角</option>
-                        <option value="toFullWidthKana">カナ→全角</option>
-                        <option value="toUpperCase">大文字化</option>
-                        <option value="toLowerCase">小文字化</option>
-                    </optgroup>
-
-                    <optgroup label="抽出・特殊処理">
-                        <option value="extractBrackets">カッコ抽出</option>
-                        <option value="reverseDialogues">セリフ順反転</option>
-                        <option value="toUmaAbbr">ウマ娘略称化</option>
-                        <option value="replaceText">文字列置換</option>
-                        <option value="extractKeywords">頻出ワード抽出</option>
-                        <option value="manualCompress">辞書を使って圧縮</option>
-                    </optgroup>
-                </select>
-
-                <div id="replaceFields" class="operation-fields hidden">
-                    <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                    <input type="text" id="replaceTarget" placeholder="置換後">
-                </div>
-
-                <div id="dictFields" class="operation-fields hidden">
-                    <div style="font-size: 11px; color: var(--text-secondary);">
-                        「元の言葉=略称」で入力
-                    </div>
-                    <textarea id="compressDict" rows="3" style="min-height: 70px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
-                    <div style="font-size: 11px; color: var(--text-secondary);">
-                        頻出候補を見たい場合は、処理を「頻出ワード抽出」にして実行してください。
-                    </div>
-                </div>
-
-                <button id="runSelectedActionBtn" class="primary-btn" disabled>選択した処理を実行</button>
-            </div>
-
-            <!-- 既存ロジックを流用するための隠しボタン群 -->
-            <div id="legacyActionButtons" hidden aria-hidden="true">
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="trimSpace" type="button"></button>
-                    <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
-                    <button class="tool-btn" data-action="removeBreaks" type="button"></button>
-                    <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
-                    <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
-                    <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
-                    <button class="tool-btn" data-action="toUpperCase" type="button"></button>
-                    <button class="tool-btn" data-action="toLowerCase" type="button"></button>
-                    <button class="tool-btn" data-action="extractBrackets" type="button"></button>
-                    <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
-                    <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
-                </div>
-
-                <button id="replaceBtn" type="button"></button>
-                <button id="extractKeywordsBtn" type="button"></button>
-                <button id="compressBtn" type="button"></button>
-            </div>
-
-            <div class="section-header" style="margin-top: 5px;">
-                <label for="outputText">整形結果</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
-                </div>
-            </div>
-            
-            <div class="output-wrapper">
-                <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
-                <div id="outputPreview"></div>
-            </div>
-
-            <div class="action-row">
-                <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
-                <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 結果を前半へ</button>
-                <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
-            </div>
-        </main>
-    </div>
-
-    <!-- ==========================================
-         右パネル: 設定画面
-    =========================================== -->
-    <div id="settings-screen" class="screen dormant">
-        <header class="app-header">
-            <button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button>
-            <h1>設定</h1>
-            <span id="settings-save-notice" class="header-notice">※反映には保存が必要</span>
-            <button id="save-settings-btn" class="header-save-button">保存</button>
-        </header>
-        <main class="main-content">
-            <div class="settings-group">
-                <h3>デザイン</h3>
-                <label for="theme-select">表示テーマ:</label>
-                <select id="theme-select" aria-label="表示テーマ">
-                    <option value="light">ライトモード</option>
-                    <option value="dark">ダークモード</option>
-                    <option value="pastel-pink">パステルモード🩷</option>
-                    <option value="pastel-blue">パステルモード🩵</option>
-                    <option value="pastel-yellow">パステルモード🟡</option>
-                    <option value="pastel-purple">パステルモード🟣</option>
-                    <option value="pastel-rainbow">パステルモード🌈</option>
-                    <option value="turf">ターフモード🌱</option>
-                </select>
-            </div>
-
-            <div class="settings-group">
-                <h3>システム設定</h3>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="auto-save-settings-toggle">
-                    設定を即時反映する（自動保存）
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。
-                </p>
-
-                <label class="checkbox-label">
-                    <input type="checkbox" id="persist-workspace-toggle" checked>
-                    作業中のテキストを自動保存する
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ 前半/後半入力欄・出力欄・検索/置換文字列などをブラウザに自動保存し、再読み込み時に復元します。
-                </p>
-
-                <label class="checkbox-label">
-                    <input type="checkbox" id="abbr-response-toggle">
-                    圧縮後、AIの返答でも略号を使わせる
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オフ: AIには正式名称で返答するよう指示します。<br>
-                    ※ オン: AIには略号で返答するよう指示します（クライアント側で復元する前提）。
-                </p>
-            </div>
-
-            <div class="danger-zone">
-                <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.5 (Response Abbr Mode + Partial Clear)
-                </p>
-                <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ サーバー上の新しいコードを強制的に読み込みたい場合に使用します。
-                </p>
-                
-                <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」「作業中テキスト」などを全て削除し、初期状態に戻します。
-                </p>
-            </div>
-        </main>
-    </div>
-
-</div>
-
-<!-- 通知用トースト -->
-<div id="toast"></div>
-
-<!-- 頻出ワード抽出ダイアログ -->
-<dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden;">
-    <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
-        <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
-        <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
-        </p>
-        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
-        </div>
-        <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
-            <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
-        </div>
-    </div>
-</dialog>
-
-<!-- 確認ダイアログ -->
-<dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center;">
-    <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px;"></p>
-    <div class="dialog-actions" style="justify-content: center;">
-        <button id="confirmCancelBtn" class="dialog-cancel-btn">キャンセル</button>
-        <button id="confirmOkBtn" class="dialog-ok-btn">OK</button>
-    </div>
-</dialog>
-
-<script>
-    // ==========================================
-    // 1. PWA インストール対応 & ServiceWorker
-    // ==========================================
-    (function initPWA() {
-        const manifestJSON = {
-            name: "Toolbox PWA",
-            short_name: "Toolbox",
-            display: "standalone",
-            start_url: location.href,
-            background_color: "#ffffff",
-            theme_color: "#4a90e2",
-            icons:[{
-                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",
-                sizes: "192x192",
-                type: "image/svg+xml"
-            }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
-        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
-
-        const swCode = `
-            const CACHE_NAME = 'toolbox-pwa-v1';
-            self.addEventListener('install', e => { self.skipWaiting(); });
-            self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-            self.addEventListener('fetch', e => {
-                e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-            });
-            self.addEventListener('message', e => {
-                if (e.data && e.data.action === 'clearCache') {
-                    caches.keys().then(names => {
-                        for (let name of names) caches.delete(name);
-                    }).then(() => {
-                        e.source.postMessage({action: 'cacheCleared'});
-                    });
-                }
-            });
-        `;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
-        }
-    })();
-
-    // ==========================================
-    // Base62 エンコーダ（略称生成用）
-    // ==========================================
-    const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    function toBase62(num) {
-        if (num === 0) return BASE62_CHARS[0];
-        let result = '';
-        while (num > 0) {
-            result = BASE62_CHARS[num % 62] + result;
-            num = Math.floor(num / 62);
-        }
-        return result;
+async function fetchExactTokenCount(txt, provider, key) {
+  if (!txt || !key) return null;
+  
+  try {
+    if (provider === 'gemini') {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:countTokens?key=${key}`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: txt }] }] })
+      });
+      if (!r.ok) throw new Error('Gemini API error');
+      const d = await r.json();
+      return d.totalTokens;
+    } 
+    else if (provider === 'anthropic') {
+      const url = `https://api.anthropic.com/v1/messages/count_tokens`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          messages: [{ role: 'user', content: txt }]
+        })
+      });
+      if (!r.ok) throw new Error('Anthropic API error');
+      const d = await r.json();
+      return d.input_tokens;
     }
-
-    function generateAbbr(index) {
-        return 'v' + toBase62(index);
+    else if (provider === 'openai') {
+      // ユーザー環境のCORS制約を回避できない場合はフォールバック近似計算が走ります
+      const url = `https://api.openai.com/v1/chat/completions`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: txt }],
+          max_tokens: 1
+        })
+      });
+      if (!r.ok) throw new Error('OpenAI API error');
+      const d = await r.json();
+      return d.usage.prompt_tokens;
     }
-
-    // ==========================================
-    // 共通UIユーティリティ
-    // ==========================================
-    function escapeHtml(str) {
-        return String(str).replace(/[&<>"']/g, function(match) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-            return map[match];
-        });
+    else if (provider === 'grok') {
+      const url = `https://api.x.ai/v1/tokenize-text`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: 'grok-2-latest',
+          text: txt
+        })
+      });
+      if (!r.ok) throw new Error('Grok API error');
+      const d = await r.json();
+      return d.token_ids ? d.token_ids.length : (d.tokens ? d.tokens.length : null);
     }
+  } catch (e) {
+    console.warn(`${provider} 正確トークン取得失敗`, e);
+    return null;
+  }
+}
 
-    let toastTimeout;
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
-    }
+let tokenFetchTimer = null;
+const inputCount = document.getElementById('inputCount');
+const outputCount = document.getElementById('outputCount');
 
-    function showConfirm(message) {
-        return new Promise((resolve) => {
-            const dialog = document.getElementById('confirmDialog');
-            document.getElementById('confirmMessage').textContent = message;
-            
-            const okBtn = document.getElementById('confirmOkBtn');
-            const cancelBtn = document.getElementById('confirmCancelBtn');
-            
-            const cleanup = () => {
-                okBtn.removeEventListener('click', onOk);
-                cancelBtn.removeEventListener('click', onCancel);
-                dialog.close();
-            };
-            
-            const onOk = () => { cleanup(); resolve(true); };
-            const onCancel = () => { cleanup(); resolve(false); };
-            
-            okBtn.addEventListener('click', onOk);
-            cancelBtn.addEventListener('click', onCancel);
-            
-            dialog.showModal();
-        });
-    }
+async function updateCounts() {
+  sync();
+  const inTxt = hiddenInput.value;
+  const outTxt = document.getElementById('outputText').value;
+  
+  let inTok = estimateTokensImproved(inTxt);
+  let outTok = estimateTokensImproved(outTxt);
+  
+  inputCount.textContent = `文字数: ${inTxt.length} / トークン(概算): ${inTok}`;
+  outputCount.textContent = `文字数: ${outTxt.length} / トークン(概算): ${outTok}`;
 
-    // ==========================================
-    // 2. 画面遷移ロジック
-    // ==========================================
-    const screens = {
-        main: document.getElementById('main-screen'),
-        menu: document.getElementById('menu-screen'),
-        settings: document.getElementById('settings-screen')
-    };
+  const provider = appSettings.tokenCalcProvider;
+  let activeKey = '';
+  if (provider === 'gemini') activeKey = appSettings.geminiApiKey;
+  if (provider === 'anthropic') activeKey = appSettings.anthropicApiKey;
+  if (provider === 'openai') activeKey = appSettings.openaiApiKey;
+  if (provider === 'grok') activeKey = appSettings.grokApiKey;
 
-    function showScreen(targetScreen) {
-        Object.values(screens).forEach(screen => {
-            screen.classList.remove('active');
-            screen.classList.remove('dormant');
-        });
+  if (appSettings.useApiTokenCount && activeKey) {
+    clearTimeout(tokenFetchTimer);
+    inputCount.style.opacity = '0.5'; 
+    outputCount.style.opacity = '0.5';
+    
+    tokenFetchTimer = setTimeout(async () => {
+      const [exactIn, exactOut] = await Promise.all([
+        fetchExactTokenCount(inTxt, provider, activeKey),
+        outTxt ? fetchExactTokenCount(outTxt, provider, activeKey) : Promise.resolve(0)
+      ]);
+      
+      if (exactIn !== null) {
+        inputCount.textContent = `文字数: ${inTxt.length} / トークン(✨正確): ${exactIn}`;
+      }
+      if (exactOut !== null && outTxt.length > 0) {
+        outputCount.textContent = `文字数: ${outTxt.length} / トークン(✨正確): ${exactOut}`;
+      }
+      
+      inputCount.style.opacity = '1'; 
+      outputCount.style.opacity = '1';
+    }, 800);
+  }
+}
 
-        if (targetScreen === 'main') {
-            screens.main.style.transform = 'translateX(0)';
-            screens.menu.style.transform = 'translateX(-100%)';
-            screens.settings.style.transform = 'translateX(100%)';
-            screens.main.classList.add('active');
-        } else if (targetScreen === 'menu') {
-            screens.main.style.transform = 'translateX(100%)';
-            screens.menu.style.transform = 'translateX(0)';
-            screens.settings.style.transform = 'translateX(200%)';
-            screens.menu.classList.add('active');
-        } else if (targetScreen === 'settings') {
-            screens.main.style.transform = 'translateX(-100%)';
-            screens.menu.style.transform = 'translateX(-200%)';
-            screens.settings.style.transform = 'translateX(0)';
-            screens.settings.classList.add('active');
-        }
+/*--- UI イベントとハイライト機能 ---*/
+const keywordDialog = document.getElementById('keywordDialog');
+const closeKeywordDialog = document.getElementById('closeKeywordDialog');
+const keywordList = document.getElementById('keywordList');
+const dictArea = document.getElementById('compressDict');
 
-        setTimeout(() => {
-            Object.values(screens).forEach(screen => {
-                if (!screen.classList.contains('active')) {
-                    screen.classList.add('dormant');
-                }
-            });
-        }, 350);
-    }
+function renderKeywordList(keywords) {
+  keywordList.innerHTML = '';
+  keywords.sort((a, b) => b.savings - a.savings).slice(0, 50).forEach(kw => {
+    const li = document.createElement('li');
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+    li.style.marginBottom = '8px';
+    li.style.padding = '8px';
+    li.style.background = 'var(--bg-secondary)';
+    li.style.borderRadius = '4px';
 
-    document.getElementById('goto-menu-btn').addEventListener('click', () => showScreen('menu'));
-    document.getElementById('goto-settings-btn').addEventListener('click', () => showScreen('settings'));
-    document.getElementById('back-to-main-from-menu').addEventListener('click', () => showScreen('main'));
-    document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
-
-    // ==========================================
-    // 3. 要素取得
-    // ==========================================
-    const themeSelect = document.getElementById('theme-select');
-    const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
-    const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
-    const abbrResponseToggle = document.getElementById('abbr-response-toggle');
-
-    const dictArea = document.getElementById('compressDict');
-    const saveNotice = document.getElementById('settings-save-notice');
-    const saveBtn = document.getElementById('save-settings-btn');
-
-    const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
-    const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
-    const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
-    const autoCompressExcludeAlnumInput = document.getElementById('autoCompressExcludeAlnum');
-
-    const inputEl = document.getElementById('inputText'); // 内部用
-    const inputPart1El = document.getElementById('inputTextPart1');
-    const inputPart2El = document.getElementById('inputTextPart2');
-    const clearPart1Btn = document.getElementById('clearPart1Btn');
-    const clearPart2Btn = document.getElementById('clearPart2Btn');
-
-    const outputEl = document.getElementById('outputText');
-    const replaceSourceEl = document.getElementById('replaceSource');
-    const replaceTargetEl = document.getElementById('replaceTarget');
-
-    const inputCount = document.getElementById('inputCount');
-    const inputCountPart1 = document.getElementById('inputCountPart1');
-    const inputCountPart2 = document.getElementById('inputCountPart2');
-    const outputCount = document.getElementById('outputCount');
-
-    const actionPicker = document.getElementById('actionPicker');
-    const replaceFields = document.getElementById('replaceFields');
-    const dictFields = document.getElementById('dictFields');
-    const runSelectedActionBtn = document.getElementById('runSelectedActionBtn');
-    const responseModeStatus = document.getElementById('responseModeStatus');
-
-    const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
-    const outputPreview = document.getElementById('outputPreview');
-
-    // ==========================================
-    // 分割入力ヘルパー
-    // ==========================================
-    const INPUT_JOINER = '';
-    let lastFocusedInputPart = inputPart1El;
-
-    function buildCombinedInputText() {
-        const part1 = inputPart1El.value || '';
-        const part2 = inputPart2El.value || '';
-
-        if (!part1) return part2;
-        if (!part2) return part1;
-        return part1 + INPUT_JOINER + part2;
-    }
-
-    function syncCombinedInput() {
-        inputEl.value = buildCombinedInputText();
-    }
-
-    function setSplitInputText(fullText) {
-        inputPart1El.value = fullText || '';
-        inputPart2El.value = '';
-        syncCombinedInput();
-    }
-
-    function updateResponseModeStatus() {
-        if (abbrResponseToggle.checked) {
-            responseModeStatus.innerHTML = '<strong>現在の返答モード:</strong> AIに「返答でも略号を使う」よう指示します。クライアント側で正式名称へ復元する前提です。';
-        } else {
-            responseModeStatus.innerHTML = '<strong>現在の返答モード:</strong> AIに「返答では正式名称を使う」よう指示します。';
-        }
-    }
-
-    function getCompressionHeaderPrefix() {
-        if (abbrResponseToggle.checked) {
-            return "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. In your responses, use the SAME abbreviations from the mapping below whenever possible. The client will restore them to the original names later.\n【重要指示】以下の対応表にある語については、あなたの出力（返答）でも可能な限り同じ略称を使ってください。後でクライアント側で正式名称に復元します。\n[ResponseMode] ABBR\n\n[Mapping]\n";
-        }
-        return "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n[ResponseMode] FULL\n\n[Mapping]\n";
-    }
-
-    // ==========================================
-    // 4. 設定保存・読み込みロジック
-    // ==========================================
-    const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
-    let appSettings = {
-        theme: 'light',
-        autoSave: false,
-        persistWorkspace: true,
-        allowAbbrResponse: false,
-        compressDict: defaultDict,
-        autoCompressMinLen: 3,
-        autoCompressMinCount: 2,
-        autoCompressMaxItems: 20,
-        autoCompressExcludeAlnum: false,
-
-        // 作業状態
-        inputText: '',
-        inputTextPart1: '',
-        inputTextPart2: '',
-        outputText: '',
-        replaceSource: '',
-        replaceTarget: '',
-        selectedAction: ''
-    };
-
-    function loadSettings() {
-        const saved = localStorage.getItem('toolbox_settings');
-        if (saved) {
-            try {
-                Object.assign(appSettings, JSON.parse(saved));
-            } catch (e) {
-                console.error("設定の読み込みに失敗しました");
-            }
-        }
-
-        const oldTheme = localStorage.getItem('formatter_theme');
-        if (oldTheme && !saved) appSettings.theme = oldTheme;
-        const oldDict = localStorage.getItem('formatter_compress_dict');
-        if (oldDict && !saved) appSettings.compressDict = oldDict;
-
-        themeSelect.value = appSettings.theme;
-        autoSaveToggle.checked = appSettings.autoSave;
-        persistWorkspaceToggle.checked = appSettings.persistWorkspace;
-        abbrResponseToggle.checked = !!appSettings.allowAbbrResponse;
-        dictArea.value = appSettings.compressDict;
-
-        autoCompressMinLenInput.value = appSettings.autoCompressMinLen;
-        autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
-        autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
-        autoCompressExcludeAlnumInput.checked = !!appSettings.autoCompressExcludeAlnum;
-
-        if (appSettings.persistWorkspace) {
-            inputPart1El.value = appSettings.inputTextPart1 || appSettings.inputText || '';
-            inputPart2El.value = appSettings.inputTextPart2 || '';
-            outputEl.value = appSettings.outputText || '';
-            replaceSourceEl.value = appSettings.replaceSource || '';
-            replaceTargetEl.value = appSettings.replaceTarget || '';
-            actionPicker.value = appSettings.selectedAction || '';
-        } else {
-            inputPart1El.value = '';
-            inputPart2El.value = '';
-            outputEl.value = '';
-            replaceSourceEl.value = '';
-            replaceTargetEl.value = '';
-            actionPicker.value = '';
-        }
-
-        applyTheme(appSettings.theme);
-        updateSaveUiState();
-        updateResponseModeStatus();
-        syncCombinedInput();
-        updateActionPickerUi();
-    }
-
-    function collectCurrentState() {
-        appSettings.theme = themeSelect.value;
-        appSettings.autoSave = autoSaveToggle.checked;
-        appSettings.persistWorkspace = persistWorkspaceToggle.checked;
-        appSettings.allowAbbrResponse = abbrResponseToggle.checked;
-        appSettings.compressDict = dictArea.value;
-
-        appSettings.autoCompressMinLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        appSettings.autoCompressExcludeAlnum = autoCompressExcludeAlnumInput.checked;
-
-        if (appSettings.persistWorkspace) {
-            syncCombinedInput();
-
-            appSettings.inputText = inputEl.value;
-            appSettings.inputTextPart1 = inputPart1El.value;
-            appSettings.inputTextPart2 = inputPart2El.value;
-            appSettings.outputText = outputEl.value;
-            appSettings.replaceSource = replaceSourceEl.value;
-            appSettings.replaceTarget = replaceTargetEl.value;
-            appSettings.selectedAction = actionPicker.value;
-        } else {
-            appSettings.inputText = '';
-            appSettings.inputTextPart1 = '';
-            appSettings.inputTextPart2 = '';
-            appSettings.outputText = '';
-            appSettings.replaceSource = '';
-            appSettings.replaceTarget = '';
-            appSettings.selectedAction = '';
-        }
-    }
-
-    function saveSettings(showMsg = true) {
-        collectCurrentState();
+    const info = document.createElement('span');
+    info.textContent = `「${kw.phrase}」 (${kw.count}回出現 / 約${kw.savings}文字削減)`;
+    
+    const addBtn = document.createElement('button');
+    addBtn.textContent = '+辞書へ';
+    addBtn.style.padding = '4px 8px';
+    addBtn.onclick = () => {
+      if (dictArea.value.includes(kw.phrase)) {
+        showToast('既に辞書に存在します');
+        return;
+      }
+      const abbr = generateAbbr(dictArea.value.split('\n').length + 1);
+      const newEntry = `${kw.phrase}=${abbr}`;
+      dictArea.value = dictArea.value ? dictArea.value + '\n' + newEntry : newEntry;
+      appSettings.compressDict = dictArea.value;
+      if (appSettings.autoSave) {
         localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        localStorage.removeItem('formatter_theme');
-        localStorage.removeItem('formatter_compress_dict');
-
-        applyTheme(appSettings.theme);
-        updateResponseModeStatus();
-        if (showMsg) showToast('設定を保存しました');
-    }
-
-    let workspaceSaveTimer = null;
-    function saveWorkspaceDebounced() {
-        if (!persistWorkspaceToggle.checked) return;
-        clearTimeout(workspaceSaveTimer);
-        workspaceSaveTimer = setTimeout(() => {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }, 500);
-    }
-
-    function updateSaveUiState() {
-        if (autoSaveToggle.checked) {
-            saveNotice.style.display = 'none';
-            saveBtn.style.display = 'none';
-        } else {
-            saveNotice.style.display = 'inline';
-            saveBtn.style.display = 'inline-block';
-        }
-    }
-
-    saveBtn.addEventListener('click', () => saveSettings(true));
-    autoSaveToggle.addEventListener('change', () => {
-        updateSaveUiState();
-        saveSettings(false);
-    });
-    persistWorkspaceToggle.addEventListener('change', () => {
-        saveSettings(false);
-    });
-
-    const handleSettingChange = () => {
-        updateResponseModeStatus();
-        if (autoSaveToggle.checked) saveSettings(false);
+      }
+      addBtn.disabled = true;
+      addBtn.textContent = '追加済';
+      showToast(`辞書に追加しました: ${newEntry}`);
     };
-    themeSelect.addEventListener('change', handleSettingChange);
-    abbrResponseToggle.addEventListener('change', handleSettingChange);
-    dictArea.addEventListener('input', handleSettingChange);
-    autoCompressMinLenInput.addEventListener('change', handleSettingChange);
-    autoCompressMinCountInput.addEventListener('change', handleSettingChange);
-    autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
-    autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
 
-    function applyTheme(themeName) {
-        document.body.className = '';
-        if (themeName !== 'light') {
-            document.body.classList.add(themeName + '-mode');
-        }
-        const colors = {
-            'light': '#4a90e2', 'dark': '#007aff', 'pastel-pink': '#ff8fab',
-            'pastel-blue': '#87cefa', 'pastel-yellow': '#ffd700', 'pastel-purple': '#ab47bc',
-            'pastel-rainbow': '#ffadad', 'turf': '#4CAF50'
-        };
-        document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
+    li.appendChild(info);
+    li.appendChild(addBtn);
+    keywordList.appendChild(li);
+  });
+  keywordDialog.classList.add('active');
+}
+
+closeKeywordDialog.addEventListener('click', () => {
+  keywordDialog.classList.remove('active');
+});
+
+const outputEl = document.getElementById('outputText');
+const outputPreview = document.getElementById('outputPreview');
+const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
+
+function getHighlightedHTML(text, searchStr) {
+  if (!text) return '';
+  let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (searchStr) {
+    const safeSearch = searchStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const regex = new RegExp(safeSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    html = html.replace(regex, `<mark style="background:orange;color:#fff;">$&</mark>`);
+  } else {
+    // n-gram 自動ハイライト (8文字以上反復)
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' });
+    const chars = Array.from(segmenter.segment(text)).map(s => s.segment);
+    const n = 8;
+    const map = new Map();
+    for (let i = 0; i <= chars.length - n; i++) {
+      const chunk = chars.slice(i, i + n).join('');
+      map.set(chunk, (map.get(chunk) || 0) + 1);
     }
-
-    // ==========================================
-    // Danger Zone
-    // ==========================================
-    document.getElementById('update-app-btn').addEventListener('click', async () => {
-        const confirmed = await showConfirm("アプリのキャッシュをクリアして最新版を再取得しますか？\n(設定と辞書は保持されます。ページがリロードされます)");
-        if (confirmed) {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.addEventListener('message', function handler(event) {
-                    if (event.data && event.data.action === 'cacheCleared') {
-                        navigator.serviceWorker.removeEventListener('message', handler);
-                        window.location.reload(true);
-                    }
-                });
-                navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
-            } else {
-                window.location.reload(true);
-            }
-        }
+    map.forEach((count, chunk) => {
+      if (count > 1) {
+        const safeChunk = chunk.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const regex = new RegExp(safeChunk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        html = html.replace(regex, `<mark style="background:#4a90e2;color:#fff;">$&</mark>`);
+      }
     });
+  }
+  return html.replace(/\n/g, '<br>');
+}
+
+let isHighlightMode = false;
+toggleHighlightBtn.addEventListener('click', () => {
+  isHighlightMode = !isHighlightMode;
+  if (isHighlightMode) {
+    outputPreview.innerHTML = getHighlightedHTML(outputEl.value, document.getElementById('highlightSearchInput')?.value || '');
+    outputEl.style.display = 'none';
+    outputPreview.style.display = 'block';
+    toggleHighlightBtn.textContent = 'ハイライト解除';
+    showToast('ハイライト表示をオンにしました');
+  } else {
+    outputEl.style.display = 'block';
+    outputPreview.style.display = 'none';
+    toggleHighlightBtn.textContent = 'ハイライト表示';
+    showToast('ハイライト表示をオフにしました');
+  }
+});
+
+/*--- 各種操作ボタンのバインド ---*/
+document.getElementById('clearBtn').addEventListener('click', () => {
+  inputPart1.value = '';
+  inputPart2.value = '';
+  outputEl.value = '';
+  updateCounts();
+  showToast('クリアしました');
+});
+
+document.getElementById('applyToInputBtn').addEventListener('click', () => {
+  if (!outputEl.value) {
+    showToast('出力テキストがありません');
+    return;
+  }
+  inputPart1.value = outputEl.value;
+  inputPart2.value = '';
+  outputEl.value = '';
+  updateCounts();
+  showToast('出力を入力領域へ適用しました');
+});
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if (!outputEl.value) {
+    showToast('コピーするテキストがありません');
+    return;
+  }
+  navigator.clipboard.writeText(outputEl.value).then(() => {
+    showToast('クリップボードにコピーしました');
+  }).catch(() => {
+    showToast('コピーに失敗しました');
+  });
+});
+
+document.getElementById('runSelectedActionBtn').addEventListener('click', () => {
+  const action = document.getElementById('actionSelect').value;
+  format(action);
+});
+
+inputPart1.addEventListener('input', updateCounts);
+inputPart2.addEventListener('input', updateCounts);
+outputEl.addEventListener('input', updateCounts);
+
+window.addEventListener('beforeunload', () => {
+  if (appSettings.persistWorkspace) {
+    appSettings.workspaceInput1 = inputPart1.value;
+    appSettings.workspaceInput2 = inputPart2.value;
+    appSettings.workspaceOutput = outputEl.value;
+    localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+  }
+});
+
+window.addEventListener('pagehide', () => {
+  if (appSettings.persistWorkspace) {
+    appSettings.workspaceInput1 = inputPart1.value;
+    appSettings.workspaceInput2 = inputPart2.value;
+    appSettings.workspaceOutput = outputEl.value;
+    localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+  }
+});
+
+/* 初期化実行 */
+if (appSettings.persistWorkspace) {
+  if (appSettings.workspaceInput1) inputPart1.value = appSettings.workspaceInput1;
+  if (appSettings.workspaceInput2) inputPart2.value = appSettings.workspaceInput2;
+  if (appSettings.workspaceOutput) outputEl.value = appSettings.workspaceOutput;
+}
+updateCounts();
 
-    document.getElementById('clear-data-btn').addEventListener('click', async () => {
-        const confirmed = await showConfirm("本当にすべてのデータ（圧縮辞書・テーマ設定・作業中テキストなど）を削除しますか？\nこの操作は元に戻せません。");
-        if (confirmed) {
-            localStorage.removeItem('toolbox_settings');
-            localStorage.removeItem('formatter_theme');
-            localStorage.removeItem('formatter_compress_dict');
-            showToast("全データをクリアしました。初期状態に戻ります。");
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 1500);
-        }
-    });
-
-    // ==========================================
-    // 5. テキスト整形ロジック & トークン計算
-    // ==========================================
-    let isHighlightMode = false;
-
-    function containsAlnum(str) {
-        return /[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(str);
-    }
-
-    function shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum = false) {
-        if (!phrase) return true;
-        if (phrase.length < minLen) return true;
-        if (/^[ぁ-ん]+$/.test(phrase)) return true;
-        if (/^[!-/:-@[-`{-~]+$/.test(phrase)) return true;
-        if (excludeAlnum && containsAlnum(phrase)) return true;
-        return false;
-    }
-
-    function estimateTokens(text) {
-        if (!text) return 0;
-        let asciiCount = 0;
-        let nonAsciiCount = 0;
-        for (let i = 0; i < text.length; i++) {
-            if (text.charCodeAt(i) <= 127) {
-                asciiCount++;
-            } else {
-                nonAsciiCount++;
-            }
-        }
-        return Math.ceil(asciiCount * 0.3 + nonAsciiCount * 1.15);
-    }
-
-    function updateCounts() {
-        syncCombinedInput();
-
-        const inTxt = inputEl.value;
-        const inTxt1 = inputPart1El.value;
-        const inTxt2 = inputPart2El.value;
-        const outTxt = outputEl.value;
-        
-        const inLen = inTxt.length;
-        const outLen = outTxt.length;
-        
-        const inTok = estimateTokens(inTxt);
-        const outTok = estimateTokens(outTxt);
-
-        inputCount.textContent = `合計${inLen}文字 (約${inTok}ﾄｰｸﾝ)`;
-        inputCountPart1.textContent = `${inTxt1.length}文字`;
-        inputCountPart2.textContent = `${inTxt2.length}文字`;
-        
-        if (outLen > 0 && inTok > outTok) {
-            const diff = inTok - outTok;
-            outputCount.innerHTML = `${outLen}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
-        } else if (outLen > 0 && inTok < outTok) {
-            const diff = outTok - inTok;
-            outputCount.innerHTML = `${outLen}文字 (約${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${diff}増加</span>`;
-        } else {
-            outputCount.textContent = `${outLen}文字 (約${outTok}ﾄｰｸﾝ)`;
-        }
-    }
-
-    function updateActionPickerUi() {
-        const action = actionPicker.value;
-
-        replaceFields.classList.toggle('hidden', action !== 'replaceText');
-        dictFields.classList.toggle('hidden', action !== 'manualCompress');
-
-        const labelMap = {
-            replaceText: '文字列を置換',
-            extractKeywords: '頻出ワードを抽出',
-            manualCompress: '辞書を使って圧縮',
-            toUmaAbbr: 'ウマ娘略称化を実行'
-        };
-
-        runSelectedActionBtn.textContent = labelMap[action] || '選択した処理を実行';
-        runSelectedActionBtn.disabled = !action;
-    }
-
-    [inputPart1El, inputPart2El].forEach(el => {
-        el.addEventListener('focus', () => {
-            lastFocusedInputPart = el;
-        });
-
-        el.addEventListener('input', () => {
-            syncCombinedInput();
-            updateCounts();
-            saveWorkspaceDebounced();
-        });
-    });
-
-    outputEl.addEventListener('input', () => {
-        updateCounts();
-        saveWorkspaceDebounced();
-    });
-    replaceSourceEl.addEventListener('input', saveWorkspaceDebounced);
-    replaceTargetEl.addEventListener('input', saveWorkspaceDebounced);
-    actionPicker.addEventListener('change', () => {
-        updateActionPickerUi();
-        saveWorkspaceDebounced();
-    });
-
-    function resetHighlightMode() {
-        if (isHighlightMode) {
-            isHighlightMode = false;
-            outputEl.style.display = 'block';
-            outputPreview.style.display = 'none';
-            toggleHighlightBtn.textContent = '🔍 色付け確認';
-            toggleHighlightBtn.classList.remove('active-mode');
-        }
-    }
-
-    const kanaMap = {
-        'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
-        'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
-        'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ',
-        'ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ',
-        'ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト',
-        'ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ',
-        'ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ',
-        'ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン',
-        'ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ',
-        '｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'
-    };
-    const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-    const umaMap = {
-        'スペシャルウィーク': 'SW', 'スペ': 'SP',
-        'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
-        'トウカイテイオー': 'TT', 'テイオー': 'TO',
-        'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
-        'フジキセキ': 'FK', 'フジ': 'FJ',
-        'オグリキャップ': 'OC', 'オグリ': 'OG',
-        'ゴールドシップ': 'GS', 'ゴルシ': 'GOS',
-        'ウオッカ': 'VDK',
-        'ダイワスカーレット': 'DS', 'ダスカ': 'DSK', 'スカーレット': 'SCL',
-        'タイキシャトル': 'TS', 'タイキ': 'TIK', 'シャトル': 'SHT',
-        'グラスワンダー': 'GW', 'グラス': 'GRS',
-        'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
-        'メジロマックイーン': 'MMQ', 'マックイーン': 'MCQ',
-        'エルコンドルパサー': 'ECP', 'エル': 'EL',
-        'テイエムオペラオー': 'TMO', 'オペラオー': 'OPO',
-        'ナリタブライアン': 'NB', 'ブライアン': 'BRI',
-        'シンボリルドルフ': 'SR', 'ルドルフ': 'RDF', '会長': 'KCH',
-        'エアグルーヴ': 'AG', 'グルーヴ': 'GRV',
-        'アグネスデジタル': 'AD', 'デジタル': 'DGT',
-        'セイウンスカイ': 'SUS', 'スカイ': 'SKY',
-        'タマモクロス': 'TC', 'タマモ': 'TMM', 'タマ': 'TMA',
-        'ファインモーション': 'FM', 'ファイン': 'FIN',
-        'ビワハヤヒデ': 'BHH', 'ハヤヒデ': 'HYH',
-        'マヤノトップガン': 'MTG', 'マヤノ': 'MYN', 'マヤ': 'MYA',
-        'マンハッタンカフェ': 'MC', 'カフェ': 'CAF',
-        'ミホノブルボン': 'MB', 'ブルボン': 'BRB',
-        'メジロライアン': 'MR', 'ライアン': 'RYN',
-        'ヒシアケボノ': 'HAK', 'アケボノ': 'AKB',
-        'ユキノビジン': 'YB', 'ユキノ': 'YKN',
-        'ライスシャワー': 'RS', 'ライス': 'RIC',
-        'アイネスフウジン': 'AF', 'アイネス': 'INS',
-        'アグネスタキオン': 'AT', 'タキオン': 'TKO',
-        'アドマイヤベガ': 'AV', 'アヤベ': 'AYB',
-        'イナリワン': 'IW', 'イナリ': 'INR',
-        'ウイニングチケット': 'WT', 'チケゾー': 'TKZ', 'チケット': 'TCK',
-        'エアシャカール': 'ASK', 'シャカール': 'SHK',
-        'エイシンフラッシュ': 'EF', 'フラッシュ': 'FLS',
-        'カレンチャン': 'CC', 'カレン': 'KRN',
-        'カワカミプリンセス': 'KP', 'カワカミ': 'KWK',
-        'ゴールドシチー': 'GC', 'シチー': 'CTY',
-        'サクラバクシンオー': 'SBO', 'バクシンオー': 'BSO', 'バクシン': 'BKS',
-        'シーキングザパール': 'SZP', 'パール': 'PRL',
-        'シンコウウインディ': 'SKW', 'ウインディ': 'WND',
-        'スイープトウショウ': 'SWT', 'スイープ': 'SWP',
-        'スーパークリーク': 'SCR', 'クリーク': 'CRK',
-        'スマートファルコン': 'SF', 'ファル子': 'FLK', 'ファルコン': 'FLC',
-        'ゼンノロブロイ': 'ZRR', 'ロブロイ': 'RBR',
-        'トーセンジョーダン': 'TJ', 'ジョーダン': 'JDN',
-        'ナカヤマフェスタ': 'NF', 'ナカヤマ': 'NKY', 'フェスタ': 'FST',
-        'ナリタタイシン': 'NT', 'タイシン': 'TSN',
-        'ニシノフラワー': 'NIF', 'ニシノ': 'NSN', 'フラワー': 'FLW',
-        'ハルウララ': 'HU', 'ウララ': 'URR',
-        'バンブーメモリー': 'BM', 'バンブー': 'BNB',
-        'ビコーペガサス': 'BP', 'ビコー': 'BKO',
-        'マーベラスサンデー': 'MVS', 'マーベラス': 'MRV',
-        'マチカネフクキタル': 'MFK', 'フクキタル': 'FKK',
-        'ミスターシービー': 'MCB', 'シービー': 'CB',
-        'メイショウドトウ': 'MSD', 'ドトウ': 'DTO',
-        'メジロドーベル': 'MD', 'ドーベル': 'DBL',
-        'ナイスネイチャ': 'NN', 'ネイチャ': 'NTC',
-        'キングヘイロー': 'KH', 'キング': 'KNG',
-        'マチカネタンホイザ': 'MTH', 'タンホイザ': 'THZ', 'マチタン': 'MCT',
-        'イクノディクタス': 'ID', 'イクノ': 'IKN',
-        'メジロパーマー': 'MP', 'パーマー': 'PAM', 'パマ': 'PMA',
-        'ダイタクヘリオス': 'DTH', 'ヘリオス': 'HRO',
-        'ツインターボ': 'TTB', 'ターボ': 'TRB',
-        'サトノダイヤモンド': 'SDD', 'ダイヤ': 'DIA',
-        'キタサンブラック': 'KB', 'キタサン': 'KTS',
-        'サクラチヨノオー': 'SCO', 'チヨノオー': 'CYO',
-        'シリウスシンボリ': 'SSB', 'シリウス': 'SRS',
-        'メジロアルダン': 'MA', 'アルダン': 'ARD',
-        'ヤエノムテキ': 'YM', 'ヤエノ': 'YEN',
-        'ツルマルツヨシ': 'TMT', 'ツヨシ': 'TYS',
-        'メジロブライト': 'MBR', 'ブライト': 'BRT',
-        'サクラローレル': 'SL', 'ローレル': 'LRL',
-        'ナリタトップロード': 'NTR', 'トップロード': 'TPR', 'トプロ': 'TPR2',
-        'ヤマニンゼファー': 'YZ', 'ゼファー': 'ZPH',
-        'フリオーソ': 'FRI',
-        'トランセンド': 'TRC',
-        'エスポワールシチー': 'ESC', 'エスポワール': 'ESP',
-        'ノースフライト': 'NFL', 'フライト': 'FRT',
-        'シンボリクリスエス': 'SKS', 'クリスエス': 'KRS', 'ボリクリ': 'BKR',
-        'タニノギムレット': 'TG', 'ギムレット': 'GMR',
-        'ダイイチルビー': 'DIR', 'ルビー': 'RBY',
-        'メジロラモーヌ': 'MLM', 'ラモーヌ': 'RMN',
-        'アストンマーチャン': 'AM', 'マーチャン': 'MCH',
-        'サトノクラウン': 'SCW', 'クラウン': 'CRW',
-        'シュヴァルグラン': 'SVG', 'シュヴァル': 'CHV',
-        'ヴィルシーナ': 'VRS',
-        'ヴィブロス': 'VIV',
-        'ダンツフレーム': 'DF', 'ダンツ': 'DNT',
-        'ケイエスミラクル': 'KSM', 'ミラクル': 'MRC',
-        'ジャングルポケット': 'JP', 'ポッケ': 'POK',
-        'ビリーヴ': 'BLV',
-        'ノーリーズン': 'NR',
-        'スティルインラブ': 'SIL', 'スティル': 'STL',
-        'コパノリッキー': 'CPR', 'リッキー': 'RCK',
-        'ホッコータルマエ': 'HT', 'タルマエ': 'TRM',
-        'ワンダーアキュート': 'WA', 'アキュート': 'ACT',
-        'サウンズオブアース': 'SOE', 'アース': 'ERS',
-        'ロイスアンドロイス': 'RAR', 'ロイス': 'ROI',
-        'カツラギエース': 'KA', 'エース': 'ACE',
-        'ネオユニヴァース': 'NU', 'ネオユニ': 'NEY',
-        'ヒシミラクル': 'HM', 'ヒシミ': 'HSM',
-        'タップダンスシチー': 'TDS', 'タップ': 'TAP',
-        'ドゥラメンテ': 'DRM', 'ドゥラ': 'DUR',
-        'ラインクラフト': 'RK', 'クラフト': 'CRF',
-        'シーザリオ': 'CZR',
-        'エアメサイア': 'AMS', 'メサイア': 'MSI',
-        'フサイチパンドラ': 'FP', 'パンドラ': 'PND',
-        'ブエナビスタ': 'BV', 'ブエナ': 'BUE',
-        'オルフェーヴル': 'ORF', 'オルフェ': 'ORP',
-        'ジェンティルドンナ': 'GD', 'ジェンティル': 'GNT',
-        'ウインバリアシオン': 'WV', 'バリアシオン': 'VAR',
-        'ドリームジャーニー': 'DJ', 'ジャーニー': 'JRN',
-        'カルストンライトオ': 'CLO', 'ライトオ': 'RTO',
-        'デュランダル': 'DRD',
-        'バブルガムフェロー': 'BGF', 'バブル': 'BBL',
-        'フェノーメノ': 'FNM',
-        'グランアレグリア': 'GAL', 'グラン': 'GRN',
-        'ラヴズオンリーユー': 'LOY', 'ラヴズ': 'LOV',
-        'クロノジェネシス': 'CG', 'クロノ': 'CRN',
-        'ステイゴールド': 'STG', 'ステゴ': 'STG2',
-        'キセキ': 'KSK',
-        'デアリングタクト': 'DAT', 'デアタク': 'DAT2',
-        'デアリングハート': 'DAH',
-        'アドマイヤグルーヴ': 'AMG',
-        'サクラチトセオー': 'SCT', 'チトセオー': 'CTO',
-        'ブラストワンピース': 'BWP', 'ブラスト': 'BLS',
-        'アーモンドアイ': 'AAI',
-        'ラッキーライラック': 'LL', 'ライラック': 'LIL',
-        'カレンブーケドール': 'CBD', 'ブーケドール': 'BKD',
-        'レッドディザイア': 'RD', 'ディザイア': 'DZI',
-        'ダーレーアラビアン': 'DLA', 'ダーレー': 'DRL',
-        'ゴドルフィンバルブ': 'GOB', 'ゴドルフィン': 'GDF',
-        'バイアリーターク': 'BYT', 'バイアリー': 'BYA',
-        'セントライト': 'SNL',
-        'スピードシンボリ': 'SPS',
-        'ハイセイコー': 'HSK',
-        'モンジュー': 'MNJ',
-        'ハッピーミーク': 'HPM', 'ミーク': 'MEK',
-        'ビターグラッセ': 'BTG', 'グラッセ': 'GLS',
-        'リトルココン': 'LCC', 'ココン': 'CCN',
-        'ライトハロー': 'LH', 'ハロー': 'HLO',
-        'ヴェニュスパーク': 'VP', 'ヴェニュス': 'VNS',
-        'リガントーナ': 'RGT', 'リガン': 'RGN',
-        'ソノンエルフィー': 'SEF', 'エルフィー': 'ELF',
-        'シュガーライツ': 'SGL', 'シュガー': 'SGR',
-        'タッカーブライン': 'TKB', 'タッカー': 'TAK',
-        'ユノハナブルーム': 'YHB', 'ユノハナ': 'YNH',
-        '駿川たづな': 'HT2', 'たづな': 'TDN',
-        '秋川やよい': 'AY', '理事長': 'RJC',
-        '乙名史悦子': 'OE', '乙名史': 'OTN', '記者': 'KSH',
-        '桐生院葵': 'KA2', '桐生院': 'KRY',
-        '安心沢刺々美': 'ASS', '安心沢': 'ANS',
-        '樫本理子': 'KR', '樫本': 'KSM2', '代理': 'DIR2',
-        '佐岳メイ': 'SM', 'メイ': 'MEI',
-        '都留岐涼花': 'TR', '都留岐': 'TRG',
-        '保科健子': 'HK', '保科': 'HSN',
-        '赤坂美聡': 'AKM', '赤坂': 'AKS', '実況': 'JKY',
-        '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
-        'トレーナー': 'TNR',
-
-        '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
-        'あたし': 'ATH', 'アタシ': 'ATK',
-        '僕': 'BOK', 'ぼく': 'BKH', 'ボク': 'BKK',
-        '俺': 'ORE', 'おれ': 'ORH', 'オレ': 'ORK',
-        '自分': 'JBN', 'じぶん': 'JBH', 'ジブン': 'JBK',
-        'ウチ': 'UCK', 'うち': 'UCH',
-        'わたくし': 'WTX', 'ワタクシ': 'WTZ',
-        '余': 'YOO', '妾': 'WRW',
-
-        'あなた': 'YUA', 'アナタ': 'YUK', '貴方': 'YUJ', '貴女': 'YUW',
-        'あんた': 'ANA', 'アンタ': 'ANK',
-        'きみ': 'KIM', 'キミ': 'KMK', '君': 'KMJ',
-        'おまえ': 'OMA', 'オマエ': 'OMK', 'お前': 'OMJ',
-        'てめえ': 'TME', 'テメエ': 'TMK', 'てめぇ': 'TMm', '手前': 'TMJ',
-        'きさま': 'KSA', 'キサマ': 'KSK2', '貴様': 'KSJ',
-        'おのれ': 'ONO', 'オノレ': 'ONK', '己': 'ONJ',
-        'おぬし': 'ONU', 'オヌシ': 'ONK2', 'お主': 'ONZ',
-        'なんじ': 'NAN', 'ナンジ': 'NNK', '汝': 'NNZ',
-        'そなた': 'SNT', 'ソナタ': 'SNK', '其方': 'SNJ',
-        'そっち': 'SOC', 'ソッチ': 'SCK',
-        'おたく': 'OTA', 'オタク': 'OTK', 'お宅': 'OTJ',
-
-        'ウマ娘': 'UMA', 'レース': 'RAC', 'ターフ': 'TRF', 'ダート': 'DRT',
-        'ジュニア': 'JNR', 'クラシック': 'CLS', 'シニア': 'SNR', 'ティアラ': 'TIR',
-        'コース': 'CRS', 'ゲート': 'GAT', 'コーナー': 'CNR', '重賞': 'JUS',
-        'マイル': 'MIL', '短距離': 'SRT', '中距離': 'MID', '長距離': 'LNG',
-        '勝負服': 'SBF', 'ダービー': 'DRB', '有馬': 'ARM', '宝塚': 'TKR',
-        '安田': 'YSD', '記念': 'KIN', '菊花賞': 'KIK', '皐月賞': 'SAT',
-        '桜花賞': 'OKA', '天皇賞': 'TEN', 'ヴィクトリア': 'VCT', 'オークス': 'OAK',
-        'スプリンター': 'SPR', '秋華賞': 'SYU', 'エリザベス': 'ELZ', '女王': 'JOU',
-        'フューチャリティ': 'FUT', 'チャンピオン': 'CHP', 'ジャパン': 'JAP', 'カップ': 'CUP',
-        'ホープフル': 'HPF', 'ジュベナイル': 'JUV', '日本': 'NIH', '福岡': 'FUK',
-        '札幌': 'SAP', '新潟': 'NIG', '船橋': 'FNB', '大井': 'OOI',
-        '小倉': 'KOK', '大阪': 'OSK', '阪神': 'HAN', '東京': 'TKY',
-        'トゥインクル': 'TWK', 'シリーズ': 'SRZ', 'トレーニング': 'TRN', 'トレセン': 'TRS',
-        'パドック': 'PDK', '感謝祭': 'KAN', 'ハロン': 'FRL', 'ファンファーレ': 'FNF',
-        '併走': 'HEI', '本格化': 'HNK', 'マイラー': 'MLR', 'デビュー': 'DBY',
-        'ライブ': 'LIV', 'レッスン': 'LSN', '蹄鉄': 'TEI', 'にんじん': 'NIN',
-        'ニンジン': 'NNJ', '先輩': 'SEN', '後輩': 'KOH', '合宿': 'GSK',
-        '練習': 'REN'
-    };
-    const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-    function extractExistingMappings(text) {
-        const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
-        const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
-
-        let match = text.match(headerRegex);
-        let oldMatch = text.match(oldHeaderRegex);
-        const replacedMap = new Map();
-        let bodyText = text;
-
-        if (match) {
-            const mapStr = match[1];
-            const pairs = mapStr.split(',');
-            pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) {
-                    replacedMap.set(abbr, original);
-                }
-            });
-            bodyText = text.replace(headerRegex, '');
-        } else if (oldMatch) {
-            const mapStr = oldMatch[1];
-            const pairs = mapStr.split(',');
-            pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) {
-                    replacedMap.set(abbr, original);
-                }
-            });
-            bodyText = text.replace(oldHeaderRegex, '');
-        }
-
-        return { replacedMap, bodyText };
-    }
-
-    function buildCompressedHeader(replacedMap) {
-        if (!replacedMap || replacedMap.size === 0) return '';
-        let header = getCompressionHeaderPrefix();
-        replacedMap.forEach((originalWord, abbr) => {
-            header += `${abbr}=${originalWord}, `;
-        });
-        header = header.slice(0, -2) + "\n</system>\n\n";
-        return header;
-    }
-
-    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
-    function processAbbreviation(text, regex, dictCallback, successMessage) {
-        const { replacedMap, bodyText } = extractExistingMappings(text);
-        let isReplaced = false;
-
-        const newText = bodyText.replace(regex, matchStr => {
-            isReplaced = true;
-            return dictCallback(matchStr, replacedMap);
-        });
-
-        if (isReplaced || replacedMap.size > 0) {
-            outputEl.value = buildCompressedHeader(replacedMap) + newText;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast(successMessage);
-        } else {
-            outputEl.value = text;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('略称化できる単語が見つかりませんでした');
-        }
-    }
-
-    function formatText(action) {
-        syncCombinedInput();
-        let text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-
-        resetHighlightMode();
-
-        switch (action) {
-            case 'trimSpace':
-                text = text.replace(/[ 　\t]+/g, '');
-                break;
-            case 'removeEmptyLines':
-                text = text.replace(/^\s*[\r\n]/gm, '');
-                break;
-            case 'removeBreaks':
-                text = text.replace(/[\r\n]+/g, '');
-                break;
-            case 'breaksToSpace':
-                text = text.replace(/[\r\n]+/g, ' ').trim();
-                break;
-            case 'toHalfWidth':
-                text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-                break;
-            case 'toFullWidthKana':
-                text = text.replace(kanaRegex, match => kanaMap[match]);
-                break;
-            case 'toUpperCase':
-                text = text.toUpperCase();
-                break;
-            case 'toLowerCase':
-                text = text.toLowerCase();
-                break;
-            case 'reverseDialogues': {
-                const regex = /「[\s\S]*?」/g;
-                const matches = text.match(regex);
-                if (matches && matches.length > 1) {
-                    matches.reverse();
-                    let i = 0;
-                    text = text.replace(regex, () => matches[i++]);
-                    showToast('セリフの順序を反転しました');
-                } else {
-                    showToast('反転するセリフ(「」)が2つ以上ありません');
-                    return;
-                }
-                break;
-            }
-            case 'extractBrackets': {
-                const regex = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
-                const matches = text.match(regex);
-                if (matches && matches.length > 0) {
-                    text = matches.join('\n');
-                    showToast(`カッコ内の文章を ${matches.length}件 抽出しました`);
-                } else {
-                    showToast('カッコで囲まれた部分が見つかりませんでした');
-                    return;
-                }
-                break;
-            }
-            case 'toUmaAbbr': {
-                processAbbreviation(text, umaRegex, (matchStr, map) => {
-                    const abbr = umaMap[matchStr];
-                    if (!map.has(abbr) || matchStr.length > map.get(abbr).length) {
-                        map.set(abbr, matchStr);
-                    }
-                    return abbr;
-                }, 'AI向けウマ娘略称化を行いました');
-                return;
-            }
-        }
-
-        outputEl.value = text;
-        updateCounts();
-        saveWorkspaceDebounced();
-    }
-
-    document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action')));
-    });
-
-    document.getElementById('pasteBtn').addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (!text) {
-                showToast('クリップボードが空です');
-                return;
-            }
-
-            const targetEl =
-                document.activeElement === inputPart1El ? inputPart1El :
-                document.activeElement === inputPart2El ? inputPart2El :
-                (lastFocusedInputPart || inputPart1El);
-
-            const selectionStart = targetEl.selectionStart ?? targetEl.value.length;
-            const selectionEnd = targetEl.selectionEnd ?? targetEl.value.length;
-            const currentText = targetEl.value;
-
-            targetEl.value =
-                currentText.substring(0, selectionStart) +
-                text +
-                currentText.substring(selectionEnd);
-
-            targetEl.selectionStart = targetEl.selectionEnd = selectionStart + text.length;
-            targetEl.focus();
-
-            syncCombinedInput();
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('貼り付けました');
-        } catch (err) {
-            showToast('貼り付けが許可されていません');
-        }
-    });
-
-    clearPart1Btn.addEventListener('click', () => {
-        inputPart1El.value = '';
-        syncCombinedInput();
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('前半入力欄を削除しました');
-    });
-
-    clearPart2Btn.addEventListener('click', () => {
-        inputPart2El.value = '';
-        syncCombinedInput();
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('後半入力欄を削除しました');
-    });
-
-    document.getElementById('replaceBtn').addEventListener('click', () => {
-        syncCombinedInput();
-
-        const source = replaceSourceEl.value;
-        const target = replaceTargetEl.value;
-        let text = inputEl.value;
-
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-        if (!source) {
-            showToast('検索文字列を入力してください');
-            return;
-        }
-
-        resetHighlightMode();
-
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escapeRegExp(source), 'g');
-
-        outputEl.value = text.replace(regex, target);
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('置換しました');
-    });
-
-    // ==========================================
-    // 🚀 頻出ワード自動抽出 ＆ プロンプト圧縮
-    // ==========================================
-    document.getElementById('compressBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        const dictText = dictArea.value;
-        
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-        if (!dictText.trim()) {
-            showToast('圧縮用辞書が空です');
-            return;
-        }
-
-        resetHighlightMode();
-
-        const dict = {};
-        const lines = dictText.split('\n');
-        lines.forEach(line => {
-            const parts = line.split('=');
-            if (parts.length === 2) {
-                const key = parts[0].trim();
-                const val = parts[1].trim();
-                if (key && val) {
-                    dict[key] = val;
-                }
-            }
-        });
-
-        const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-        if (keys.length === 0) {
-            showToast('有効な辞書指定がありません (例: 魔法少女=MG)');
-            return;
-        }
-
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('(' + keys.map(escapeRegExp).join('|') + ')', 'g');
-
-        processAbbreviation(text, regex, (matchStr, map) => {
-            const abbr = dict[matchStr];
-            map.set(abbr, matchStr);
-            return abbr;
-        }, 'AI向けに圧縮しました');
-    });
-
-    document.getElementById('autoCompressBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-        if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。手動圧縮をお使いください。');
-            return;
-        }
-
-        resetHighlightMode();
-
-        const { replacedMap, bodyText } = extractExistingMappings(text);
-
-        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
-        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
-
-        const ngrams = new Map();
-        for (let n = 1; n <= 6; n++) {
-            for (let i = 0; i <= segments.length - n; i++) {
-                let phrase = '';
-                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-                phrase = phrase.trim();
-
-                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-            }
-        }
-
-        const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count >= minCount) {
-                const tokenCost = Math.ceil(phrase.length * 1.15);
-                const saving = (tokenCost * count) - (tokenCost + 2 + count);
-                if (saving > 2) {
-                    results.push({ phrase, count, saving });
-                }
-            }
-        }
-
-        results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults = [];
-        for (const item of results) {
-            let isSubphrase = false;
-            for (const kept of filteredResults) {
-                if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) {
-                        isSubphrase = true;
-                        break;
-                    }
-                }
-            }
-            if (!isSubphrase) filteredResults.push(item);
-        }
-
-        filteredResults.sort((a, b) => b.saving - a.saving);
-
-        const targets = filteredResults.slice(0, maxItems);
-
-        if (targets.length === 0) {
-            showToast('指定条件で自動圧縮できるワードがありませんでした');
-            return;
-        }
-
-        let newText = bodyText;
-        let abbrCounter = replacedMap.size + 1;
-        let isReplaced = false;
-
-        targets.sort((a, b) => b.phrase.length - a.phrase.length);
-
-        for (const target of targets) {
-            const original = target.phrase;
-
-            let alreadyExists = false;
-            for (const [, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) {
-                    alreadyExists = true;
-                    break;
-                }
-            }
-            if (alreadyExists) continue;
-
-            let abbr = generateAbbr(abbrCounter);
-            while (replacedMap.has(abbr)) {
-                abbrCounter++;
-                abbr = generateAbbr(abbrCounter);
-            }
-
-            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(escapeRegExp(original), 'g');
-
-            if (regex.test(newText)) {
-                newText = newText.replace(regex, abbr);
-                replacedMap.set(abbr, original);
-                abbrCounter++;
-                isReplaced = true;
-            }
-        }
-
-        if (isReplaced || replacedMap.size > 0) {
-            outputEl.value = buildCompressedHeader(replacedMap) + newText;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('🚀 完全自動でプロンプトを圧縮しました！');
-        } else {
-            outputEl.value = text;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('自動圧縮できるワードがありませんでした');
-        }
-    });
-
-    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
-    document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-
-        if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは単語抽出機能に非対応です');
-            return;
-        }
-
-        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
-        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
-
-        const ngrams = new Map();
-        for (let n = 1; n <= 6; n++) {
-            for (let i = 0; i <= segments.length - n; i++) {
-                let phrase = '';
-                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-                phrase = phrase.trim();
-
-                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-            }
-        }
-
-        const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count >= minCount) {
-                const tokenCost = Math.ceil(phrase.length * 1.15);
-                const saving = (tokenCost * count) - (tokenCost + 2 + count);
-                if (saving > 2) {
-                    results.push({ phrase, count, saving });
-                }
-            }
-        }
-
-        results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults = [];
-        for (const item of results) {
-            let isSubphrase = false;
-            for (const kept of filteredResults) {
-                if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) {
-                        isSubphrase = true;
-                        break;
-                    }
-                }
-            }
-            if (!isSubphrase) filteredResults.push(item);
-        }
-
-        filteredResults.sort((a, b) => b.saving - a.saving);
-
-        const listContainer = document.getElementById('keywordList');
-        listContainer.innerHTML = '';
-
-        if (filteredResults.length === 0) {
-            listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
-        } else {
-            const topResults = filteredResults.slice(0, maxItems);
-            topResults.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'keyword-item';
-
-                let autoAbbr = generateAbbr(index + 1);
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'keyword-info';
-
-                const wordDiv = document.createElement('div');
-                wordDiv.className = 'keyword-word';
-                wordDiv.textContent = item.phrase;
-
-                const statsDiv = document.createElement('div');
-                statsDiv.className = 'keyword-stats';
-                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
-
-                infoDiv.appendChild(wordDiv);
-                infoDiv.appendChild(statsDiv);
-
-                const addBtn = document.createElement('button');
-                addBtn.className = 'add-keyword-btn';
-                addBtn.textContent = '+ 辞書へ';
-
-                addBtn.addEventListener('click', () => {
-                    const currentDict = dictArea.value;
-                    const newEntry = `${item.phrase}=${autoAbbr}`;
-
-                    if (currentDict.includes(item.phrase + '=')) {
-                        showToast('既に辞書に登録されています');
-                        return;
-                    }
-
-                    if (currentDict.trim() === '') {
-                        dictArea.value = newEntry;
-                    } else {
-                        dictArea.value = currentDict + '\n' + newEntry;
-                    }
-
-                    if (autoSaveToggle.checked) saveSettings(false);
-
-                    addBtn.textContent = '追加済';
-                    addBtn.disabled = true;
-                    showToast(`「${item.phrase}」を辞書に追加しました`);
-                    saveWorkspaceDebounced();
-                });
-
-                div.appendChild(infoDiv);
-                div.appendChild(addBtn);
-                listContainer.appendChild(div);
-            });
-        }
-
-        const dialog = document.getElementById('keywordDialog');
-        dialog.showModal();
-    });
-
-    document.getElementById('closeKeywordDialog').addEventListener('click', () => {
-        document.getElementById('keywordDialog').close();
-    });
-
-    function getHighlightedHTML(text, searchStr = '') {
-        if (!text) return '';
-
-        if (searchStr) {
-            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${escapeRegExp(searchStr)})`, 'g');
-            const parts = text.split(regex);
-            let html = '';
-            for (let i = 0; i < parts.length; i++) {
-                if (i % 2 === 1) {
-                    html += `<mark style="background-color: #ff9800; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">${escapeHtml(parts[i])}</mark>`;
-                } else {
-                    html += escapeHtml(parts[i]);
-                }
-            }
-            return html;
-        } else {
-            const minLength = 8;
-            if (text.length < minLength) return escapeHtml(text);
-
-            let highlightMap = new Array(text.length).fill(false);
-            let ngrams = new Map();
-
-            for (let i = 0; i <= text.length - minLength; i++) {
-                let sub = text.substring(i, i + minLength);
-                if (/^[\s\r\n]+$/.test(sub)) continue;
-
-                if (ngrams.has(sub)) {
-                    ngrams.get(sub).push(i);
-                } else {
-                    ngrams.set(sub, [i]);
-                }
-            }
-
-            for (let [, indices] of ngrams.entries()) {
-                if (indices.length > 1) {
-                    for (let idx of indices) {
-                        for (let k = 0; k < minLength; k++) {
-                            highlightMap[idx + k] = true;
-                        }
-                    }
-                }
-            }
-
-            let html = '';
-            let inHighlight = false;
-            for (let i = 0; i < text.length; i++) {
-                if (highlightMap[i] && !inHighlight) {
-                    html += `<mark style="background-color: #03a9f4; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">`;
-                    inHighlight = true;
-                } else if (!highlightMap[i] && inHighlight) {
-                    html += `</mark>`;
-                    inHighlight = false;
-                }
-                html += escapeHtml(text[i]);
-            }
-            if (inHighlight) {
-                html += `</mark>`;
-            }
-            return html;
-        }
-    }
-
-    toggleHighlightBtn.addEventListener('click', () => {
-        isHighlightMode = !isHighlightMode;
-        if (isHighlightMode) {
-            const text = outputEl.value;
-            if (!text) {
-                showToast('結果テキストがありません');
-                isHighlightMode = false;
-                return;
-            }
-            const searchStr = replaceSourceEl.value;
-
-            outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
-            outputEl.style.display = 'none';
-            outputPreview.style.display = 'block';
-            toggleHighlightBtn.innerHTML = '✏️ 編集に戻る';
-            toggleHighlightBtn.classList.add('active-mode');
-
-            if (searchStr) {
-                showToast(`「${searchStr}」をハイライトしました`);
-            } else {
-                showToast('8文字以上の重複箇所をハイライトしました');
-            }
-        } else {
-            resetHighlightMode();
-        }
-    });
-
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        inputPart1El.value = '';
-        inputPart2El.value = '';
-        syncCombinedInput();
-
-        outputEl.value = '';
-        updateCounts();
-        resetHighlightMode();
-        saveWorkspaceDebounced();
-    });
-
-    document.getElementById('applyToInputBtn').addEventListener('click', () => {
-        if (outputEl.value) {
-            setSplitInputText(outputEl.value);
-            outputEl.value = '';
-            updateCounts();
-            resetHighlightMode();
-            saveWorkspaceDebounced();
-            showToast('結果を前半入力欄に反映しました');
-        }
-    });
-
-    document.getElementById('copyBtn').addEventListener('click', async () => {
-        if (!outputEl.value) return;
-        try {
-            await navigator.clipboard.writeText(outputEl.value);
-            showToast('コピーしました！');
-        } catch (err) {
-            showToast('コピーに失敗しました');
-        }
-    });
-
-    runSelectedActionBtn.addEventListener('click', () => {
-        const action = actionPicker.value;
-
-        if (!action) {
-            showToast('処理を選択してください');
-            return;
-        }
-
-        if (action === 'replaceText') {
-            document.getElementById('replaceBtn').click();
-            return;
-        }
-
-        if (action === 'extractKeywords') {
-            document.getElementById('extractKeywordsBtn').click();
-            return;
-        }
-
-        if (action === 'manualCompress') {
-            document.getElementById('compressBtn').click();
-            return;
-        }
-
-        const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
-        if (!legacyBtn) {
-            showToast('処理の実行に失敗しました');
-            return;
-        }
-
-        legacyBtn.click();
-    });
-
-    // 初期化
-    loadSettings();
-    syncCombinedInput();
-    updateCounts();
-
-    // ページ離脱時に作業状態を保存
-    window.addEventListener('beforeunload', () => {
-        if (persistWorkspaceToggle.checked) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }
-    });
-
-    // iOS Safari ではpagehideの方が確実
-    window.addEventListener('pagehide', () => {
-        if (persistWorkspaceToggle.checked) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }
-    });
 </script>
 </body>
 </html>
