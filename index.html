@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -153,9 +154,6 @@
         #main-screen { transform: translateX(0); }
         #settings-screen { transform: translateX(100%); }
 
-        /* =========================================
-           ヘッダー
-        ========================================= */
         .app-header {
             display: flex;
             align-items: center;
@@ -214,9 +212,6 @@
             gap: 12px;
         }
 
-        /* =========================================
-           UIパーツ
-        ========================================= */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -294,7 +289,6 @@
             overflow-y: auto;
         }
 
-        /* ツールボタンのグリッド */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -337,9 +331,6 @@
         }
         .char-count { font-size: 12px; font-weight: normal; color: var(--text-secondary); transition: opacity 0.3s; }
 
-        /* =========================================
-           分割入力欄
-        ========================================= */
         .split-inputs {
             display: flex;
             flex-direction: column;
@@ -354,9 +345,6 @@
             min-height: 120px;
         }
 
-        /* =========================================
-           ドラム選択UI
-        ========================================= */
         .operation-card {
             border: 1px solid var(--border-secondary);
             border-radius: 10px;
@@ -416,9 +404,6 @@
             padding: 8px 10px;
         }
 
-        /* =========================================
-           メニュー＆設定画面
-        ========================================= */
         .menu-list { list-style: none; padding: 0; }
         .menu-item {
             padding: 15px;
@@ -460,7 +445,6 @@
         #update-app-btn { background-color: var(--bg-button-update); }
         #clear-data-btn { background-color: var(--bg-button-delete); }
 
-        /* トースト通知 */
         #toast {
             position: fixed;
             bottom: 30px;
@@ -478,9 +462,6 @@
         }
         #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
-        /* =========================================
-           ダイアログ装飾
-        ========================================= */
         dialog.custom-dialog {
             display: none;
             border: 1px solid var(--border-primary);
@@ -513,9 +494,6 @@
 
 <div class="app-container">
 
-    <!-- ==========================================
-         左パネル: ツール選択メニュー
-    =========================================== -->
     <div id="menu-screen" class="screen dormant">
         <header class="app-header">
             <h1 style="text-align: right; padding-right: 10px;">ツール選択</h1>
@@ -541,9 +519,6 @@
         </main>
     </div>
 
-    <!-- ==========================================
-         中央パネル: メイン画面
-    =========================================== -->
     <div id="main-screen" class="screen active">
         <header class="app-header">
             <button id="goto-menu-btn" class="header-button left" aria-label="メニューを開く">☰</button>
@@ -556,7 +531,7 @@
                 <label>入力テキスト（前半＋後半を結合して処理）</label>
                 <div class="tiny-action-row">
                     <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
-                    <span class="char-count" id="inputCount">合計0文字 (約0ﾄｰｸﾝ)</span>
+                    <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
                 </div>
             </div>
 
@@ -588,10 +563,8 @@
                 </div>
             </div>
 
-            <!-- 既存ロジック用の内部テキスト -->
             <textarea id="inputText" hidden aria-hidden="true" tabindex="-1"></textarea>
 
-            <!-- AI向けプロンプト圧縮 UI -->
             <div style="margin-top: 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
@@ -604,7 +577,6 @@
                 
                 <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
 
-                <!-- 自動圧縮の詳細設定 -->
                 <details style="margin-bottom: 8px;">
                     <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
                     <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
@@ -628,7 +600,6 @@
                 </details>
             </div>
 
-            <!-- その他の処理をドラム選択式に統合 -->
             <div class="operation-card">
                 <div class="section-header">
                     <label for="actionPicker">その他の処理</label>
@@ -680,7 +651,6 @@
                 <button id="runSelectedActionBtn" class="primary-btn" disabled>選択した処理を実行</button>
             </div>
 
-            <!-- 既存ロジックを流用するための隠しボタン群 -->
             <div id="legacyActionButtons" hidden aria-hidden="true">
                 <div class="tools-grid">
                     <button class="tool-btn" data-action="trimSpace" type="button"></button>
@@ -705,7 +675,7 @@
                 <label for="outputText">整形結果</label>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <span class="char-count" id="outputCount">0文字 (約0ﾄｰｸﾝ)</span>
+                    <span class="char-count" id="outputCount">0文字 (≈0ﾄｰｸﾝ)</span>
                 </div>
             </div>
             
@@ -722,9 +692,6 @@
         </main>
     </div>
 
-    <!-- ==========================================
-         右パネル: 設定画面
-    =========================================== -->
     <div id="settings-screen" class="screen dormant">
         <header class="app-header">
             <button id="back-to-main-from-settings" class="header-button left" aria-label="メインに戻る">＜</button>
@@ -748,44 +715,70 @@
                 </select>
             </div>
 
-            <!-- ★ 追加: 各種AI API 連携 (オプション) - Grok対応 ★ -->
             <div class="settings-group">
-                <h3>正確なトークン計算 (オプション)</h3>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="use-api-token-toggle">
-                    APIを利用して正確なトークン数を計算する
-                </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オンにすると、入力停止時にバックグラウンドで各AIのサーバーに通信します。オフ時や通信失敗時は、各モデルに最適化された精度の高い近似計算を利用します。
-                </p>
+                <h3>トークン計算</h3>
 
                 <label for="token-calc-provider" style="font-size: 14px; margin-bottom: 4px; display: block;">対象のAIモデル:</label>
-                <select id="token-calc-provider" style="margin-bottom: 15px;">
-                    <option value="gemini">Gemini (Google)</option>
-                    <option value="anthropic">Claude (Anthropic)</option>
+                <select id="token-calc-provider" style="margin-bottom: 10px;">
                     <option value="openai">ChatGPT (OpenAI)</option>
+                    <option value="anthropic">Claude (Anthropic)</option>
+                    <option value="gemini">Gemini (Google)</option>
                     <option value="grok">Grok (xAI)</option>
+                    <option value="deepseek">DeepSeek</option>
                 </select>
-                
-                <div id="api-key-container-gemini" class="api-key-container">
-                    <label for="gemini-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Gemini APIキー:</label>
-                    <input type="password" id="gemini-api-key" placeholder="AIzaSy... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+
+                <div id="tokenizerStatusNotice" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; padding: 6px 8px; background: var(--bg-secondary); border-radius: 4px;"></div>
+
+                <div id="deepseek-precise-container" style="display: none;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="deepseek-precise-tokenizer-toggle">
+                        高精度モード (HF Transformers, 約17MB)
+                    </label>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
+                        ※ オフ時は o200k_base による近似計算（≈95-98%）。オンにすると初回のみ約17MBのDeepSeek公式トークナイザーを取得し、100%正確なカウントを行います。
+                    </p>
                 </div>
 
-                <div id="api-key-container-anthropic" class="api-key-container" style="display: none;">
-                    <label for="anthropic-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Anthropic APIキー:</label>
-                    <input type="password" id="anthropic-api-key" placeholder="sk-ant-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
-                </div>
+                <details style="margin-top: 5px;">
+                    <summary style="font-size: 13px; cursor: pointer; color: var(--text-secondary); outline: none;">API による正確なトークン計算 (オプション)</summary>
+                    <div style="margin-top: 10px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="use-api-token-toggle">
+                            APIを利用して正確なトークン数を計算する
+                        </label>
+                        <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
+                            ※ オンにすると、入力停止時にバックグラウンドで各AIのサーバーに通信します。ほとんどのプロバイダではローカルトークナイザーで十分な精度が得られるため、通常は不要です。
+                        </p>
+                        
+                        <div id="api-key-container-openai" class="api-key-container" style="display: none;">
+                            <label for="openai-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">OpenAI APIキー:</label>
+                            <input type="password" id="openai-api-key" placeholder="sk-proj-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                        </div>
 
-                <div id="api-key-container-openai" class="api-key-container" style="display: none;">
-                    <label for="openai-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">OpenAI APIキー:</label>
-                    <input type="password" id="openai-api-key" placeholder="sk-proj-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
-                </div>
+                        <div id="api-key-container-anthropic" class="api-key-container" style="display: none;">
+                            <label for="anthropic-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Anthropic APIキー:</label>
+                            <input type="password" id="anthropic-api-key" placeholder="sk-ant-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                        </div>
 
-                <div id="api-key-container-grok" class="api-key-container" style="display: none;">
-                    <label for="grok-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">xAI (Grok) APIキー:</label>
-                    <input type="password" id="grok-api-key" placeholder="xai-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
-                </div>
+                        <div id="api-key-container-gemini" class="api-key-container" style="display: none;">
+                            <label for="gemini-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Gemini APIキー:</label>
+                            <input type="password" id="gemini-api-key" placeholder="AIzaSy... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                        </div>
+
+                        <div id="api-key-container-grok" class="api-key-container" style="display: none;">
+                            <label for="grok-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">xAI (Grok) APIキー:</label>
+                            <input type="password" id="grok-api-key" placeholder="xai-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                        </div>
+
+                        <div id="api-key-container-deepseek" class="api-key-container" style="display: none;">
+                            <label for="deepseek-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">DeepSeek APIキー:</label>
+                            <input type="password" id="deepseek-api-key" placeholder="sk-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                            <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 5px;">
+                                ※ DeepSeek には専用の token count API がないため、chat completion API で代替します。生成1トークン分の課金が発生します。
+                            </p>
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <div class="settings-group">
@@ -818,7 +811,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.9 (Multi-Model + Grok Support)
+                    バージョン: 6.3 (Tokenizer accuracy improvements)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -835,10 +828,8 @@
 
 </div>
 
-<!-- 通知用トースト -->
 <div id="toast"></div>
 
-<!-- 頻出ワード抽出ダイアログ -->
 <dialog id="keywordDialog" class="custom-dialog" style="width: 90%; max-width: 450px; padding: 0; overflow: hidden;">
     <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
         <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
@@ -853,7 +844,6 @@
     </div>
 </dialog>
 
-<!-- 確認ダイアログ -->
 <dialog id="confirmDialog" class="custom-dialog" style="max-width: 300px; text-align: center;">
     <p id="confirmMessage" class="dialog-message" style="margin-bottom: 20px;"></p>
     <div class="dialog-actions" style="justify-content: center;">
@@ -884,7 +874,7 @@
         document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
         const swCode = `
-            const CACHE_NAME = 'toolbox-pwa-v1';
+            const CACHE_NAME = 'toolbox-pwa-v2';
             self.addEventListener('install', e => { self.skipWaiting(); });
             self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
             self.addEventListener('fetch', e => {
@@ -1022,18 +1012,21 @@
     const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
     const abbrResponseToggle = document.getElementById('abbr-response-toggle');
 
-    // ★ 追加要素: マルチAI API設定 (Grok含む)
     const useApiTokenToggle = document.getElementById('use-api-token-toggle');
     const tokenProviderSelect = document.getElementById('token-calc-provider');
     const apiKeyContainerGemini = document.getElementById('api-key-container-gemini');
     const apiKeyContainerAnthropic = document.getElementById('api-key-container-anthropic');
     const apiKeyContainerOpenai = document.getElementById('api-key-container-openai');
     const apiKeyContainerGrok = document.getElementById('api-key-container-grok');
+    const apiKeyContainerDeepseek = document.getElementById('api-key-container-deepseek');
+    const deepseekPreciseContainer = document.getElementById('deepseek-precise-container');
     
     const geminiApiKeyInput = document.getElementById('gemini-api-key');
     const anthropicApiKeyInput = document.getElementById('anthropic-api-key');
     const openaiApiKeyInput = document.getElementById('openai-api-key');
     const grokApiKeyInput = document.getElementById('grok-api-key');
+    const deepseekApiKeyInput = document.getElementById('deepseek-api-key');
+    const deepseekPreciseToggle = document.getElementById('deepseek-precise-tokenizer-toggle');
 
     const dictArea = document.getElementById('compressDict');
     const saveNotice = document.getElementById('settings-save-notice');
@@ -1044,7 +1037,7 @@
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
     const autoCompressExcludeAlnumInput = document.getElementById('autoCompressExcludeAlnum');
 
-    const inputEl = document.getElementById('inputText'); // 内部用
+    const inputEl = document.getElementById('inputText');
     const inputPart1El = document.getElementById('inputTextPart1');
     const inputPart2El = document.getElementById('inputTextPart2');
     const clearPart1Btn = document.getElementById('clearPart1Btn');
@@ -1067,6 +1060,7 @@
 
     const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
     const outputPreview = document.getElementById('outputPreview');
+    const tokenizerStatusNotice = document.getElementById('tokenizerStatusNotice');
 
     // ==========================================
     // 分割入力ヘルパー
@@ -1077,7 +1071,6 @@
     function buildCombinedInputText() {
         const part1 = inputPart1El.value || '';
         const part2 = inputPart2El.value || '';
-
         if (!part1) return part2;
         if (!part2) return part1;
         return part1 + INPUT_JOINER + part2;
@@ -1123,15 +1116,15 @@
         autoCompressMaxItems: 20,
         autoCompressExcludeAlnum: false,
         
-        // ★ 追加: API関連設定 (マルチAI・Grok対応)
         useApiTokenCount: false,
-        tokenCalcProvider: 'gemini',
+        tokenCalcProvider: 'openai',
         geminiApiKey: '',
         anthropicApiKey: '',
         openaiApiKey: '',
         grokApiKey: '',
+        deepseekApiKey: '',
+        deepseekPreciseTokenizer: false,
 
-        // 作業状態
         inputText: '',
         inputTextPart1: '',
         inputTextPart2: '',
@@ -1156,6 +1149,9 @@
         const oldDict = localStorage.getItem('formatter_compress_dict');
         if (oldDict && !saved) appSettings.compressDict = oldDict;
 
+        // v5 → v6 マイグレーション: 旧設定キーを削除
+        if (appSettings.claudePreciseTokenizer !== undefined) delete appSettings.claudePreciseTokenizer;
+
         themeSelect.value = appSettings.theme;
         autoSaveToggle.checked = appSettings.autoSave;
         persistWorkspaceToggle.checked = appSettings.persistWorkspace;
@@ -1167,13 +1163,14 @@
         autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
         autoCompressExcludeAlnumInput.checked = !!appSettings.autoCompressExcludeAlnum;
         
-        // ★ 追加: API設定の反映
         useApiTokenToggle.checked = !!appSettings.useApiTokenCount;
-        tokenProviderSelect.value = appSettings.tokenCalcProvider || 'gemini';
+        tokenProviderSelect.value = appSettings.tokenCalcProvider || 'openai';
         geminiApiKeyInput.value = appSettings.geminiApiKey || '';
         anthropicApiKeyInput.value = appSettings.anthropicApiKey || '';
         openaiApiKeyInput.value = appSettings.openaiApiKey || '';
         grokApiKeyInput.value = appSettings.grokApiKey || '';
+        deepseekApiKeyInput.value = appSettings.deepseekApiKey || '';
+        deepseekPreciseToggle.checked = !!appSettings.deepseekPreciseTokenizer;
         
         updateApiKeyVisibility();
 
@@ -1212,17 +1209,17 @@
         appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
         appSettings.autoCompressExcludeAlnum = autoCompressExcludeAlnumInput.checked;
         
-        // ★ 追加: API設定の保存
         appSettings.useApiTokenCount = useApiTokenToggle.checked;
         appSettings.tokenCalcProvider = tokenProviderSelect.value;
         appSettings.geminiApiKey = geminiApiKeyInput.value;
         appSettings.anthropicApiKey = anthropicApiKeyInput.value;
         appSettings.openaiApiKey = openaiApiKeyInput.value;
         appSettings.grokApiKey = grokApiKeyInput.value;
+        appSettings.deepseekApiKey = deepseekApiKeyInput.value;
+        appSettings.deepseekPreciseTokenizer = deepseekPreciseToggle.checked;
 
         if (appSettings.persistWorkspace) {
             syncCombinedInput();
-
             appSettings.inputText = inputEl.value;
             appSettings.inputTextPart1 = inputPart1El.value;
             appSettings.inputTextPart2 = inputPart2El.value;
@@ -1273,10 +1270,12 @@
     }
     
     function updateApiKeyVisibility() {
-        apiKeyContainerGemini.style.display = tokenProviderSelect.value === 'gemini' ? 'block' : 'none';
-        apiKeyContainerAnthropic.style.display = tokenProviderSelect.value === 'anthropic' ? 'block' : 'none';
-        apiKeyContainerOpenai.style.display = tokenProviderSelect.value === 'openai' ? 'block' : 'none';
-        apiKeyContainerGrok.style.display = tokenProviderSelect.value === 'grok' ? 'block' : 'none';
+        const provider = tokenProviderSelect.value;
+        document.querySelectorAll('.api-key-container').forEach(c => c.style.display = 'none');
+        const container = document.getElementById(`api-key-container-${provider}`);
+        if (container) container.style.display = 'block';
+
+        deepseekPreciseContainer.style.display = provider === 'deepseek' ? 'block' : 'none';
     }
 
     saveBtn.addEventListener('click', () => saveSettings(true));
@@ -1300,10 +1299,10 @@
     autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
     autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
     
-    // ★ 追加: API設定変更時のイベントリスナー
     tokenProviderSelect.addEventListener('change', () => {
         updateApiKeyVisibility();
         handleSettingChange();
+        initLocalTokenizer();
         updateCounts();
     });
     useApiTokenToggle.addEventListener('change', () => {
@@ -1314,6 +1313,19 @@
     anthropicApiKeyInput.addEventListener('input', handleSettingChange);
     openaiApiKeyInput.addEventListener('input', handleSettingChange);
     grokApiKeyInput.addEventListener('input', handleSettingChange);
+    deepseekApiKeyInput.addEventListener('input', handleSettingChange);
+    
+    deepseekPreciseToggle.addEventListener('change', () => {
+        handleSettingChange();
+        if (tokenProviderSelect.value === 'deepseek') {
+            // 高精度モード切替時はトークナイザーを再初期化
+            localTokenizers.deepseek.encoder = null;
+            localTokenizers.deepseek.status = 'idle';
+            localTokenizers.deepseek._precise = false;
+            initLocalTokenizer();
+        }
+        updateCounts();
+    });
 
     function applyTheme(themeName) {
         document.body.className = '';
@@ -1362,7 +1374,7 @@
     });
 
     // ==========================================
-    // 5. テキスト整形ロジック & トークン計算
+    // 5. ★★★ トークン計算エンジン v6.3 ★★★
     // ==========================================
     let isHighlightMode = false;
 
@@ -1373,66 +1385,308 @@
     function shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum = false) {
         if (!phrase) return true;
         if (phrase.length < minLen) return true;
-        if (/^[ぁ-ん]+$/.test(phrase)) return true;
+        if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) return true;
         if (/^[!-/:-@[-`{-~]+$/.test(phrase)) return true;
         if (excludeAlnum && containsAlnum(phrase)) return true;
         return false;
     }
 
-    // ★ マルチモデル向け改良版: 各トークナイザーの特性に合わせた近似計算
-    function estimateTokensImproved(text, provider) {
-        if (!text) return 0;
-        
-        let asciiCount = 0;
-        let kanaCount = 0;
-        let kanjiCount = 0;
-        let otherCount = 0;
-        
-        for (let i = 0; i < text.length; i++) {
-            const charCode = text.charCodeAt(i);
-            const char = text[i];
-            
-            if (charCode <= 127) {
-                asciiCount++;
-            } else if (/[\u3040-\u309F\u30A0-\u30FF]/.test(char)) {
-                // ひらがな・カタカナ
-                kanaCount++;
-            } else if (/[\u4E00-\u9FAF]/.test(char)) {
-                // 漢字
-                kanjiCount++;
-            } else {
-                // その他の記号や絵文字など
-                otherCount++;
-            }
-        }
-        
-        let estimated = 0;
-        if (provider === 'gemini') {
-            // Gemini (SentencePiece)
-            estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
-        } else if (provider === 'anthropic') {
-            // Claude (BPE)
-            estimated = (asciiCount * 0.28) + (kanaCount * 0.7) + (kanjiCount * 1.0) + (otherCount * 1.2);
-        } else if (provider === 'openai') {
-            // GPT-4o (o200k_base) - 日本語圧縮率が非常に高い
-            estimated = (asciiCount * 0.25) + (kanaCount * 0.5) + (kanjiCount * 0.8) + (otherCount * 1.0);
-        } else if (provider === 'grok') {
-            // xAI Grok (GPT-4oと類似した高効率トークナイザー特性)
-            estimated = (asciiCount * 0.25) + (kanaCount * 0.5) + (kanjiCount * 0.8) + (otherCount * 1.0);
-        } else {
-            // Default
-            estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
-        }
-        
-        return Math.ceil(estimated);
+    function countTokensForPhrase(text) {
+        const provider = appSettings.tokenCalcProvider || 'openai';
+        const local = countTokensLocal(text, provider);
+        if (local !== null) return local;
+        return estimateTokensApprox(text, provider);
     }
 
-    // ★ 統合版: 各AI APIを利用した正確なトークン計算 (Grok含む)
+    // ------------------------------------------
+    // 5a. マルチプロバイダ対応ローカルトークナイザー
+    // ------------------------------------------
+    const localTokenizers = {
+        openai:    { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
+        anthropic: { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
+        gemini:    { encoder: null, status: 'idle', _type: 'gemma3' },
+        grok:      { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
+        deepseek:  { encoder: null, status: 'idle', _type: 'ai-tokenizer', _precise: false }
+    };
+
+    // ai-tokenizer の Tokenizer クラスをキャッシュ
+    let _AiTokenizerClass = null;
+    // ai-tokenizer のエンコーディングデータをキャッシュ
+    const _aiTokenizerEncodings = {};
+
+    async function getAiTokenizerClass() {
+        if (_AiTokenizerClass) return _AiTokenizerClass;
+        const mod = await import('https://esm.sh/ai-tokenizer@latest');
+        _AiTokenizerClass = mod.Tokenizer || mod.default;
+        return _AiTokenizerClass;
+    }
+
+    async function getAiTokenizerEncoding(name) {
+        if (_aiTokenizerEncodings[name]) return _aiTokenizerEncodings[name];
+        const mod = await import(`https://esm.sh/ai-tokenizer@latest/encoding/${name}`);
+        _aiTokenizerEncodings[name] = mod;
+        return mod;
+    }
+
+    async function loadAiTokenizer(encodingName) {
+        const [Tokenizer, encoding] = await Promise.all([
+            getAiTokenizerClass(),
+            getAiTokenizerEncoding(encodingName)
+        ]);
+        return new Tokenizer(encoding);
+    }
+
+    async function loadGemmaEncoder() {
+        const entry = localTokenizers.gemini;
+        if (entry.encoder) return entry.encoder;
+        const gemmaModule = await import('https://esm.sh/@lenml/tokenizer-gemma3');
+        const tokenizer = gemmaModule.fromPreTrained();
+        entry.encoder = tokenizer;
+        return tokenizer;
+    }
+
+    async function loadDeepseekPreciseEncoder() {
+        const { AutoTokenizer } = await import(
+            'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'
+        );
+        const tokenizer = await AutoTokenizer.from_pretrained(
+            'deepseek-ai/DeepSeek-V3'
+        );
+        return tokenizer;
+    }
+
+    async function initLocalTokenizer() {
+        const provider = tokenProviderSelect.value;
+        const entry = localTokenizers[provider];
+        if (!entry) return;
+
+        // DeepSeek 高精度モードの切り替え判定
+        if (provider === 'deepseek') {
+            const wantPrecise = deepseekPreciseToggle.checked;
+            if (entry.status === 'ready' && entry.encoder) {
+                if (wantPrecise === entry._precise) {
+                    updateTokenizerStatusUI();
+                    return;
+                }
+                // モード変更 → 再ロード
+                entry.encoder = null;
+                entry.status = 'idle';
+            }
+        } else {
+            if (entry.status === 'ready' && entry.encoder) {
+                updateTokenizerStatusUI();
+                return;
+            }
+        }
+
+        if (entry.status === 'loading') return;
+
+        entry.status = 'loading';
+        updateTokenizerStatusUI();
+
+        try {
+            if (provider === 'openai') {
+                entry.encoder = await loadAiTokenizer('o200k_base');
+                entry.status = 'ready';
+                console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for OpenAI');
+
+            } else if (provider === 'anthropic') {
+                entry.encoder = await loadAiTokenizer('claude');
+                entry.status = 'ready';
+                console.log('[TokenEngine] ai-tokenizer (claude) loaded for Anthropic');
+
+            } else if (provider === 'gemini') {
+                await loadGemmaEncoder();
+                entry.status = 'ready';
+                console.log('[TokenEngine] @lenml/tokenizer-gemma3 loaded for Gemini');
+
+            } else if (provider === 'grok') {
+                entry.encoder = await loadAiTokenizer('o200k_base');
+                entry.status = 'ready';
+                console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for Grok');
+
+            } else if (provider === 'deepseek') {
+                if (deepseekPreciseToggle.checked) {
+                    entry.encoder = await loadDeepseekPreciseEncoder();
+                    entry._precise = true;
+                    entry._type = 'hf-transformers';
+                    console.log('[TokenEngine] HF Transformers (DeepSeek-V3) loaded — precise mode');
+                } else {
+                    entry.encoder = await loadAiTokenizer('o200k_base');
+                    entry._precise = false;
+                    entry._type = 'ai-tokenizer';
+                    console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for DeepSeek — approx mode');
+                }
+                entry.status = 'ready';
+            }
+        } catch (err) {
+            console.warn(`[TokenEngine] ${provider} tokenizer load failed:`, err);
+            entry.status = 'failed';
+        }
+
+        updateTokenizerStatusUI();
+        updateCounts();
+    }
+
+    function countTokensLocal(text, provider) {
+        if (!text) return null;
+        const entry = localTokenizers[provider];
+        if (!entry || entry.status !== 'ready' || !entry.encoder) return null;
+
+        try {
+            if (provider === 'gemini') {
+                // @lenml/tokenizer-gemma3
+                return entry.encoder.encode(text, null, { add_special_tokens: false }).length;
+            } else if (provider === 'deepseek' && entry._precise) {
+                // HF Transformers
+                const ids = entry.encoder.encode(text, null, { add_special_tokens: false });
+                return ids.length;
+            } else {
+                // ai-tokenizer: .count() メソッド
+                return entry.encoder.count(text);
+            }
+        } catch (e) {
+            console.warn(`[TokenEngine] ${provider} encode error:`, e);
+            return null;
+        }
+    }
+
+    function updateTokenizerStatusUI() {
+        const provider = tokenProviderSelect.value;
+        const entry = localTokenizers[provider];
+        if (!entry) { tokenizerStatusNotice.innerHTML = ''; return; }
+
+        const infoMap = {
+            openai: {
+                name: 'ai-tokenizer (o200k_base)',
+                size: '約2-3MB',
+                ready: 'OpenAI GPT-4o/4.1 に対して100%正確。GPT-5系は≈99%。⚠️ GPT-5.1系は短文で最大20%の誤差が生じます。',
+                badge: '🎯'
+            },
+            anthropic: {
+                name: 'ai-tokenizer (claude)',
+                size: '約2-3MB',
+                ready: 'Claude 全モデル (3/3.5/4/4.5) に対して≈98-99%の精度。',
+                badge: '≈99%'
+            },
+            gemini: {
+                name: '@lenml/tokenizer-gemma3 (SentencePiece 262K)',
+                size: '約2MB',
+                ready: 'Gemini は Gemma3 と同じトークナイザーを使用。≈99%の精度。',
+                badge: '🎯'
+            },
+            grok: {
+                name: 'ai-tokenizer (o200k_base)',
+                size: '約2-3MB',
+                ready: 'Grok-3/3-mini に対して≈99%の精度。⚠️ Grok-4系はトークナイザーが根本的に異なるため非対応（精度67%以下）。Grok-4をお使いの場合はAPI計算を有効にしてください。',
+                badge: '≈99%'
+            },
+            deepseek: deepseekPreciseToggle.checked ? {
+                name: 'HF Transformers (DeepSeek-V3 公式)',
+                size: '約17MB',
+                ready: 'DeepSeek V3/V3.1/R1 に対して100%正確。公式の tokenizer.json を使用。',
+                badge: '🎯'
+            } : {
+                name: 'ai-tokenizer (o200k_base 近似)',
+                size: '約2-3MB',
+                ready: 'DeepSeek V3で≈95%、R1で≈96-98%の近似精度。5%前後の誤差が常に生じます。正確な値が必要な場合は高精度モードを有効にしてください。',
+                badge: '≈95%'
+            }
+        };
+
+        const info = infoMap[provider];
+        if (!info) { tokenizerStatusNotice.innerHTML = ''; return; }
+
+        if (entry.status === 'loading') {
+            tokenizerStatusNotice.innerHTML = `⏳ ${info.name}（${info.size}）をダウンロード中…初回のみデータを取得します。`;
+        } else if (entry.status === 'ready') {
+            tokenizerStatusNotice.innerHTML = `${info.badge} ローカルトークナイザー利用中: ${info.name}。${info.ready}`;
+        } else if (entry.status === 'failed') {
+            tokenizerStatusNotice.innerHTML = `⚠️ ${info.name} のダウンロードに失敗しました。近似計算を使用します。`;
+        } else {
+            tokenizerStatusNotice.innerHTML = `ℹ️ ページ読み込み時に ${info.name}（${info.size}）を自動取得します。`;
+        }
+    }
+
+    // ------------------------------------------
+    // 5b. フォールバック近似計算（プロバイダ別係数）
+    // ------------------------------------------
+    function estimateTokensApprox(text, provider) {
+        if (!text) return 0;
+
+        // プロバイダ別の補正係数
+        // BPE系 (OpenAI, Anthropic, Grok) と SentencePiece系 (Gemini) で分岐
+        // DeepSeek は独自BPEだが、日本語で若干大きめにカウントする傾向
+        const coefficients = {
+            openai:    { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
+            anthropic: { hiragana: 1.7, katakana: 1.7, kanji: 1.05, asciiPerToken: 4.3 },
+            gemini:    { hiragana: 1.5, katakana: 1.5, kanji: 1.0, asciiPerToken: 4.0 },
+            grok:      { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
+            deepseek:  { hiragana: 1.6, katakana: 1.6, kanji: 1.0, asciiPerToken: 4.2 }
+        };
+        const c = coefficients[provider] || coefficients.openai;
+
+        let totalTokens = 0;
+
+        const asciiWords = text.match(/[a-zA-Z]+/g) || [];
+        for (const w of asciiWords) {
+            const len = w.length;
+            if (len <= 4) totalTokens += 1;
+            else if (len <= 8) totalTokens += 2;
+            else if (len <= 13) totalTokens += 3;
+            else totalTokens += Math.ceil(len / c.asciiPerToken);
+        }
+
+        const numbers = text.match(/[0-9０-９]+/g) || [];
+        for (const n of numbers) {
+            totalTokens += Math.ceil(n.length / 3);
+        }
+
+        const jaSegments = text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g, '\x00').split('\x00').filter(s => s.length > 0);
+
+        for (const seg of jaSegments) {
+            const blocks = seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g) || [];
+
+            for (const block of blocks) {
+                const len = block.length;
+                if (len === 0) continue;
+
+                if (/^[ぁ-ん]+$/.test(block)) {
+                    totalTokens += Math.ceil(len / c.hiragana);
+                } else if (/^[ァ-ヶー]+$/.test(block)) {
+                    totalTokens += Math.ceil(len / c.katakana);
+                } else if (/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(block)) {
+                    totalTokens += Math.ceil(len / c.kanji);
+                } else {
+                    for (let i = 0; i < block.length; i++) {
+                        const cp = block.codePointAt(i);
+                        if (cp > 0xFFFF) { totalTokens += 2.5; i++; }
+                        else if (cp > 0x7FF) { totalTokens += 1; }
+                        else { totalTokens += 1; }
+                    }
+                }
+            }
+        }
+
+        const whitespaceRuns = text.match(/[\s\r\n]+/g) || [];
+        for (const ws of whitespaceRuns) {
+            const newlines = (ws.match(/\n/g) || []).length;
+            totalTokens += newlines;
+            const spaces = ws.length - newlines;
+            if (spaces > 0) totalTokens += Math.ceil(spaces / 4);
+        }
+
+        return Math.max(1, Math.ceil(totalTokens));
+    }
+
+    // ------------------------------------------
+    // 5c. API による正確なトークン計算
+    // ------------------------------------------
     async function fetchExactTokenCount(text, provider, apiKey) {
         if (!text || !apiKey) return null;
         
         if (provider === 'gemini') {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:countTokens?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`;
             try {
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1459,8 +1713,9 @@
                         'anthropic-dangerous-direct-browser-access': 'true' 
                     },
                     body: JSON.stringify({
-                        model: 'claude-3-5-sonnet-latest',
-                        messages: [{ role: 'user', content: text }]
+                        model: 'claude-sonnet-4-20250514',
+                        messages: [{ role: 'user', content: text }],
+                        max_tokens: 1
                     })
                 });
                 if (!response.ok) throw new Error('API Request Failed');
@@ -1472,9 +1727,8 @@
             }
         }
         else if (provider === 'openai') {
-            const url = `https://api.openai.com/v1/responses/input_tokens`;
             try {
-                const response = await fetch(url, {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1482,37 +1736,58 @@
                     },
                     body: JSON.stringify({
                         model: 'gpt-4o-mini',
-                        input: text
+                        messages: [{ role: 'user', content: text }],
+                        max_tokens: 1
                     })
                 });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
-                return data.input_tokens;
+                return data.usage?.prompt_tokens || null;
             } catch (error) {
                 console.warn('OpenAIトークン取得失敗(CORS制限の可能性あり):', error);
                 return null;
             }
         }
         else if (provider === 'grok') {
-            const url = `https://api.x.ai/v1/tokenize-text`;
             try {
-                const response = await fetch(url, {
+                const response = await fetch('https://api.x.ai/v1/tokenize-text', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
-                        model: 'grok-2-latest',
+                        model: 'grok-3-mini',
                         text: text
                     })
                 });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
-                // xAIのtokenize-textエンドポイントはtoken_idsの配列を返す
                 return data.token_ids ? data.token_ids.length : null;
             } catch (error) {
                 console.warn('Grokトークン取得失敗:', error);
+                return null;
+            }
+        }
+        else if (provider === 'deepseek') {
+            try {
+                const response = await fetch('https://api.deepseek.com/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [{ role: 'user', content: text }],
+                        max_tokens: 1
+                    })
+                });
+                if (!response.ok) throw new Error('API Request Failed');
+                const data = await response.json();
+                return data.usage?.prompt_tokens || null;
+            } catch (error) {
+                console.warn('DeepSeekトークン取得失敗:', error);
                 return null;
             }
         }
@@ -1520,8 +1795,18 @@
         return null;
     }
 
-    // ★ 改良版: デバウンス＆ハイブリッドUI更新ロジック
+    // ------------------------------------------
+    // 5d. 統合トークン計算 & UI更新
+    // ------------------------------------------
     let tokenFetchTimer = null;
+
+    function getTokenCount(text, provider) {
+        const localCount = countTokensLocal(text, provider);
+        if (localCount !== null) {
+            return { count: localCount, method: 'local' };
+        }
+        return { count: estimateTokensApprox(text, provider), method: 'approx' };
+    }
 
     function updateCounts() {
         syncCombinedInput();
@@ -1534,41 +1819,47 @@
         const inLen = inTxt.length;
         const outLen = outTxt.length;
         
-        let provider = appSettings.tokenCalcProvider || 'gemini';
+        const provider = appSettings.tokenCalcProvider || 'openai';
         let apiKey = '';
         if (provider === 'gemini') apiKey = appSettings.geminiApiKey;
         else if (provider === 'anthropic') apiKey = appSettings.anthropicApiKey;
         else if (provider === 'openai') apiKey = appSettings.openaiApiKey;
         else if (provider === 'grok') apiKey = appSettings.grokApiKey;
+        else if (provider === 'deepseek') apiKey = appSettings.deepseekApiKey;
         
-        // 即座に近似計算でUIを更新
-        let inTok = estimateTokensImproved(inTxt, provider);
-        let outTok = estimateTokensImproved(outTxt, provider);
+        let inResult = getTokenCount(inTxt, provider);
+        let outResult = getTokenCount(outTxt, provider);
+        let inTok = inResult.count;
+        let outTok = outResult.count;
+        let currentMethod = inResult.method;
 
-        const renderCounts = (isExact = false) => {
-            const exactMark = isExact ? "✨" : "約";
-            inputCount.textContent = `合計${inLen}文字 (${exactMark}${inTok}ﾄｰｸﾝ)`;
+        const renderCounts = (method) => {
+            const prefix = {
+                'api':    '✨',
+                'local':  '🎯',
+                'approx': '≈'
+            }[method] || '≈';
+
+            inputCount.textContent = `合計${inLen}文字 (${prefix}${inTok}ﾄｰｸﾝ)`;
             inputCountPart1.textContent = `${inTxt1.length}文字`;
             inputCountPart2.textContent = `${inTxt2.length}文字`;
             
             if (outLen > 0 && inTok > outTok) {
                 const diff = inTok - outTok;
-                outputCount.innerHTML = `${outLen}文字 (${exactMark}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
+                outputCount.innerHTML = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
             } else if (outLen > 0 && inTok < outTok) {
                 const diff = outTok - inTok;
-                outputCount.innerHTML = `${outLen}文字 (${exactMark}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${diff}増加</span>`;
+                outputCount.innerHTML = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${diff}増加</span>`;
             } else {
-                outputCount.textContent = `${outLen}文字 (${exactMark}${outTok}ﾄｰｸﾝ)`;
+                outputCount.textContent = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ)`;
             }
         };
 
-        renderCounts(false); // 初回レンダリング（近似値）
+        renderCounts(currentMethod);
 
-        // API計算がオンかつAPIキーが存在する場合、デバウンスして正確な値を取得
         if (appSettings.useApiTokenCount && apiKey) {
             clearTimeout(tokenFetchTimer);
             
-            // 入力中を示すインジケーターとして少し薄くする
             inputCount.style.opacity = '0.5';
             outputCount.style.opacity = '0.5';
             
@@ -1583,10 +1874,9 @@
                 
                 inputCount.style.opacity = '1';
                 outputCount.style.opacity = '1';
-                renderCounts(exactInTok !== null); // 成功すれば✨マーク付きでレンダリング
-            }, 800); // 800msの入力停止後にAPIリクエスト
+                renderCounts(exactInTok !== null ? 'api' : currentMethod);
+            }, 800);
         } else {
-            // API不使用時は不透明度を戻す
             inputCount.style.opacity = '1';
             outputCount.style.opacity = '1';
         }
@@ -1642,6 +1932,9 @@
         }
     }
 
+    // ==========================================
+    // 6. テキスト整形ロジック
+    // ==========================================
     const kanaMap = {
         'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
         'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
@@ -1657,18 +1950,13 @@
     const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
     const umaMap = {
-        'スペシャルウィーク': 'SW', 'スペ': 'SP',
-        'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
-        'トウカイテイオー': 'TT', 'テイオー': 'TO',
-        'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
-        'フジキセキ': 'FK', 'フジ': 'FJ',
-        'オグリキャップ': 'OC', 'オグリ': 'OG',
-        'ゴールドシップ': 'GS', 'ゴルシ': 'GOS',
-        'ウオッカ': 'VDK',
+        'スペシャルウィーク': 'SW', 'スペ': 'SP', 'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
+        'トウカイテイオー': 'TT', 'テイオー': 'TO', 'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
+        'フジキセキ': 'FK', 'フジ': 'FJ', 'オグリキャップ': 'OC', 'オグリ': 'OG',
+        'ゴールドシップ': 'GS', 'ゴルシ': 'GOS', 'ウオッカ': 'VDK',
         'ダイワスカーレット': 'DS', 'ダスカ': 'DSK', 'スカーレット': 'SCL',
         'タイキシャトル': 'TS', 'タイキ': 'TIK', 'シャトル': 'SHT',
-        'グラスワンダー': 'GW', 'グラス': 'GRS',
-        'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
+        'グラスワンダー': 'GW', 'グラス': 'GRS', 'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
         'メジロマックイーン': 'MMQ', 'マックイーン': 'MCQ',
         'エルコンドルパサー': 'ECP', 'エル': 'EL',
         'テイエムオペラオー': 'TMO', 'オペラオー': 'OPO',
@@ -1734,8 +2022,7 @@
         'サクラローレル': 'SL', 'ローレル': 'LRL',
         'ナリタトップロード': 'NTR', 'トップロード': 'TPR', 'トプロ': 'TPR2',
         'ヤマニンゼファー': 'YZ', 'ゼファー': 'ZPH',
-        'フリオーソ': 'FRI',
-        'トランセンド': 'TRC',
+        'フリオーソ': 'FRI', 'トランセンド': 'TRC',
         'エスポワールシチー': 'ESC', 'エスポワール': 'ESP',
         'ノースフライト': 'NFL', 'フライト': 'FRT',
         'シンボリクリスエス': 'SKS', 'クリスエス': 'KRS', 'ボリクリ': 'BKR',
@@ -1745,13 +2032,11 @@
         'アストンマーチャン': 'AM', 'マーチャン': 'MCH',
         'サトノクラウン': 'SCW', 'クラウン': 'CRW',
         'シュヴァルグラン': 'SVG', 'シュヴァル': 'CHV',
-        'ヴィルシーナ': 'VRS',
-        'ヴィブロス': 'VIV',
+        'ヴィルシーナ': 'VRS', 'ヴィブロス': 'VIV',
         'ダンツフレーム': 'DF', 'ダンツ': 'DNT',
         'ケイエスミラクル': 'KSM', 'ミラクル': 'MRC',
         'ジャングルポケット': 'JP', 'ポッケ': 'POK',
-        'ビリーヴ': 'BLV',
-        'ノーリーズン': 'NR',
+        'ビリーヴ': 'BLV', 'ノーリーズン': 'NR',
         'スティルインラブ': 'SIL', 'スティル': 'STL',
         'コパノリッキー': 'CPR', 'リッキー': 'RCK',
         'ホッコータルマエ': 'HT', 'タルマエ': 'TRM',
@@ -1764,8 +2049,7 @@
         'タップダンスシチー': 'TDS', 'タップ': 'TAP',
         'ドゥラメンテ': 'DRM', 'ドゥラ': 'DUR',
         'ラインクラフト': 'RK', 'クラフト': 'CRF',
-        'シーザリオ': 'CZR',
-        'エアメサイア': 'AMS', 'メサイア': 'MSI',
+        'シーザリオ': 'CZR', 'エアメサイア': 'AMS', 'メサイア': 'MSI',
         'フサイチパンドラ': 'FP', 'パンドラ': 'PND',
         'ブエナビスタ': 'BV', 'ブエナ': 'BUE',
         'オルフェーヴル': 'ORF', 'オルフェ': 'ORP',
@@ -1793,10 +2077,8 @@
         'ダーレーアラビアン': 'DLA', 'ダーレー': 'DRL',
         'ゴドルフィンバルブ': 'GOB', 'ゴドルフィン': 'GDF',
         'バイアリーターク': 'BYT', 'バイアリー': 'BYA',
-        'セントライト': 'SNL',
-        'スピードシンボリ': 'SPS',
-        'ハイセイコー': 'HSK',
-        'モンジュー': 'MNJ',
+        'セントライト': 'SNL', 'スピードシンボリ': 'SPS',
+        'ハイセイコー': 'HSK', 'モンジュー': 'MNJ',
         'ハッピーミーク': 'HPM', 'ミーク': 'MEK',
         'ビターグラッセ': 'BTG', 'グラッセ': 'GLS',
         'リトルココン': 'LCC', 'ココン': 'CCN',
@@ -1819,7 +2101,6 @@
         '赤坂美聡': 'AKM', '赤坂': 'AKS', '実況': 'JKY',
         '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
         'トレーナー': 'TNR',
-
         '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
         'あたし': 'ATH', 'アタシ': 'ATK',
         '僕': 'BOK', 'ぼく': 'BKH', 'ボク': 'BKK',
@@ -1828,7 +2109,6 @@
         'ウチ': 'UCK', 'うち': 'UCH',
         'わたくし': 'WTX', 'ワタクシ': 'WTZ',
         '余': 'YOO', '妾': 'WRW',
-
         'あなた': 'YUA', 'アナタ': 'YUK', '貴方': 'YUJ', '貴女': 'YUW',
         'あんた': 'ANA', 'アンタ': 'ANK',
         'きみ': 'KIM', 'キミ': 'KMK', '君': 'KMJ',
@@ -1841,7 +2121,6 @@
         'そなた': 'SNT', 'ソナタ': 'SNK', '其方': 'SNJ',
         'そっち': 'SOC', 'ソッチ': 'SCK',
         'おたく': 'OTA', 'オタク': 'OTK', 'お宅': 'OTJ',
-
         'ウマ娘': 'UMA', 'レース': 'RAC', 'ターフ': 'TRF', 'ダート': 'DRT',
         'ジュニア': 'JNR', 'クラシック': 'CLS', 'シニア': 'SNR', 'ティアラ': 'TIR',
         'コース': 'CRS', 'ゲート': 'GAT', 'コーナー': 'CNR', '重賞': 'JUS',
@@ -1854,7 +2133,7 @@
         'ホープフル': 'HPF', 'ジュベナイル': 'JUV', '日本': 'NIH', '福岡': 'FUK',
         '札幌': 'SAP', '新潟': 'NIG', '船橋': 'FNB', '大井': 'OOI',
         '小倉': 'KOK', '大阪': 'OSK', '阪神': 'HAN', '東京': 'TKY',
-        'トゥインクル': 'TWK', 'シリーズ': 'SRZ', 'トレーニング': 'TRN', 'トレセン': 'TRS',
+        'トゥインクル': 'TWK', 'シリーズ': 'SRZ','トレーニング': 'TRN', 'トレセン': 'TRS',
         'パドック': 'PDK', '感謝祭': 'KAN', 'ハロン': 'FRL', 'ファンファーレ': 'FNF',
         '併走': 'HEI', '本格化': 'HNK', 'マイラー': 'MLR', 'デビュー': 'DBY',
         'ライブ': 'LIV', 'レッスン': 'LSN', '蹄鉄': 'TEI', 'にんじん': 'NIN',
@@ -1877,9 +2156,7 @@
             const pairs = mapStr.split(',');
             pairs.forEach(pair => {
                 const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) {
-                    replacedMap.set(abbr, original);
-                }
+                if (abbr && original) replacedMap.set(abbr, original);
             });
             bodyText = text.replace(headerRegex, '');
         } else if (oldMatch) {
@@ -1887,9 +2164,7 @@
             const pairs = mapStr.split(',');
             pairs.forEach(pair => {
                 const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) {
-                    replacedMap.set(abbr, original);
-                }
+                if (abbr && original) replacedMap.set(abbr, original);
             });
             bodyText = text.replace(oldHeaderRegex, '');
         }
@@ -1907,7 +2182,6 @@
         return header;
     }
 
-    // ★ 略称化・圧縮機能における「既存ヘッダーの保護・再構築」処理 ★
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const { replacedMap, bodyText } = extractExistingMappings(text);
         let isReplaced = false;
@@ -1933,38 +2207,19 @@
     function formatText(action) {
         syncCombinedInput();
         let text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
+        if (!text) { showToast('入力テキストがありません'); return; }
 
         resetHighlightMode();
 
         switch (action) {
-            case 'trimSpace':
-                text = text.replace(/[ 　\t]+/g, '');
-                break;
-            case 'removeEmptyLines':
-                text = text.replace(/^\s*[\r\n]/gm, '');
-                break;
-            case 'removeBreaks':
-                text = text.replace(/[\r\n]+/g, '');
-                break;
-            case 'breaksToSpace':
-                text = text.replace(/[\r\n]+/g, ' ').trim();
-                break;
-            case 'toHalfWidth':
-                text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-                break;
-            case 'toFullWidthKana':
-                text = text.replace(kanaRegex, match => kanaMap[match]);
-                break;
-            case 'toUpperCase':
-                text = text.toUpperCase();
-                break;
-            case 'toLowerCase':
-                text = text.toLowerCase();
-                break;
+            case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
+            case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
+            case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
+            case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
+            case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
+            case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
+            case 'toUpperCase': text = text.toUpperCase(); break;
+            case 'toLowerCase': text = text.toLowerCase(); break;
             case 'reverseDialogues': {
                 const regex = /「[\s\S]*?」/g;
                 const matches = text.match(regex);
@@ -2069,14 +2324,8 @@
         const target = replaceTargetEl.value;
         let text = inputEl.value;
 
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-        if (!source) {
-            showToast('検索文字列を入力してください');
-            return;
-        }
+        if (!text) { showToast('入力テキストがありません'); return; }
+        if (!source) { showToast('検索文字列を入力してください'); return; }
 
         resetHighlightMode();
 
@@ -2097,14 +2346,8 @@
         const text = inputEl.value;
         const dictText = dictArea.value;
         
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
-        if (!dictText.trim()) {
-            showToast('圧縮用辞書が空です');
-            return;
-        }
+        if (!text) { showToast('入力テキストがありません'); return; }
+        if (!dictText.trim()) { showToast('圧縮用辞書が空です'); return; }
 
         resetHighlightMode();
 
@@ -2115,9 +2358,7 @@
             if (parts.length === 2) {
                 const key = parts[0].trim();
                 const val = parts[1].trim();
-                if (key && val) {
-                    dict[key] = val;
-                }
+                if (key && val) dict[key] = val;
             }
         });
 
@@ -2140,10 +2381,7 @@
     document.getElementById('autoCompressBtn').addEventListener('click', () => {
         syncCombinedInput();
         const text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
+        if (!text) { showToast('入力テキストがありません'); return; }
         if (!window.Intl || !Intl.Segmenter) {
             showToast('お使いのブラウザは自動抽出に非対応です。手動圧縮をお使いください。');
             return;
@@ -2176,11 +2414,11 @@
         const results = [];
         for (let [phrase, count] of ngrams.entries()) {
             if (count >= minCount) {
-                const tokenCost = Math.ceil(phrase.length * 1.15);
-                const saving = (tokenCost * count) - (tokenCost + 2 + count);
-                if (saving > 2) {
-                    results.push({ phrase, count, saving });
-                }
+                const phraseTokens = countTokensForPhrase(phrase);
+                const abbrTokens = 1;
+                const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
+                const saving = (phraseTokens * count) - (abbrTokens * count + dictEntryCost);
+                if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
             }
         }
 
@@ -2190,10 +2428,7 @@
             let isSubphrase = false;
             for (const kept of filteredResults) {
                 if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) {
-                        isSubphrase = true;
-                        break;
-                    }
+                    if (item.count <= kept.count + 2) { isSubphrase = true; break; }
                 }
             }
             if (!isSubphrase) filteredResults.push(item);
@@ -2209,36 +2444,43 @@
         }
 
         let newText = bodyText;
-        let abbrCounter = replacedMap.size + 1;
         let isReplaced = false;
 
-        targets.sort((a, b) => b.phrase.length - a.phrase.length);
+        targets.sort((a, b) => b.saving - a.saving);
 
+        const abbrPool = [];
+        let abbrIdx = replacedMap.size + 1;
+        for (let i = 0; i < targets.length + 10; i++) {
+            let candidate = generateAbbr(abbrIdx);
+            while (replacedMap.has(candidate)) { abbrIdx++; candidate = generateAbbr(abbrIdx); }
+            abbrPool.push(candidate);
+            abbrIdx++;
+        }
+
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        let poolIndex = 0;
+
+        const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
+        const abbrAssignment = new Map();
         for (const target of targets) {
+            abbrAssignment.set(target.phrase, abbrPool[poolIndex++]);
+        }
+
+        for (const target of sortedForReplace) {
             const original = target.phrase;
 
             let alreadyExists = false;
             for (const [, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) {
-                    alreadyExists = true;
-                    break;
-                }
+                if (existingOriginal === original) { alreadyExists = true; break; }
             }
             if (alreadyExists) continue;
 
-            let abbr = generateAbbr(abbrCounter);
-            while (replacedMap.has(abbr)) {
-                abbrCounter++;
-                abbr = generateAbbr(abbrCounter);
-            }
-
-            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const abbr = abbrAssignment.get(original);
             const regex = new RegExp(escapeRegExp(original), 'g');
 
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                abbrCounter++;
                 isReplaced = true;
             }
         }
@@ -2260,10 +2502,7 @@
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         syncCombinedInput();
         const text = inputEl.value;
-        if (!text) {
-            showToast('入力テキストがありません');
-            return;
-        }
+        if (!text) { showToast('入力テキストがありません'); return; }
 
         if (!window.Intl || !Intl.Segmenter) {
             showToast('お使いのブラウザは単語抽出機能に非対応です');
@@ -2293,11 +2532,11 @@
         const results = [];
         for (let [phrase, count] of ngrams.entries()) {
             if (count >= minCount) {
-                const tokenCost = Math.ceil(phrase.length * 1.15);
-                const saving = (tokenCost * count) - (tokenCost + 2 + count);
-                if (saving > 2) {
-                    results.push({ phrase, count, saving });
-                }
+                const phraseTokens = countTokensForPhrase(phrase);
+                const abbrTokens = 1;
+                const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
+                const saving = (phraseTokens * count) - (abbrTokens * count + dictEntryCost);
+                if (saving > 2) results.push({ phrase, count, saving });
             }
         }
 
@@ -2307,10 +2546,7 @@
             let isSubphrase = false;
             for (const kept of filteredResults) {
                 if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) {
-                        isSubphrase = true;
-                        break;
-                    }
+                    if (item.count <= kept.count + 2) { isSubphrase = true; break; }
                 }
             }
             if (!isSubphrase) filteredResults.push(item);
@@ -2442,9 +2678,7 @@
                 }
                 html += escapeHtml(text[i]);
             }
-            if (inHighlight) {
-                html += `</mark>`;
-            }
+            if (inHighlight) html += `</mark>`;
             return html;
         }
     }
@@ -2511,10 +2745,7 @@
     runSelectedActionBtn.addEventListener('click', () => {
         const action = actionPicker.value;
 
-        if (!action) {
-            showToast('処理を選択してください');
-            return;
-        }
+        if (!action) { showToast('処理を選択してください'); return; }
 
         if (action === 'replaceText') {
             document.getElementById('replaceBtn').click();
@@ -2532,18 +2763,20 @@
         }
 
         const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
-        if (!legacyBtn) {
-            showToast('処理の実行に失敗しました');
-            return;
-        }
+        if (!legacyBtn) { showToast('処理の実行に失敗しました'); return; }
 
         legacyBtn.click();
     });
 
-    // 初期化
+    // ==========================================
+    // 7. 初期化
+    // ==========================================
     loadSettings();
     syncCombinedInput();
     updateCounts();
+
+    // ローカルトークナイザーのバックグラウンドロード開始
+    initLocalTokenizer();
 
     // ページ離脱時に作業状態を保存
     window.addEventListener('beforeunload', () => {
