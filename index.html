@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -749,19 +748,38 @@
                 </select>
             </div>
 
-            <!-- ★ 追加: Gemini API 連携 (オプション) ★ -->
+            <!-- ★ 追加: 各種AI API 連携 (オプション) ★ -->
             <div class="settings-group">
-                <h3>Gemini API 連携 (オプション)</h3>
+                <h3>正確なトークン計算 (オプション)</h3>
                 <label class="checkbox-label">
                     <input type="checkbox" id="use-api-token-toggle">
                     APIを利用して正確なトークン数を計算する
                 </label>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オンにすると、入力停止時にバックグラウンドでGoogleのサーバーに通信し、実際の正確なトークン数を取得します。オフの場合やオフライン時は、精度の高い近似計算を利用します。
+                    ※ オンにすると、入力停止時にバックグラウンドで各AIのサーバーに通信します。オフ時や通信失敗時は、各モデルに最適化された精度の高い近似計算を利用します。
                 </p>
+
+                <label for="token-calc-provider" style="font-size: 14px; margin-bottom: 4px; display: block;">対象のAIモデル:</label>
+                <select id="token-calc-provider" style="margin-bottom: 15px;">
+                    <option value="gemini">Gemini (Google)</option>
+                    <option value="anthropic">Claude (Anthropic)</option>
+                    <option value="openai">ChatGPT (OpenAI)</option>
+                </select>
                 
-                <label for="gemini-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">APIキー:</label>
-                <input type="password" id="gemini-api-key" placeholder="AIzaSy... (入力はブラウザにのみ保存されます)" style="font-family: monospace;">
+                <div id="api-key-container-gemini" class="api-key-container">
+                    <label for="gemini-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Gemini APIキー:</label>
+                    <input type="password" id="gemini-api-key" placeholder="AIzaSy... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                </div>
+
+                <div id="api-key-container-anthropic" class="api-key-container" style="display: none;">
+                    <label for="anthropic-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Anthropic APIキー:</label>
+                    <input type="password" id="anthropic-api-key" placeholder="sk-ant-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                </div>
+
+                <div id="api-key-container-openai" class="api-key-container" style="display: none;">
+                    <label for="openai-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">OpenAI APIキー:</label>
+                    <input type="password" id="openai-api-key" placeholder="sk-proj-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                </div>
             </div>
 
             <div class="settings-group">
@@ -794,7 +812,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.6 (Accurate Token Counter)
+                    バージョン: 4.8 (Multi-Model Token Counter)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -998,9 +1016,15 @@
     const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
     const abbrResponseToggle = document.getElementById('abbr-response-toggle');
 
-    // ★ 追加要素
+    // ★ 追加要素: マルチAI API設定
     const useApiTokenToggle = document.getElementById('use-api-token-toggle');
+    const tokenProviderSelect = document.getElementById('token-calc-provider');
+    const apiKeyContainerGemini = document.getElementById('api-key-container-gemini');
+    const apiKeyContainerAnthropic = document.getElementById('api-key-container-anthropic');
+    const apiKeyContainerOpenai = document.getElementById('api-key-container-openai');
     const geminiApiKeyInput = document.getElementById('gemini-api-key');
+    const anthropicApiKeyInput = document.getElementById('anthropic-api-key');
+    const openaiApiKeyInput = document.getElementById('openai-api-key');
 
     const dictArea = document.getElementById('compressDict');
     const saveNotice = document.getElementById('settings-save-notice');
@@ -1090,9 +1114,12 @@
         autoCompressMaxItems: 20,
         autoCompressExcludeAlnum: false,
         
-        // ★ 追加: API関連設定
+        // ★ 追加: API関連設定 (マルチAI対応)
         useApiTokenCount: false,
+        tokenCalcProvider: 'gemini',
         geminiApiKey: '',
+        anthropicApiKey: '',
+        openaiApiKey: '',
 
         // 作業状態
         inputText: '',
@@ -1132,7 +1159,12 @@
         
         // ★ 追加: API設定の反映
         useApiTokenToggle.checked = !!appSettings.useApiTokenCount;
+        tokenProviderSelect.value = appSettings.tokenCalcProvider || 'gemini';
         geminiApiKeyInput.value = appSettings.geminiApiKey || '';
+        anthropicApiKeyInput.value = appSettings.anthropicApiKey || '';
+        openaiApiKeyInput.value = appSettings.openaiApiKey || '';
+        
+        updateApiKeyVisibility();
 
         if (appSettings.persistWorkspace) {
             inputPart1El.value = appSettings.inputTextPart1 || appSettings.inputText || '';
@@ -1171,7 +1203,10 @@
         
         // ★ 追加: API設定の保存
         appSettings.useApiTokenCount = useApiTokenToggle.checked;
+        appSettings.tokenCalcProvider = tokenProviderSelect.value;
         appSettings.geminiApiKey = geminiApiKeyInput.value;
+        appSettings.anthropicApiKey = anthropicApiKeyInput.value;
+        appSettings.openaiApiKey = openaiApiKeyInput.value;
 
         if (appSettings.persistWorkspace) {
             syncCombinedInput();
@@ -1224,6 +1259,12 @@
             saveBtn.style.display = 'inline-block';
         }
     }
+    
+    function updateApiKeyVisibility() {
+        apiKeyContainerGemini.style.display = tokenProviderSelect.value === 'gemini' ? 'block' : 'none';
+        apiKeyContainerAnthropic.style.display = tokenProviderSelect.value === 'anthropic' ? 'block' : 'none';
+        apiKeyContainerOpenai.style.display = tokenProviderSelect.value === 'openai' ? 'block' : 'none';
+    }
 
     saveBtn.addEventListener('click', () => saveSettings(true));
     autoSaveToggle.addEventListener('change', () => {
@@ -1247,14 +1288,18 @@
     autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
     
     // ★ 追加: API設定変更時のイベントリスナー
+    tokenProviderSelect.addEventListener('change', () => {
+        updateApiKeyVisibility();
+        handleSettingChange();
+        updateCounts();
+    });
     useApiTokenToggle.addEventListener('change', () => {
         handleSettingChange();
-        updateCounts(); // オン/オフ切り替えで直ちに再計算
+        updateCounts();
     });
-    geminiApiKeyInput.addEventListener('input', () => {
-        handleSettingChange();
-        // APIキー入力中の過度なAPI呼び出しを防ぐため、ここではupdateCountsは呼ばない
-    });
+    geminiApiKeyInput.addEventListener('input', handleSettingChange);
+    anthropicApiKeyInput.addEventListener('input', handleSettingChange);
+    openaiApiKeyInput.addEventListener('input', handleSettingChange);
 
     function applyTheme(themeName) {
         document.body.className = '';
@@ -1320,8 +1365,8 @@
         return false;
     }
 
-    // ★ 改良版: より正確なクライアント側トークン近似計算
-    function estimateTokensImproved(text) {
+    // ★ マルチモデル向け改良版: 各トークナイザーの特性に合わせた近似計算
+    function estimateTokensImproved(text, provider) {
         if (!text) return 0;
         
         let asciiCount = 0;
@@ -1347,35 +1392,92 @@
             }
         }
         
-        // Geminiの処理効率に合わせた調整された係数
-        const estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
+        let estimated = 0;
+        if (provider === 'gemini') {
+            // Gemini (SentencePiece)
+            estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
+        } else if (provider === 'anthropic') {
+            // Claude (BPE)
+            estimated = (asciiCount * 0.28) + (kanaCount * 0.7) + (kanjiCount * 1.0) + (otherCount * 1.2);
+        } else if (provider === 'openai') {
+            // GPT-4o (o200k_base) - 日本語圧縮率が非常に高い
+            estimated = (asciiCount * 0.25) + (kanaCount * 0.5) + (kanjiCount * 0.8) + (otherCount * 1.0);
+        } else {
+            // Default
+            estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
+        }
+        
         return Math.ceil(estimated);
     }
 
-    // ★ 追加: APIを利用した正確なトークン計算
-    async function fetchExactTokenCount(text, apiKey) {
+    // ★ 統合版: 各AI APIを利用した正確なトークン計算
+    async function fetchExactTokenCount(text, provider, apiKey) {
         if (!text || !apiKey) return null;
         
-        // 2026年時点での一般的な高速モデルを指定
-        const model = 'gemini-1.5-flash';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:countTokens?key=${apiKey}`;
-        
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: text }] }]
-                })
-            });
-            
-            if (!response.ok) throw new Error('API Request Failed');
-            const data = await response.json();
-            return data.totalTokens;
-        } catch (error) {
-            console.warn('正確なトークン取得に失敗しました。', error);
-            return null;
+        if (provider === 'gemini') {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:countTokens?key=${apiKey}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
+                });
+                if (!response.ok) throw new Error('API Request Failed');
+                const data = await response.json();
+                return data.totalTokens;
+            } catch (error) {
+                console.warn('Geminiトークン取得失敗:', error);
+                return null;
+            }
+        } 
+        else if (provider === 'anthropic') {
+            const url = `https://api.anthropic.com/v1/messages/count_tokens`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true' 
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-3-5-sonnet-latest',
+                        messages: [{ role: 'user', content: text }]
+                    })
+                });
+                if (!response.ok) throw new Error('API Request Failed');
+                const data = await response.json();
+                return data.input_tokens;
+            } catch (error) {
+                console.warn('Anthropicトークン取得失敗:', error);
+                return null;
+            }
         }
+        else if (provider === 'openai') {
+            const url = `https://api.openai.com/v1/responses/input_tokens`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        input: text
+                    })
+                });
+                if (!response.ok) throw new Error('API Request Failed');
+                const data = await response.json();
+                return data.input_tokens;
+            } catch (error) {
+                console.warn('OpenAIトークン取得失敗(CORS制限の可能性あり):', error);
+                return null;
+            }
+        }
+        
+        return null;
     }
 
     // ★ 改良版: デバウンス＆ハイブリッドUI更新ロジック
@@ -1392,9 +1494,15 @@
         const inLen = inTxt.length;
         const outLen = outTxt.length;
         
+        let provider = appSettings.tokenCalcProvider || 'gemini';
+        let apiKey = '';
+        if (provider === 'gemini') apiKey = appSettings.geminiApiKey;
+        else if (provider === 'anthropic') apiKey = appSettings.anthropicApiKey;
+        else if (provider === 'openai') apiKey = appSettings.openaiApiKey;
+        
         // 即座に近似計算でUIを更新
-        let inTok = estimateTokensImproved(inTxt);
-        let outTok = estimateTokensImproved(outTxt);
+        let inTok = estimateTokensImproved(inTxt, provider);
+        let outTok = estimateTokensImproved(outTxt, provider);
 
         const renderCounts = (isExact = false) => {
             const exactMark = isExact ? "✨" : "約";
@@ -1416,7 +1524,7 @@
         renderCounts(false); // 初回レンダリング（近似値）
 
         // API計算がオンかつAPIキーが存在する場合、デバウンスして正確な値を取得
-        if (appSettings.useApiTokenCount && appSettings.geminiApiKey) {
+        if (appSettings.useApiTokenCount && apiKey) {
             clearTimeout(tokenFetchTimer);
             
             // 入力中を示すインジケーターとして少し薄くする
@@ -1425,8 +1533,8 @@
             
             tokenFetchTimer = setTimeout(async () => {
                 const [exactInTok, exactOutTok] = await Promise.all([
-                    fetchExactTokenCount(inTxt, appSettings.geminiApiKey),
-                    outTxt ? fetchExactTokenCount(outTxt, appSettings.geminiApiKey) : Promise.resolve(0)
+                    fetchExactTokenCount(inTxt, provider, apiKey),
+                    outTxt ? fetchExactTokenCount(outTxt, provider, apiKey) : Promise.resolve(0)
                 ]);
                 
                 if (exactInTok !== null) inTok = exactInTok;
