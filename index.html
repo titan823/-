@@ -1439,8 +1439,8 @@
     async function loadGemmaEncoder() {
         const entry = localTokenizers.gemini;
         if (entry.encoder) return entry.encoder;
-        const gemmaModule = await import('https://esm.sh/@lenml/tokenizer-gemma3');
-        const tokenizer = gemmaModule.fromPreTrained();
+        const gemmaModule = await import('https://cdn.jsdelivr.net/npm/@lenml/tokenizer-gemma3/+esm');
+        const tokenizer = await gemmaModule.fromPreTrained();
         entry.encoder = tokenizer;
         return tokenizer;
     }
