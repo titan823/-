@@ -748,7 +748,7 @@
                 </select>
             </div>
 
-            <!-- ★ 追加: 各種AI API 連携 (オプション) ★ -->
+            <!-- ★ 追加: 各種AI API 連携 (オプション) - Grok対応 ★ -->
             <div class="settings-group">
                 <h3>正確なトークン計算 (オプション)</h3>
                 <label class="checkbox-label">
@@ -764,6 +764,7 @@
                     <option value="gemini">Gemini (Google)</option>
                     <option value="anthropic">Claude (Anthropic)</option>
                     <option value="openai">ChatGPT (OpenAI)</option>
+                    <option value="grok">Grok (xAI)</option>
                 </select>
                 
                 <div id="api-key-container-gemini" class="api-key-container">
@@ -779,6 +780,11 @@
                 <div id="api-key-container-openai" class="api-key-container" style="display: none;">
                     <label for="openai-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">OpenAI APIキー:</label>
                     <input type="password" id="openai-api-key" placeholder="sk-proj-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                </div>
+
+                <div id="api-key-container-grok" class="api-key-container" style="display: none;">
+                    <label for="grok-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">xAI (Grok) APIキー:</label>
+                    <input type="password" id="grok-api-key" placeholder="xai-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
                 </div>
             </div>
 
@@ -812,7 +818,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 4.8 (Multi-Model Token Counter)
+                    バージョン: 4.9 (Multi-Model + Grok Support)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -1016,15 +1022,18 @@
     const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
     const abbrResponseToggle = document.getElementById('abbr-response-toggle');
 
-    // ★ 追加要素: マルチAI API設定
+    // ★ 追加要素: マルチAI API設定 (Grok含む)
     const useApiTokenToggle = document.getElementById('use-api-token-toggle');
     const tokenProviderSelect = document.getElementById('token-calc-provider');
     const apiKeyContainerGemini = document.getElementById('api-key-container-gemini');
     const apiKeyContainerAnthropic = document.getElementById('api-key-container-anthropic');
     const apiKeyContainerOpenai = document.getElementById('api-key-container-openai');
+    const apiKeyContainerGrok = document.getElementById('api-key-container-grok');
+    
     const geminiApiKeyInput = document.getElementById('gemini-api-key');
     const anthropicApiKeyInput = document.getElementById('anthropic-api-key');
     const openaiApiKeyInput = document.getElementById('openai-api-key');
+    const grokApiKeyInput = document.getElementById('grok-api-key');
 
     const dictArea = document.getElementById('compressDict');
     const saveNotice = document.getElementById('settings-save-notice');
@@ -1114,12 +1123,13 @@
         autoCompressMaxItems: 20,
         autoCompressExcludeAlnum: false,
         
-        // ★ 追加: API関連設定 (マルチAI対応)
+        // ★ 追加: API関連設定 (マルチAI・Grok対応)
         useApiTokenCount: false,
         tokenCalcProvider: 'gemini',
         geminiApiKey: '',
         anthropicApiKey: '',
         openaiApiKey: '',
+        grokApiKey: '',
 
         // 作業状態
         inputText: '',
@@ -1163,6 +1173,7 @@
         geminiApiKeyInput.value = appSettings.geminiApiKey || '';
         anthropicApiKeyInput.value = appSettings.anthropicApiKey || '';
         openaiApiKeyInput.value = appSettings.openaiApiKey || '';
+        grokApiKeyInput.value = appSettings.grokApiKey || '';
         
         updateApiKeyVisibility();
 
@@ -1207,6 +1218,7 @@
         appSettings.geminiApiKey = geminiApiKeyInput.value;
         appSettings.anthropicApiKey = anthropicApiKeyInput.value;
         appSettings.openaiApiKey = openaiApiKeyInput.value;
+        appSettings.grokApiKey = grokApiKeyInput.value;
 
         if (appSettings.persistWorkspace) {
             syncCombinedInput();
@@ -1264,6 +1276,7 @@
         apiKeyContainerGemini.style.display = tokenProviderSelect.value === 'gemini' ? 'block' : 'none';
         apiKeyContainerAnthropic.style.display = tokenProviderSelect.value === 'anthropic' ? 'block' : 'none';
         apiKeyContainerOpenai.style.display = tokenProviderSelect.value === 'openai' ? 'block' : 'none';
+        apiKeyContainerGrok.style.display = tokenProviderSelect.value === 'grok' ? 'block' : 'none';
     }
 
     saveBtn.addEventListener('click', () => saveSettings(true));
@@ -1300,6 +1313,7 @@
     geminiApiKeyInput.addEventListener('input', handleSettingChange);
     anthropicApiKeyInput.addEventListener('input', handleSettingChange);
     openaiApiKeyInput.addEventListener('input', handleSettingChange);
+    grokApiKeyInput.addEventListener('input', handleSettingChange);
 
     function applyTheme(themeName) {
         document.body.className = '';
@@ -1402,6 +1416,9 @@
         } else if (provider === 'openai') {
             // GPT-4o (o200k_base) - 日本語圧縮率が非常に高い
             estimated = (asciiCount * 0.25) + (kanaCount * 0.5) + (kanjiCount * 0.8) + (otherCount * 1.0);
+        } else if (provider === 'grok') {
+            // xAI Grok (GPT-4oと類似した高効率トークナイザー特性)
+            estimated = (asciiCount * 0.25) + (kanaCount * 0.5) + (kanjiCount * 0.8) + (otherCount * 1.0);
         } else {
             // Default
             estimated = (asciiCount * 0.25) + (kanaCount * 0.6) + (kanjiCount * 1.0) + (otherCount * 1.2);
@@ -1410,7 +1427,7 @@
         return Math.ceil(estimated);
     }
 
-    // ★ 統合版: 各AI APIを利用した正確なトークン計算
+    // ★ 統合版: 各AI APIを利用した正確なトークン計算 (Grok含む)
     async function fetchExactTokenCount(text, provider, apiKey) {
         if (!text || !apiKey) return null;
         
@@ -1476,6 +1493,29 @@
                 return null;
             }
         }
+        else if (provider === 'grok') {
+            const url = `https://api.x.ai/v1/tokenize-text`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'grok-2-latest',
+                        text: text
+                    })
+                });
+                if (!response.ok) throw new Error('API Request Failed');
+                const data = await response.json();
+                // xAIのtokenize-textエンドポイントはtoken_idsの配列を返す
+                return data.token_ids ? data.token_ids.length : null;
+            } catch (error) {
+                console.warn('Grokトークン取得失敗:', error);
+                return null;
+            }
+        }
         
         return null;
     }
@@ -1499,6 +1539,7 @@
         if (provider === 'gemini') apiKey = appSettings.geminiApiKey;
         else if (provider === 'anthropic') apiKey = appSettings.anthropicApiKey;
         else if (provider === 'openai') apiKey = appSettings.openaiApiKey;
+        else if (provider === 'grok') apiKey = appSettings.grokApiKey;
         
         // 即座に近似計算でUIを更新
         let inTok = estimateTokensImproved(inTxt, provider);
