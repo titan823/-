@@ -601,6 +601,10 @@
                             <span>鉤括弧を軽量な記号に置換:</span>
                             <input type="checkbox" id="autoCompressReplaceBrackets" checked>
                         </label>
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            反復圧縮の最大回数:
+                            <input type="number" id="autoCompressMaxPasses" min="1" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                        </label>
                         <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
                             <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">内蔵辞書による一括置換（自動圧縮の最初に適用）:</div>
                             <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
@@ -908,6 +912,7 @@ const autoCompressTrimWhitespaceInput=document.getElementById('autoCompressTrimW
 const autoCompressReplaceBracketsInput=document.getElementById('autoCompressReplaceBrackets');
 const autoCompressApplyUmaInput=document.getElementById('autoCompressApplyUma');
 const autoCompressApplyPronounInput=document.getElementById('autoCompressApplyPronoun');
+const autoCompressMaxPassesInput=document.getElementById('autoCompressMaxPasses');
 const inputEl=document.getElementById('inputText');
 const inputPart1El=document.getElementById('inputTextPart1');
 const inputPart2El=document.getElementById('inputTextPart2');
@@ -1219,6 +1224,7 @@ let appSettings = {
     autoCompressExcludeAlnum:false, autoCompressMergeDialogues:true,
     autoCompressTrimWhitespace:true, autoCompressReplaceBrackets:true,
     autoCompressApplyUma:false, autoCompressApplyPronoun:false,
+    autoCompressMaxPasses:3,
     useApiTokenCount:false, tokenCalcProvider:'openai',
     geminiApiKey:'', anthropicApiKey:'', openaiApiKey:'', grokApiKey:'', deepseekApiKey:'',
     deepseekPreciseTokenizer:false,
@@ -1248,6 +1254,7 @@ function loadSettings() {
     autoCompressReplaceBracketsInput.checked=appSettings.autoCompressReplaceBrackets!==false;
     autoCompressApplyUmaInput.checked=!!appSettings.autoCompressApplyUma;
     autoCompressApplyPronounInput.checked=!!appSettings.autoCompressApplyPronoun;
+    autoCompressMaxPassesInput.value=appSettings.autoCompressMaxPasses||3;
     useApiTokenToggle.checked=!!appSettings.useApiTokenCount;
     tokenProviderSelect.value=appSettings.tokenCalcProvider||'openai';
     geminiApiKeyInput.value=appSettings.geminiApiKey||'';
@@ -1282,6 +1289,7 @@ function collectCurrentState() {
     appSettings.autoCompressReplaceBrackets=autoCompressReplaceBracketsInput.checked;
     appSettings.autoCompressApplyUma=autoCompressApplyUmaInput.checked;
     appSettings.autoCompressApplyPronoun=autoCompressApplyPronounInput.checked;
+    appSettings.autoCompressMaxPasses=parseInt(autoCompressMaxPassesInput.value,10)||3;
     appSettings.useApiTokenCount=useApiTokenToggle.checked;appSettings.tokenCalcProvider=tokenProviderSelect.value;
     appSettings.geminiApiKey=geminiApiKeyInput.value;appSettings.anthropicApiKey=anthropicApiKeyInput.value;
     appSettings.openaiApiKey=openaiApiKeyInput.value;appSettings.grokApiKey=grokApiKeyInput.value;
@@ -1306,7 +1314,7 @@ persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
 const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
 [themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
-[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();});
 useApiTokenToggle.addEventListener('change',()=>{handleSettingChange();updateCounts();});
 deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(tokenProviderSelect.value==='deepseek'){localTokenizers.deepseek.encoder=null;localTokenizers.deepseek.status='idle';localTokenizers.deepseek._precise=false;initLocalTokenizer();}updateCounts();});
@@ -1591,79 +1599,93 @@ document.getElementById('autoCompressBtn').addEventListener('click', () => {
         processedBody = r.text; bracketReplacedCount = r.replacedCount;
     }
 
-    // Step 4: 頻出ワード自動圧縮
     const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
     const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
+    const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-    const segments = Array.from(segmenter.segment(processedBody)).filter(s => s.segment.trim().length > 0);
-
-    const ngrams = new Map();
-    for (let n = 1; n <= 6; n++) {
-        for (let i = 0; i <= segments.length - n; i++) {
-            let phrase = '';
-            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-            phrase = phrase.trim();
-            if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-        }
-    }
-
-    const results = [];
-    for (let [phrase, count] of ngrams.entries()) {
-        if (count >= minCount) {
-            const phraseTokens = countTokensForPhrase(phrase);
-            const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
-            const saving = (phraseTokens * count) - (1 * count + dictEntryCost);
-            if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
-        }
-    }
-
-    results.sort((a, b) => b.phrase.length - a.phrase.length);
-    const filteredResults = [];
-    for (const item of results) {
-        let isSub = false;
-        for (const kept of filteredResults) {
-            if (kept.phrase.includes(item.phrase) && item.count <= kept.count + 2) { isSub = true; break; }
-        }
-        if (!isSub) filteredResults.push(item);
-    }
-    filteredResults.sort((a, b) => b.saving - a.saving);
-    const targets = filteredResults.slice(0, maxItems);
-
-    if (targets.length === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
-        showToast('自動圧縮できるワードがありませんでした'); return;
-    }
 
     let newText = processedBody;
     let isReplaced = false;
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     let nextAbbrIndex = replacedMap.size + 1;
-    const abbrAssignment = new Map();
+    let totalCompressedCount = 0;
 
-    for (const target of targets) {
-        const { abbr, nextIndex } = generateSafeAbbr(nextAbbrIndex, processedBody, replacedMap);
-        abbrAssignment.set(target.phrase, abbr);
-        nextAbbrIndex = nextIndex;
+    for (let pass = 0; pass < maxPasses; pass++) {
+        const segments = Array.from(segmenter.segment(newText)).filter(s => s.segment.trim().length > 0);
+
+        const ngrams = new Map();
+        for (let n = 1; n <= 6; n++) {
+            for (let i = 0; i <= segments.length - n; i++) {
+                let phrase = '';
+                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+                phrase = phrase.trim();
+                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
+                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+            }
+        }
+
+        const results = [];
+        for (let [phrase, count] of ngrams.entries()) {
+            if (count >= minCount) {
+                const phraseTokens = countTokensForPhrase(phrase);
+                const dictEntryCost = countTokensForPhrase(`v0=${phrase}\n`);
+                const saving = (phraseTokens * count) - (1 * count + dictEntryCost);
+                if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
+            }
+        }
+
+        results.sort((a, b) => b.phrase.length - a.phrase.length);
+        const filteredResults = [];
+        for (const item of results) {
+            let isSub = false;
+            for (const kept of filteredResults) {
+                if (kept.phrase.includes(item.phrase)) {
+                    const remainingCount = item.count - kept.count;
+                    const remainingSaving = (item.phraseTokens * remainingCount) - (1 * remainingCount + countTokensForPhrase(`v0=${item.phrase}\n`));
+                    if (remainingSaving <= 2) { isSub = true; break; }
+                }
+            }
+            if (!isSub) filteredResults.push(item);
+        }
+        filteredResults.sort((a, b) => b.saving - a.saving);
+        const targets = filteredResults.slice(0, maxItems);
+
+        if (targets.length === 0) break;
+
+        let passReplaced = false;
+        const abbrAssignment = new Map();
+        for (const target of targets) {
+            const { abbr, nextIndex } = generateSafeAbbr(nextAbbrIndex, newText, replacedMap);
+            abbrAssignment.set(target.phrase, abbr);
+            nextAbbrIndex = nextIndex;
+        }
+
+        const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
+        for (const target of sortedForReplace) {
+            const original = target.phrase;
+            let alreadyExists = false;
+            for (const [, existingOriginal] of replacedMap.entries()) {
+                if (existingOriginal === original) { alreadyExists = true; break; }
+            }
+            if (alreadyExists) continue;
+            const abbr = abbrAssignment.get(original);
+            const regex = new RegExp(esc(original), 'g');
+            if (regex.test(newText)) {
+                newText = newText.replace(regex, abbr);
+                replacedMap.set(abbr, original);
+                isReplaced = true;
+                passReplaced = true;
+                totalCompressedCount++;
+            }
+        }
+
+        if (!passReplaced) break;
     }
 
-    const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
-    for (const target of sortedForReplace) {
-        const original = target.phrase;
-        let alreadyExists = false;
-        for (const [, existingOriginal] of replacedMap.entries()) {
-            if (existingOriginal === original) { alreadyExists = true; break; }
-        }
-        if (alreadyExists) continue;
-        const abbr = abbrAssignment.get(original);
-        const regex = new RegExp(esc(original), 'g');
-        if (regex.test(newText)) {
-            newText = newText.replace(regex, abbr);
-            replacedMap.set(abbr, original);
-            isReplaced = true;
-        }
+    if (totalCompressedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
+        showToast('自動圧縮できるワードがありませんでした'); return;
     }
 
     const formatOptions = {
@@ -1742,7 +1764,8 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         filtered.slice(0, maxItems).forEach((item, index) => {
             const div = document.createElement('div'); div.className = 'keyword-item';
             let autoAbbr = generateAbbr(index + 1);
-            const infoDiv = document.createElement('div'); infoDiv.className = 'keyword-info';
+            const infoDiv = document.createElement('div');
+             infoDiv.className = 'keyword-info';
             const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
             const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats'; statsDiv.textContent = `出現:${item.count}回 / 節約:約${item.saving}ﾄｰｸﾝ`;
             infoDiv.appendChild(wordDiv); infoDiv.appendChild(statsDiv);
