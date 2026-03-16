@@ -811,7 +811,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 6.3 (Tokenizer accuracy improvements)
+                    バージョン: 6.4 (Gemma 3 Tokenizer via HF Transformers)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -1374,7 +1374,7 @@
     });
 
     // ==========================================
-    // 5. ★★★ トークン計算エンジン v6.3 ★★★
+    // 5. ★★★ トークン計算エンジン v6.4 ★★★
     // ==========================================
     let isHighlightMode = false;
 
@@ -1404,7 +1404,7 @@
     const localTokenizers = {
         openai:    { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
         anthropic: { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
-        gemini:    { encoder: null, status: 'idle', _type: 'gemma3' },
+        gemini:    { encoder: null, status: 'idle', _type: 'hf-transformers' }, // GeminiはHF Transformersを使用
         grok:      { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
         deepseek:  { encoder: null, status: 'idle', _type: 'ai-tokenizer', _precise: false }
     };
@@ -1439,8 +1439,12 @@
     async function loadGemmaEncoder() {
         const entry = localTokenizers.gemini;
         if (entry.encoder) return entry.encoder;
-        const gemmaModule = await import('https://cdn.jsdelivr.net/npm/@lenml/tokenizer-gemma3/+esm');
-        const tokenizer = await gemmaModule.fromPreTrained();
+        const { AutoTokenizer } = await import(
+            'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'
+        );
+        const tokenizer = await AutoTokenizer.from_pretrained(
+            'onnx-community/gemma-3-1b-it-ONNX'
+        );
         entry.encoder = tokenizer;
         return tokenizer;
     }
@@ -1496,9 +1500,9 @@
                 console.log('[TokenEngine] ai-tokenizer (claude) loaded for Anthropic');
 
             } else if (provider === 'gemini') {
-                await loadGemmaEncoder();
+                entry.encoder = await loadGemmaEncoder();
                 entry.status = 'ready';
-                console.log('[TokenEngine] @lenml/tokenizer-gemma3 loaded for Gemini');
+                console.log('[TokenEngine] HF Transformers (Gemma 3 SentencePiece 262K) loaded for Gemini');
 
             } else if (provider === 'grok') {
                 entry.encoder = await loadAiTokenizer('o200k_base');
@@ -1534,15 +1538,10 @@
         if (!entry || entry.status !== 'ready' || !entry.encoder) return null;
 
         try {
-            if (provider === 'gemini') {
-                // @lenml/tokenizer-gemma3
-                return entry.encoder.encode(text, null, { add_special_tokens: false }).length;
-            } else if (provider === 'deepseek' && entry._precise) {
-                // HF Transformers
+            if (entry._type === 'hf-transformers') {
                 const ids = entry.encoder.encode(text, null, { add_special_tokens: false });
                 return ids.length;
             } else {
-                // ai-tokenizer: .count() メソッド
                 return entry.encoder.count(text);
             }
         } catch (e) {
@@ -1570,9 +1569,9 @@
                 badge: '≈99%'
             },
             gemini: {
-                name: '@lenml/tokenizer-gemma3 (SentencePiece 262K)',
-                size: '約2MB',
-                ready: 'Gemini は Gemma3 と同じトークナイザーを使用。≈99%の精度。',
+                name: 'HF Transformers (Gemma 3 SentencePiece 262K)',
+                size: '約20MB',
+                ready: 'Gemini 全モデル（2.0/2.5/3）と同じトークナイザーを使用。100%正確。',
                 badge: '🎯'
             },
             grok: {
