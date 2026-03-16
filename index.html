@@ -948,14 +948,15 @@ function buildCompressedHeader(replacedMap, formatOptions) {
     const hasFmt = formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets);
     if (!hasMap && !hasFmt) return '';
 
-    let header = '';
+            let header = '';
 
     if (hasMap) {
-        header += '[ABBR_MAP]\n';
+                header += '--- Abbreviation Map (not part of the text) ---\n';
         replacedMap.forEach((original, abbr) => {
             header += `${abbr}=${original}\n`;
         });
-        header += '[/ABBR_MAP]\n';
+        header += '--- End of Map ---\n';
+
     }
 
     if (hasMap) {
@@ -1370,7 +1371,8 @@ function extractExistingMappings(text) {
     let bodyText = text;
 
     // 新フォーマット: [ABBR_MAP]...[/ABBR_MAP]
-        const newRe = /^\[ABBR_MAP\]\n([\s\S]*?)\n\[\/ABBR_MAP\]\n(?:[^\n]*\n)*?\n/;
+            const newRe = /^---\s*Abbreviation Map\b[^\n]*---\n([\s\S]*?)\n---\s*End of Map\s*---\n(?:[^\n]*\n)*?\n/;
+
 
     let m = text.match(newRe);
     if (m) {
