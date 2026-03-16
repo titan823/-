@@ -958,35 +958,25 @@ function buildCompressedHeader(replacedMap, formatOptions) {
         header += '[/ABBR_MAP]\n';
     }
 
-    // メタ行: RESP + FMT を1行に
-    let metaParts = [];
     if (hasMap) {
-        metaParts.push('[RESP:' + (abbrResponseToggle.checked ? 'ABBR' : 'FULL') + ']');
+        if (abbrResponseToggle.checked) {
+            header += 'Above: abbreviation=original. Use the same abbreviations in your reply.\n';
+        } else {
+            header += 'Above: abbreviation=original. Use original names in your reply, never abbreviations.\n';
+        }
     }
-    if (hasFmt) {
-        let flags = [];
-        if (formatOptions.mergedDialogues) flags.push('merge');
-        if (formatOptions.replacedBrackets) flags.push('bracket');
-        metaParts.push('[FMT:' + flags.join(',') + ']');
-    }
-    if (metaParts.length > 0) header += metaParts.join('') + '\n';
 
-    // 1行説明（AIが初見でも理解できる最小限）
-    let hints = [];
-    if (hasMap) hints.push('Mapping:abbr=original');
-    if (hasMap) {
-        if (abbrResponseToggle.checked) hints.push('RESP:ABBR=reply using abbreviations');
-        else hints.push('RESP:FULL=reply using original names only');
-    }
     if (hasFmt) {
-        if (formatOptions.mergedDialogues) hints.push('merge=same-speaker lines merged');
-        if (formatOptions.replacedBrackets) hints.push('bracket:Name>text=dialogue,"q"=quote,\'t\'=title,(n)=note');
+        let fmtParts = [];
+        if (formatOptions.replacedBrackets) fmtParts.push('"Name>text" is dialogue. "text" is quote. \'text\' is title. (text) is note');
+        if (formatOptions.mergedDialogues) fmtParts.push('Same-speaker lines are merged');
+        header += 'Format: ' + fmtParts.join('. ') + '.\n';
     }
-    if (hints.length > 0) header += hints.join('. ') + '.\n';
 
     header += '\n';
     return header;
 }
+
 
 
 // ==========================================
@@ -1380,7 +1370,8 @@ function extractExistingMappings(text) {
     let bodyText = text;
 
     // 新フォーマット: [ABBR_MAP]...[/ABBR_MAP]
-    const newRe = /^\[ABBR_MAP\]\n([\s\S]*?)\n\[\/ABBR_MAP\]\n(?:\[RESP:(?:FULL|ABBR)\])?(?:\[FMT:[^\]]*\])?\n?[^\n]*\n?\n?/;
+        const newRe = /^\[ABBR_MAP\]\n([\s\S]*?)\n\[\/ABBR_MAP\]\n(?:[^\n]*\n)*?\n/;
+
     let m = text.match(newRe);
     if (m) {
         m[1].split('\n').forEach(line => {
