@@ -601,6 +601,17 @@
                             <span>鉤括弧を軽量な記号に置換:</span>
                             <input type="checkbox" id="autoCompressReplaceBrackets" checked>
                         </label>
+                        <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">内蔵辞書による一括置換（自動圧縮の最初に適用）:</div>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>ウマ娘の名前を略称化:</span>
+                                <input type="checkbox" id="autoCompressApplyUma">
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>人称代名詞を略称化:</span>
+                                <input type="checkbox" id="autoCompressApplyPronoun">
+                            </label>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -636,6 +647,7 @@
                         <option value="replaceText">文字列置換</option>
                         <option value="extractKeywords">頻出ワード抽出</option>
                         <option value="manualCompress">辞書を使って圧縮</option>
+                        <option value="decompressText">圧縮テキストを復元</option>
                     </optgroup>
                 </select>
 
@@ -672,10 +684,10 @@
                     <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
                     <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
                 </div>
-
                 <button id="replaceBtn" type="button"></button>
                 <button id="extractKeywordsBtn" type="button"></button>
                 <button id="compressBtn" type="button"></button>
+                <button id="decompressBtn" type="button"></button>
             </div>
 
             <div class="section-header" style="margin-top: 5px;">
@@ -724,7 +736,6 @@
 
             <div class="settings-group">
                 <h3>トークン計算</h3>
-
                 <label for="token-calc-provider" style="font-size: 14px; margin-bottom: 4px; display: block;">対象のAIモデル:</label>
                 <select id="token-calc-provider" style="margin-bottom: 10px;">
                     <option value="openai">ChatGPT (OpenAI)</option>
@@ -733,9 +744,7 @@
                     <option value="grok">Grok (xAI)</option>
                     <option value="deepseek">DeepSeek</option>
                 </select>
-
                 <div id="tokenizerStatusNotice" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; padding: 6px 8px; background: var(--bg-secondary); border-radius: 4px;"></div>
-
                 <div id="deepseek-precise-container" style="display: none;">
                     <label class="checkbox-label">
                         <input type="checkbox" id="deepseek-precise-tokenizer-toggle">
@@ -745,7 +754,6 @@
                         ※ オフ時は o200k_base による近似計算（≈95-98%）。オンにすると初回のみ約17MBのDeepSeek公式トークナイザーを取得し、100%正確なカウントを行います。
                     </p>
                 </div>
-
                 <details style="margin-top: 5px;">
                     <summary style="font-size: 13px; cursor: pointer; color: var(--text-secondary); outline: none;">API による正確なトークン計算 (オプション)</summary>
                     <div style="margin-top: 10px;">
@@ -754,35 +762,27 @@
                             APIを利用して正確なトークン数を計算する
                         </label>
                         <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                            ※ オンにすると、入力停止時にバックグラウンドで各AIのサーバーに通信します。ほとんどのプロバイダではローカルトークナイザーで十分な精度が得られるため、通常は不要です。
+                            ※ オンにすると、入力停止時にバックグラウンドで各AIのサーバーに通信します。
                         </p>
-                        
                         <div id="api-key-container-openai" class="api-key-container" style="display: none;">
                             <label for="openai-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">OpenAI APIキー:</label>
-                            <input type="password" id="openai-api-key" placeholder="sk-proj-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                            <input type="password" id="openai-api-key" placeholder="sk-proj-..." style="font-family: monospace;">
                         </div>
-
                         <div id="api-key-container-anthropic" class="api-key-container" style="display: none;">
                             <label for="anthropic-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Anthropic APIキー:</label>
-                            <input type="password" id="anthropic-api-key" placeholder="sk-ant-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                            <input type="password" id="anthropic-api-key" placeholder="sk-ant-..." style="font-family: monospace;">
                         </div>
-
                         <div id="api-key-container-gemini" class="api-key-container" style="display: none;">
                             <label for="gemini-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">Gemini APIキー:</label>
-                            <input type="password" id="gemini-api-key" placeholder="AIzaSy... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                            <input type="password" id="gemini-api-key" placeholder="AIzaSy..." style="font-family: monospace;">
                         </div>
-
                         <div id="api-key-container-grok" class="api-key-container" style="display: none;">
                             <label for="grok-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">xAI (Grok) APIキー:</label>
-                            <input type="password" id="grok-api-key" placeholder="xai-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
+                            <input type="password" id="grok-api-key" placeholder="xai-..." style="font-family: monospace;">
                         </div>
-
                         <div id="api-key-container-deepseek" class="api-key-container" style="display: none;">
                             <label for="deepseek-api-key" style="font-size: 14px; margin-bottom: 4px; display: block;">DeepSeek APIキー:</label>
-                            <input type="password" id="deepseek-api-key" placeholder="sk-... (ブラウザにのみ保存されます)" style="font-family: monospace;">
-                            <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 5px;">
-                                ※ DeepSeek には専用の token count API がないため、chat completion API で代替します。生成1トークン分の課金が発生します。
-                            </p>
+                            <input type="password" id="deepseek-api-key" placeholder="sk-..." style="font-family: monospace;">
                         </div>
                     </div>
                 </details>
@@ -794,41 +794,25 @@
                     <input type="checkbox" id="auto-save-settings-toggle">
                     設定を即時反映する（自動保存）
                 </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オンにすると「保存」ボタンを押さなくても、変更が直ちに保存・適用されます。
-                </p>
-
                 <label class="checkbox-label">
                     <input type="checkbox" id="persist-workspace-toggle" checked>
                     作業中のテキストを自動保存する
                 </label>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ 前半/後半入力欄・出力欄・検索/置換文字列などをブラウザに自動保存し、再読み込み時に復元します。
-                </p>
-
                 <label class="checkbox-label">
                     <input type="checkbox" id="abbr-response-toggle">
                     圧縮後、AIの返答でも略号を使わせる
                 </label>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
-                    ※ オフ: AIには正式名称で返答するよう指示します。<br>
-                    ※ オン: AIには略号で返答するよう指示します（クライアント側で復元する前提）。
+                    ※ オフ: AIには正式名称で返答するよう指示。オン: 略号で返答するよう指示（復元前提）。
                 </p>
             </div>
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 6.6 (セリフ結合・括弧置換・空白削除)
+                    バージョン: 7.1 (最小ヘッダー・内蔵辞書・復元・衝突チェック)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ サーバー上の新しいコードを強制的に読み込みたい場合に使用します。
-                </p>
-                
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
-                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
-                    ※ ブラウザに保存されている「圧縮辞書」「テーマ設定」「作業中テキスト」などを全て削除し、初期状態に戻します。
-                </p>
             </div>
         </main>
     </div>
@@ -841,10 +825,9 @@
     <div style="display: flex; flex-direction: column; max-height: 80vh; padding: 20px;">
         <h3 style="margin-top:0; font-size:16px; border-bottom: 1px solid var(--border-secondary); padding-bottom: 10px;">頻出ワード抽出結果</h3>
         <p style="font-size:12px; color:var(--text-secondary); margin-bottom: 10px;">
-            入力テキストを解析し、トークン削減効果が高い順に提案しています。<br>「+ 辞書へ」を押すと手動圧縮辞書に自動入力されます。
+            トークン削減効果が高い順に提案。「+ 辞書へ」で手動圧縮辞書に追加。
         </p>
-        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;">
-        </div>
+        <div id="keywordList" style="flex-grow: 1; overflow-y: auto; display:flex; flex-direction:column; gap:8px; padding-right: 5px; margin-bottom: 15px;"></div>
         <div style="text-align: right; flex-shrink: 0; padding-top: 10px; border-top: 1px solid var(--border-secondary);">
             <button id="closeKeywordDialog" class="secondary-btn" style="background-color: var(--bg-button-action);">閉じる</button>
         </div>
@@ -860,1819 +843,994 @@
 </dialog>
 
 <script>
-    (function initPWA() {
-        const manifestJSON = {
-            name: "Toolbox PWA",
-            short_name: "Toolbox",
-            display: "standalone",
-            start_url: location.href,
-            background_color: "#ffffff",
-            theme_color: "#4a90e2",
-            icons:[{
-                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",
-                sizes: "192x192",
-                type: "image/svg+xml"
-            }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
-        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
-
-        const swCode = `
-            const CACHE_NAME = 'toolbox-pwa-v2';
-            self.addEventListener('install', e => { self.skipWaiting(); });
-            self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-            self.addEventListener('fetch', e => {
-                e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-            });
-            self.addEventListener('message', e => {
-                if (e.data && e.data.action === 'clearCache') {
-                    caches.keys().then(names => {
-                        for (let name of names) caches.delete(name);
-                    }).then(() => {
-                        e.source.postMessage({action: 'cacheCleared'});
-                    });
-                }
-            });
-        `;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
-        }
-    })();
-
-    const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    function toBase62(num) {
-        if (num === 0) return BASE62_CHARS[0];
-        let result = '';
-        while (num > 0) {
-            result = BASE62_CHARS[num % 62] + result;
-            num = Math.floor(num / 62);
-        }
-        return result;
-    }
-
-    function generateAbbr(index) {
-        return 'v' + toBase62(index);
-    }
-
-    function escapeHtml(str) {
-        return String(str).replace(/[&<>"']/g, function(match) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-            return map[match];
-        });
-    }
-
-    let toastTimeout;
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
-    }
-
-    function showConfirm(message) {
-        return new Promise((resolve) => {
-            const dialog = document.getElementById('confirmDialog');
-            document.getElementById('confirmMessage').textContent = message;
-            const okBtn = document.getElementById('confirmOkBtn');
-            const cancelBtn = document.getElementById('confirmCancelBtn');
-            const cleanup = () => {
-                okBtn.removeEventListener('click', onOk);
-                cancelBtn.removeEventListener('click', onCancel);
-                dialog.close();
-            };
-            const onOk = () => { cleanup(); resolve(true); };
-            const onCancel = () => { cleanup(); resolve(false); };
-            okBtn.addEventListener('click', onOk);
-            cancelBtn.addEventListener('click', onCancel);
-            dialog.showModal();
-        });
-    }
-
-    const screens = {
-        main: document.getElementById('main-screen'),
-        menu: document.getElementById('menu-screen'),
-        settings: document.getElementById('settings-screen')
+(function initPWA() {
+    const manifestJSON = {
+        name: "Toolbox PWA", short_name: "Toolbox", display: "standalone",
+        start_url: location.href, background_color: "#ffffff", theme_color: "#4a90e2",
+        icons:[{ src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+PHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIGZpbGw9IiM0YTkwZTIiIHJ4PSI0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSI4MCIgZmlsbD0iI2ZmZiIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=", sizes: "192x192", type: "image/svg+xml" }]
     };
-
-    function showScreen(targetScreen) {
-        Object.values(screens).forEach(screen => {
-            screen.classList.remove('active');
-            screen.classList.remove('dormant');
+    const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
+    document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+    const swCode = `
+        const CACHE_NAME='toolbox-pwa-v2';
+        self.addEventListener('install',e=>{self.skipWaiting();});
+        self.addEventListener('activate',e=>{e.waitUntil(clients.claim());});
+        self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});
+        self.addEventListener('message',e=>{
+            if(e.data&&e.data.action==='clearCache'){
+                caches.keys().then(names=>{for(let n of names)caches.delete(n);}).then(()=>{e.source.postMessage({action:'cacheCleared'});});
+            }
         });
-        if (targetScreen === 'main') {
-            screens.main.style.transform = 'translateX(0)';
-            screens.menu.style.transform = 'translateX(-100%)';
-            screens.settings.style.transform = 'translateX(100%)';
-            screens.main.classList.add('active');
-        } else if (targetScreen === 'menu') {
-            screens.main.style.transform = 'translateX(100%)';
-            screens.menu.style.transform = 'translateX(0)';
-            screens.settings.style.transform = 'translateX(200%)';
-            screens.menu.classList.add('active');
-        } else if (targetScreen === 'settings') {
-            screens.main.style.transform = 'translateX(-100%)';
-            screens.menu.style.transform = 'translateX(-200%)';
-            screens.settings.style.transform = 'translateX(0)';
-            screens.settings.classList.add('active');
-        }
-        setTimeout(() => {
-            Object.values(screens).forEach(screen => {
-                if (!screen.classList.contains('active')) {
-                    screen.classList.add('dormant');
-                }
-            });
-        }, 350);
+    `;
+    if('serviceWorker' in navigator){navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}))).catch(()=>{});}
+})();
+
+const BASE62='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function toBase62(n){if(n===0)return BASE62[0];let r='';while(n>0){r=BASE62[n%62]+r;n=Math.floor(n/62);}return r;}
+function generateAbbr(i){return 'v'+toBase62(i);}
+function isAbbrSafe(a,t){return !t.includes(a);}
+function generateSafeAbbr(si,t,m){let i=si,a=generateAbbr(i),c=0;while((!isAbbrSafe(a,t)||m.has(a))&&c<200){i++;a=generateAbbr(i);c++;}return{abbr:a,nextIndex:i+1};}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+let toastTimeout;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),2000);}
+function showConfirm(msg){return new Promise(r=>{const d=document.getElementById('confirmDialog');document.getElementById('confirmMessage').textContent=msg;const ok=document.getElementById('confirmOkBtn'),ca=document.getElementById('confirmCancelBtn');const cl=()=>{ok.removeEventListener('click',onOk);ca.removeEventListener('click',onCa);d.close();};const onOk=()=>{cl();r(true);};const onCa=()=>{cl();r(false);};ok.addEventListener('click',onOk);ca.addEventListener('click',onCa);d.showModal();});}
+
+const screens={main:document.getElementById('main-screen'),menu:document.getElementById('menu-screen'),settings:document.getElementById('settings-screen')};
+function showScreen(t){Object.values(screens).forEach(s=>{s.classList.remove('active');s.classList.remove('dormant');});if(t==='main'){screens.main.style.transform='translateX(0)';screens.menu.style.transform='translateX(-100%)';screens.settings.style.transform='translateX(100%)';screens.main.classList.add('active');}else if(t==='menu'){screens.main.style.transform='translateX(100%)';screens.menu.style.transform='translateX(0)';screens.settings.style.transform='translateX(200%)';screens.menu.classList.add('active');}else if(t==='settings'){screens.main.style.transform='translateX(-100%)';screens.menu.style.transform='translateX(-200%)';screens.settings.style.transform='translateX(0)';screens.settings.classList.add('active');}setTimeout(()=>{Object.values(screens).forEach(s=>{if(!s.classList.contains('active'))s.classList.add('dormant');});},350);}
+document.getElementById('goto-menu-btn').addEventListener('click',()=>showScreen('menu'));
+document.getElementById('goto-settings-btn').addEventListener('click',()=>showScreen('settings'));
+document.getElementById('back-to-main-from-menu').addEventListener('click',()=>showScreen('main'));
+document.getElementById('back-to-main-from-settings').addEventListener('click',()=>showScreen('main'));
+
+const themeSelect=document.getElementById('theme-select');
+const autoSaveToggle=document.getElementById('auto-save-settings-toggle');
+const persistWorkspaceToggle=document.getElementById('persist-workspace-toggle');
+const abbrResponseToggle=document.getElementById('abbr-response-toggle');
+const useApiTokenToggle=document.getElementById('use-api-token-toggle');
+const tokenProviderSelect=document.getElementById('token-calc-provider');
+const deepseekPreciseContainer=document.getElementById('deepseek-precise-container');
+const geminiApiKeyInput=document.getElementById('gemini-api-key');
+const anthropicApiKeyInput=document.getElementById('anthropic-api-key');
+const openaiApiKeyInput=document.getElementById('openai-api-key');
+const grokApiKeyInput=document.getElementById('grok-api-key');
+const deepseekApiKeyInput=document.getElementById('deepseek-api-key');
+const deepseekPreciseToggle=document.getElementById('deepseek-precise-tokenizer-toggle');
+const dictArea=document.getElementById('compressDict');
+const saveNotice=document.getElementById('settings-save-notice');
+const saveBtn=document.getElementById('save-settings-btn');
+const autoCompressMinLenInput=document.getElementById('autoCompressMinLen');
+const autoCompressMinCountInput=document.getElementById('autoCompressMinCount');
+const autoCompressMaxItemsInput=document.getElementById('autoCompressMaxItems');
+const autoCompressExcludeAlnumInput=document.getElementById('autoCompressExcludeAlnum');
+const autoCompressMergeDialoguesInput=document.getElementById('autoCompressMergeDialogues');
+const autoCompressTrimWhitespaceInput=document.getElementById('autoCompressTrimWhitespace');
+const autoCompressReplaceBracketsInput=document.getElementById('autoCompressReplaceBrackets');
+const autoCompressApplyUmaInput=document.getElementById('autoCompressApplyUma');
+const autoCompressApplyPronounInput=document.getElementById('autoCompressApplyPronoun');
+const inputEl=document.getElementById('inputText');
+const inputPart1El=document.getElementById('inputTextPart1');
+const inputPart2El=document.getElementById('inputTextPart2');
+const clearPart1Btn=document.getElementById('clearPart1Btn');
+const clearPart2Btn=document.getElementById('clearPart2Btn');
+const outputEl=document.getElementById('outputText');
+const replaceSourceEl=document.getElementById('replaceSource');
+const replaceTargetEl=document.getElementById('replaceTarget');
+const inputCount=document.getElementById('inputCount');
+const inputCountPart1=document.getElementById('inputCountPart1');
+const inputCountPart2=document.getElementById('inputCountPart2');
+const outputCount=document.getElementById('outputCount');
+const actionPicker=document.getElementById('actionPicker');
+const replaceFields=document.getElementById('replaceFields');
+const dictFields=document.getElementById('dictFields');
+const runSelectedActionBtn=document.getElementById('runSelectedActionBtn');
+const responseModeStatus=document.getElementById('responseModeStatus');
+const toggleHighlightBtn=document.getElementById('toggleHighlightBtn');
+const outputPreview=document.getElementById('outputPreview');
+const tokenizerStatusNotice=document.getElementById('tokenizerStatusNotice');
+
+const INPUT_JOINER='';
+let lastFocusedInputPart=inputPart1El;
+function buildCombinedInputText(){const p1=inputPart1El.value||'',p2=inputPart2El.value||'';if(!p1)return p2;if(!p2)return p1;return p1+INPUT_JOINER+p2;}
+function syncCombinedInput(){inputEl.value=buildCombinedInputText();}
+function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';syncCombinedInput();}
+
+function updateResponseModeStatus(){
+    if(abbrResponseToggle.checked){responseModeStatus.innerHTML='<strong>返答モード:</strong> AIにも略号で返答させます（復元前提）。';}
+    else{responseModeStatus.innerHTML='<strong>返答モード:</strong> AIには正式名称で返答させます。';}
+}
+
+// ==========================================
+// 最小ヘッダー設計
+// ==========================================
+function buildCompressedHeader(replacedMap, formatOptions) {
+    const hasMap = replacedMap && replacedMap.size > 0;
+    const hasFmt = formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets);
+    if (!hasMap && !hasFmt) return '';
+
+    let header = '';
+
+    if (hasMap) {
+        header += '[ABBR_MAP]\n';
+        replacedMap.forEach((original, abbr) => {
+            header += `${abbr}=${original}\n`;
+        });
+        header += '[/ABBR_MAP]\n';
     }
 
-    document.getElementById('goto-menu-btn').addEventListener('click', () => showScreen('menu'));
-    document.getElementById('goto-settings-btn').addEventListener('click', () => showScreen('settings'));
-    document.getElementById('back-to-main-from-menu').addEventListener('click', () => showScreen('main'));
-    document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
-
-    const themeSelect = document.getElementById('theme-select');
-    const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
-    const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
-    const abbrResponseToggle = document.getElementById('abbr-response-toggle');
-
-    const useApiTokenToggle = document.getElementById('use-api-token-toggle');
-    const tokenProviderSelect = document.getElementById('token-calc-provider');
-    const apiKeyContainerGemini = document.getElementById('api-key-container-gemini');
-    const apiKeyContainerAnthropic = document.getElementById('api-key-container-anthropic');
-    const apiKeyContainerOpenai = document.getElementById('api-key-container-openai');
-    const apiKeyContainerGrok = document.getElementById('api-key-container-grok');
-    const apiKeyContainerDeepseek = document.getElementById('api-key-container-deepseek');
-    const deepseekPreciseContainer = document.getElementById('deepseek-precise-container');
-    
-    const geminiApiKeyInput = document.getElementById('gemini-api-key');
-    const anthropicApiKeyInput = document.getElementById('anthropic-api-key');
-    const openaiApiKeyInput = document.getElementById('openai-api-key');
-    const grokApiKeyInput = document.getElementById('grok-api-key');
-    const deepseekApiKeyInput = document.getElementById('deepseek-api-key');
-    const deepseekPreciseToggle = document.getElementById('deepseek-precise-tokenizer-toggle');
-
-    const dictArea = document.getElementById('compressDict');
-    const saveNotice = document.getElementById('settings-save-notice');
-    const saveBtn = document.getElementById('save-settings-btn');
-
-    const autoCompressMinLenInput = document.getElementById('autoCompressMinLen');
-    const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
-    const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
-    const autoCompressExcludeAlnumInput = document.getElementById('autoCompressExcludeAlnum');
-    const autoCompressMergeDialoguesInput = document.getElementById('autoCompressMergeDialogues');
-    const autoCompressTrimWhitespaceInput = document.getElementById('autoCompressTrimWhitespace');
-    const autoCompressReplaceBracketsInput = document.getElementById('autoCompressReplaceBrackets');
-
-    const inputEl = document.getElementById('inputText');
-    const inputPart1El = document.getElementById('inputTextPart1');
-    const inputPart2El = document.getElementById('inputTextPart2');
-    const clearPart1Btn = document.getElementById('clearPart1Btn');
-    const clearPart2Btn = document.getElementById('clearPart2Btn');
-
-    const outputEl = document.getElementById('outputText');
-    const replaceSourceEl = document.getElementById('replaceSource');
-    const replaceTargetEl = document.getElementById('replaceTarget');
-
-    const inputCount = document.getElementById('inputCount');
-    const inputCountPart1 = document.getElementById('inputCountPart1');
-    const inputCountPart2 = document.getElementById('inputCountPart2');
-    const outputCount = document.getElementById('outputCount');
-
-    const actionPicker = document.getElementById('actionPicker');
-    const replaceFields = document.getElementById('replaceFields');
-    const dictFields = document.getElementById('dictFields');
-    const runSelectedActionBtn = document.getElementById('runSelectedActionBtn');
-    const responseModeStatus = document.getElementById('responseModeStatus');
-
-    const toggleHighlightBtn = document.getElementById('toggleHighlightBtn');
-    const outputPreview = document.getElementById('outputPreview');
-    const tokenizerStatusNotice = document.getElementById('tokenizerStatusNotice');
-
-    const INPUT_JOINER = '';
-    let lastFocusedInputPart = inputPart1El;
-
-    function buildCombinedInputText() {
-        const part1 = inputPart1El.value || '';
-        const part2 = inputPart2El.value || '';
-        if (!part1) return part2;
-        if (!part2) return part1;
-        return part1 + INPUT_JOINER + part2;
+    // メタ行: RESP + FMT を1行に
+    let metaParts = [];
+    if (hasMap) {
+        metaParts.push('[RESP:' + (abbrResponseToggle.checked ? 'ABBR' : 'FULL') + ']');
     }
-
-    function syncCombinedInput() {
-        inputEl.value = buildCombinedInputText();
+    if (hasFmt) {
+        let flags = [];
+        if (formatOptions.mergedDialogues) flags.push('merge');
+        if (formatOptions.replacedBrackets) flags.push('bracket');
+        metaParts.push('[FMT:' + flags.join(',') + ']');
     }
+    if (metaParts.length > 0) header += metaParts.join('') + '\n';
 
-    function setSplitInputText(fullText) {
-        inputPart1El.value = fullText || '';
-        inputPart2El.value = '';
-        syncCombinedInput();
+    // 1行説明（AIが初見でも理解できる最小限）
+    let hints = [];
+    if (hasMap) hints.push('Mapping:abbr=original');
+    if (hasMap) {
+        if (abbrResponseToggle.checked) hints.push('RESP:ABBR=reply using abbreviations');
+        else hints.push('RESP:FULL=reply using original names only');
     }
-
-    function updateResponseModeStatus() {
-        if (abbrResponseToggle.checked) {
-            responseModeStatus.innerHTML = '<strong>現在の返答モード:</strong> AIに「返答でも略号を使う」よう指示します。クライアント側で正式名称へ復元する前提です。';
-        } else {
-            responseModeStatus.innerHTML = '<strong>現在の返答モード:</strong> AIに「返答では正式名称を使う」よう指示します。';
-        }
+    if (hasFmt) {
+        if (formatOptions.mergedDialogues) hints.push('merge=same-speaker lines merged');
+        if (formatOptions.replacedBrackets) hints.push('bracket:Name>text=dialogue,"q"=quote,\'t\'=title,(n)=note');
     }
+    if (hints.length > 0) header += hints.join('. ') + '.\n';
 
-        function getCompressionHeaderPrefix(formatOptions) {
-        let header = '';
-        if (abbrResponseToggle.checked) {
-            header += "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. In your responses, use the SAME abbreviations from the mapping below whenever possible. The client will restore them to the original names later.\n【重要指示】以下の対応表にある語については、あなたの出力（返答）でも可能な限り同じ略称を使ってください。後でクライアント側で正式名称に復元します。\n[ResponseMode] ABBR\n";
-        } else {
-            header += "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n[ResponseMode] FULL\n";
-        }
-        if (formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets)) {
-            header += "\n[Format Notes]\n";
-            if (formatOptions.mergedDialogues) {
-                header += "- Consecutive lines from the same speaker have been merged into one line.\n";
-            }
-            if (formatOptions.replacedBrackets) {
-                header += "- \"Name>text\" = dialogue line (originally Name:「text」)\n";
-                header += "- 'text' = title/name brackets (originally 『text』)\n";
-                header += "- \"text\" in prose = quoted speech (originally 「text」)\n";
-                header += "- (text) = parenthetical note (originally （text）)\n";
-            }
-        }
-        header += "\n[Mapping]\n";
-        return header;
-    }
+    header += '\n';
+    return header;
+}
 
 
-    const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
-    let appSettings = {
-        theme: 'light',
-        autoSave: false,
-        persistWorkspace: true,
-        allowAbbrResponse: false,
-        compressDict: defaultDict,
-        autoCompressMinLen: 3,
-        autoCompressMinCount: 2,
-        autoCompressMaxItems: 20,
-        autoCompressExcludeAlnum: false,
-        autoCompressMergeDialogues: true,
-        autoCompressTrimWhitespace: true,
-        autoCompressReplaceBrackets: true,
-        
-        useApiTokenCount: false,
-        tokenCalcProvider: 'openai',
-        geminiApiKey: '',
-        anthropicApiKey: '',
-        openaiApiKey: '',
-        grokApiKey: '',
-        deepseekApiKey: '',
-        deepseekPreciseTokenizer: false,
+// ==========================================
+// 内蔵辞書
+// ==========================================
+const pronounMap = {
+    '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
+    'あたし': 'ATH', 'アタシ': 'ATK',
+    '僕': 'BOK', 'ぼく': 'BKH', 'ボク': 'BKK',
+    '俺': 'ORE', 'おれ': 'ORH', 'オレ': 'ORK',
+    '自分': 'JBN', 'じぶん': 'JBH', 'ジブン': 'JBK',
+    'ウチ': 'UCK', 'うち': 'UCH',
+    'わたくし': 'WTX', 'ワタクシ': 'WTZ',
+    '余': 'YOO', '妾': 'WRW',
+    'あなた': 'YUA', 'アナタ': 'YUK', '貴方': 'YUJ', '貴女': 'YUW',
+    'あんた': 'ANA', 'アンタ': 'ANK',
+    'きみ': 'KIM', 'キミ': 'KMK', '君': 'KMJ',
+    'おまえ': 'OMA', 'オマエ': 'OMK', 'お前': 'OMJ',
+    'てめえ': 'TME', 'テメエ': 'TMK', 'てめぇ': 'TMm', '手前': 'TMJ',
+    'きさま': 'KSA', 'キサマ': 'KSK2', '貴様': 'KSJ',
+    'おのれ': 'ONO', 'オノレ': 'ONK', '己': 'ONJ',
+    'おぬし': 'ONU', 'オヌシ': 'ONK2', 'お主': 'ONZ',
+    'なんじ': 'NAN', 'ナンジ': 'NNK', '汝': 'NNZ',
+    'そなた': 'SNT', 'ソナタ': 'SNK', '其方': 'SNJ',
+    'そっち': 'SOC', 'ソッチ': 'SCK',
+    'おたく': 'OTA', 'オタク': 'OTK', 'お宅': 'OTJ'
+};
 
-        inputText: '',
-        inputTextPart1: '',
-        inputTextPart2: '',
-        outputText: '',
-        replaceSource: '',
-        replaceTarget: '',
-        selectedAction: ''
+const umaNameOnlyMap = {};
+const umaTermMap = {};
+// umaMap から人称以外を分離（人称は pronounMap に統合済み）
+(function separateUmaMap() {
+    const umaFullMap = {
+        'スペシャルウィーク':'SW','スペ':'SP','サイレンススズカ':'SSZ','スズカ':'SZK',
+        'トウカイテイオー':'TT','テイオー':'TO','マルゼンスキー':'MZ','マルゼン':'MRZ',
+        'フジキセキ':'FK','フジ':'FJ','オグリキャップ':'OC','オグリ':'OG',
+        'ゴールドシップ':'GS','ゴルシ':'GOS','ウオッカ':'VDK',
+        'ダイワスカーレット':'DS','ダスカ':'DSK','スカーレット':'SCL',
+        'タイキシャトル':'TS','タイキ':'TIK','シャトル':'SHT',
+        'グラスワンダー':'GW','グラス':'GRS','ヒシアマゾン':'HA','アマゾン':'AMZ',
+        'メジロマックイーン':'MMQ','マックイーン':'MCQ',
+        'エルコンドルパサー':'ECP','エル':'EL',
+        'テイエムオペラオー':'TMO','オペラオー':'OPO',
+        'ナリタブライアン':'NB','ブライアン':'BRI',
+        'シンボリルドルフ':'SR','ルドルフ':'RDF','会長':'KCH',
+        'エアグルーヴ':'AG','グルーヴ':'GRV',
+        'アグネスデジタル':'AD','デジタル':'DGT',
+        'セイウンスカイ':'SUS','スカイ':'SKY',
+        'タマモクロス':'TC','タマモ':'TMM','タマ':'TMA',
+        'ファインモーション':'FM','ファイン':'FIN',
+        'ビワハヤヒデ':'BHH','ハヤヒデ':'HYH',
+        'マヤノトップガン':'MTG','マヤノ':'MYN','マヤ':'MYA',
+        'マンハッタンカフェ':'MC','カフェ':'CAF',
+        'ミホノブルボン':'MB','ブルボン':'BRB',
+        'メジロライアン':'MR','ライアン':'RYN',
+        'ヒシアケボノ':'HAK','アケボノ':'AKB',
+        'ユキノビジン':'YB','ユキノ':'YKN',
+        'ライスシャワー':'RS','ライス':'RIC',
+        'アイネスフウジン':'AF','アイネス':'INS',
+        'アグネスタキオン':'AT','タキオン':'TKO',
+        'アドマイヤベガ':'AV','アヤベ':'AYB',
+        'イナリワン':'IW','イナリ':'INR',
+        'ウイニングチケット':'WT','チケゾー':'TKZ','チケット':'TCK',
+        'エアシャカール':'ASK','シャカール':'SHK',
+        'エイシンフラッシュ':'EF','フラッシュ':'FLS',
+        'カレンチャン':'CC','カレン':'KRN',
+        'カワカミプリンセス':'KP','カワカミ':'KWK',
+        'ゴールドシチー':'GC','シチー':'CTY',
+        'サクラバクシンオー':'SBO','バクシンオー':'BSO','バクシン':'BKS',
+        'シーキングザパール':'SZP','パール':'PRL',
+        'シンコウウインディ':'SKW','ウインディ':'WND',
+        'スイープトウショウ':'SWT','スイープ':'SWP',
+        'スーパークリーク':'SCR','クリーク':'CRK',
+        'スマートファルコン':'SF','ファル子':'FLK','ファルコン':'FLC',
+        'ゼンノロブロイ':'ZRR','ロブロイ':'RBR',
+        'トーセンジョーダン':'TJ','ジョーダン':'JDN',
+        'ナカヤマフェスタ':'NF','ナカヤマ':'NKY','フェスタ':'FST',
+        'ナリタタイシン':'NT','タイシン':'TSN',
+        'ニシノフラワー':'NIF','ニシノ':'NSN','フラワー':'FLW',
+        'ハルウララ':'HU','ウララ':'URR',
+        'バンブーメモリー':'BM','バンブー':'BNB',
+        'ビコーペガサス':'BP','ビコー':'BKO',
+        'マーベラスサンデー':'MVS','マーベラス':'MRV',
+        'マチカネフクキタル':'MFK','フクキタル':'FKK',
+        'ミスターシービー':'MCB','シービー':'CB',
+        'メイショウドトウ':'MSD','ドトウ':'DTO',
+        'メジロドーベル':'MD','ドーベル':'DBL',
+        'ナイスネイチャ':'NN','ネイチャ':'NTC',
+        'キングヘイロー':'KH','キング':'KNG',
+        'マチカネタンホイザ':'MTH','タンホイザ':'THZ','マチタン':'MCT',
+        'イクノディクタス':'ID','イクノ':'IKN',
+        'メジロパーマー':'MP','パーマー':'PAM','パマ':'PMA',
+        'ダイタクヘリオス':'DTH','ヘリオス':'HRO',
+        'ツインターボ':'TTB','ターボ':'TRB',
+        'サトノダイヤモンド':'SDD','ダイヤ':'DIA',
+        'キタサンブラック':'KB','キタサン':'KTS',
+        'サクラチヨノオー':'SCO','チヨノオー':'CYO',
+        'シリウスシンボリ':'SSB','シリウス':'SRS',
+        'メジロアルダン':'MA','アルダン':'ARD',
+        'ヤエノムテキ':'YM','ヤエノ':'YEN',
+        'ツルマルツヨシ':'TMT','ツヨシ':'TYS',
+        'メジロブライト':'MBR','ブライト':'BRT',
+        'サクラローレル':'SL','ローレル':'LRL',
+        'ナリタトップロード':'NTR','トップロード':'TPR','トプロ':'TPR2',
+        'ヤマニンゼファー':'YZ','ゼファー':'ZPH',
+        'フリオーソ':'FRI','トランセンド':'TRC',
+        'エスポワールシチー':'ESC','エスポワール':'ESP',
+        'ノースフライト':'NFL','フライト':'FRT',
+        'シンボリクリスエス':'SKS','クリスエス':'KRS','ボリクリ':'BKR',
+        'タニノギムレット':'TG','ギムレット':'GMR',
+        'ダイイチルビー':'DIR','ルビー':'RBY',
+        'メジロラモーヌ':'MLM','ラモーヌ':'RMN',
+        'アストンマーチャン':'AM','マーチャン':'MCH',
+        'サトノクラウン':'SCW','クラウン':'CRW',
+        'シュヴァルグラン':'SVG','シュヴァル':'CHV',
+        'ヴィルシーナ':'VRS','ヴィブロス':'VIV',
+        'ダンツフレーム':'DF','ダンツ':'DNT',
+        'ケイエスミラクル':'KSM','ミラクル':'MRC',
+        'ジャングルポケット':'JP','ポッケ':'POK',
+        'ビリーヴ':'BLV','ノーリーズン':'NR',
+        'スティルインラブ':'SIL','スティル':'STL',
+        'コパノリッキー':'CPR','リッキー':'RCK',
+        'ホッコータルマエ':'HT','タルマエ':'TRM',
+        'ワンダーアキュート':'WA','アキュート':'ACT',
+        'サウンズオブアース':'SOE','アース':'ERS',
+        'ロイスアンドロイス':'RAR','ロイス':'ROI',
+        'カツラギエース':'KA','エース':'ACE',
+        'ネオユニヴァース':'NU','ネオユニ':'NEY',
+        'ヒシミラクル':'HM','ヒシミ':'HSM',
+        'タップダンスシチー':'TDS','タップ':'TAP',
+        'ドゥラメンテ':'DRM','ドゥラ':'DUR',
+        'ラインクラフト':'RK','クラフト':'CRF',
+        'シーザリオ':'CZR','エアメサイア':'AMS','メサイア':'MSI',
+        'フサイチパンドラ':'FP','パンドラ':'PND',
+        'ブエナビスタ':'BV','ブエナ':'BUE',
+        'オルフェーヴル':'ORF','オルフェ':'ORP',
+        'ジェンティルドンナ':'GD','ジェンティル':'GNT',
+        'ウインバリアシオン':'WV','バリアシオン':'VAR',
+        'ドリームジャーニー':'DJ','ジャーニー':'JRN',
+        'カルストンライトオ':'CLO','ライトオ':'RTO',
+        'デュランダル':'DRD',
+        'バブルガムフェロー':'BGF','バブル':'BBL',
+        'フェノーメノ':'FNM',
+        'グランアレグリア':'GAL','グラン':'GRN',
+        'ラヴズオンリーユー':'LOY','ラヴズ':'LOV',
+        'クロノジェネシス':'CG','クロノ':'CRN',
+        'ステイゴールド':'STG','ステゴ':'STG2',
+        'キセキ':'KSK',
+        'デアリングタクト':'DAT','デアタク':'DAT2',
+        'デアリングハート':'DAH',
+        'アドマイヤグルーヴ':'AMG',
+        'サクラチトセオー':'SCT','チトセオー':'CTO',
+        'ブラストワンピース':'BWP','ブラスト':'BLS',
+        'アーモンドアイ':'AAI',
+        'ラッキーライラック':'LL','ライラック':'LIL',
+        'カレンブーケドール':'CBD','ブーケドール':'BKD',
+        'レッドディザイア':'RD','ディザイア':'DZI',
+        'ダーレーアラビアン':'DLA','ダーレー':'DRL',
+        'ゴドルフィンバルブ':'GOB','ゴドルフィン':'GDF',
+        'バイアリーターク':'BYT','バイアリー':'BYA',
+        'セントライト':'SNL','スピードシンボリ':'SPS',
+        'ハイセイコー':'HSK','モンジュー':'MNJ',
+        'ハッピーミーク':'HPM','ミーク':'MEK',
+        'ビターグラッセ':'BTG','グラッセ':'GLS',
+        'リトルココン':'LCC','ココン':'CCN',
+        'ライトハロー':'LH','ハロー':'HLO',
+        'ヴェニュスパーク':'VP','ヴェニュス':'VNS',
+        'リガントーナ':'RGT','リガン':'RGN',
+        'ソノンエルフィー':'SEF','エルフィー':'ELF',
+        'シュガーライツ':'SGL','シュガー':'SGR',
+        'タッカーブライン':'TKB','タッカー':'TAK',
+        'ユノハナブルーム':'YHB','ユノハナ':'YNH',
+        '駿川たづな':'HT2','たづな':'TDN',
+        '秋川やよい':'AY','理事長':'RJC',
+        '乙名史悦子':'OE','乙名史':'OTN','記者':'KSH',
+        '桐生院葵':'KA2','桐生院':'KRY',
+        '安心沢刺々美':'ASS','安心沢':'ANS',
+        '樫本理子':'KR','樫本':'KSM2','代理':'DIR2',
+        '佐岳メイ':'SM','メイ':'MEI',
+        '都留岐涼花':'TR','都留岐':'TRG',
+        '保科健子':'HK','保科':'HSN',
+        '赤坂美聡':'AKM','赤坂':'AKS','実況':'JKY',
+        '細江純子':'HJ','細江':'HSE','解説':'KAI',
+        'トレーナー':'TNR',
+        'ウマ娘':'UMA','レース':'RAC','ターフ':'TRF','ダート':'DRT',
+        'ジュニア':'JNR','クラシック':'CLS','シニア':'SNR','ティアラ':'TIR',
+        'コース':'CRS','ゲート':'GAT','コーナー':'CNR','重賞':'JUS',
+        'マイル':'MIL','短距離':'SRT','中距離':'MID','長距離':'LNG',
+        '勝負服':'SBF','ダービー':'DRB','有馬':'ARM','宝塚':'TKR',
+        '安田':'YSD','記念':'KIN','菊花賞':'KIK','皐月賞':'SAT',
+        '桜花賞':'OKA','天皇賞':'TEN','ヴィクトリア':'VCT','オークス':'OAK',
+        'スプリンター':'SPR','秋華賞':'SYU','エリザベス':'ELZ','女王':'JOU',
+        'フューチャリティ':'FUT','チャンピオン':'CHP','ジャパン':'JAP','カップ':'CUP',
+        'ホープフル':'HPF','ジュベナイル':'JUV','日本':'NIH','福岡':'FUK',
+        '札幌':'SAP','新潟':'NIG','船橋':'FNB','大井':'OOI',
+        '小倉':'KOK','大阪':'OSK','阪神':'HAN','東京':'TKY',
+        'トゥインクル':'TWK','シリーズ':'SRZ','トレーニング':'TRN','トレセン':'TRS',
+        'パドック':'PDK','感謝祭':'KAN','ハロン':'FRL','ファンファーレ':'FNF',
+        '併走':'HEI','本格化':'HNK','マイラー':'MLR','デビュー':'DBY',
+        'ライブ':'LIV','レッスン':'LSN','蹄鉄':'TEI','にんじん':'NIN',
+        'ニンジン':'NNJ','先輩':'SEN','後輩':'KOH','合宿':'GSK','練習':'REN'
     };
+    for (const [k,v] of Object.entries(umaFullMap)) {
+        if (!(k in pronounMap)) umaNameOnlyMap[k] = v;
+    }
+})();
 
-    function loadSettings() {
-        const saved = localStorage.getItem('toolbox_settings');
-        if (saved) {
-            try {
-                Object.assign(appSettings, JSON.parse(saved));
-            } catch (e) {
-                console.error("設定の読み込みに失敗しました");
-            }
+// umaMap は旧来の「その他の処理 > ウマ娘略称化」用にまだ使う（人称含む全部入り）
+const umaMap = Object.assign({}, umaNameOnlyMap, pronounMap);
+const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
+
+function buildDictRegex(dict) {
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const keys = Object.keys(dict).sort((a,b) => b.length - a.length);
+    return new RegExp('(' + keys.map(esc).join('|') + ')', 'g');
+}
+
+// 内蔵辞書を本文に適用し、replacedMapに登録
+function applyBuiltinDict(text, dict, replacedMap) {
+    const regex = buildDictRegex(dict);
+    let count = 0;
+    const result = text.replace(regex, match => {
+        const abbr = dict[match];
+        if (!replacedMap.has(abbr) || match.length > replacedMap.get(abbr).length) {
+            replacedMap.set(abbr, match);
         }
-
-        const oldTheme = localStorage.getItem('formatter_theme');
-        if (oldTheme && !saved) appSettings.theme = oldTheme;
-        const oldDict = localStorage.getItem('formatter_compress_dict');
-        if (oldDict && !saved) appSettings.compressDict = oldDict;
-
-        if (appSettings.claudePreciseTokenizer !== undefined) delete appSettings.claudePreciseTokenizer;
-
-        themeSelect.value = appSettings.theme;
-        autoSaveToggle.checked = appSettings.autoSave;
-        persistWorkspaceToggle.checked = appSettings.persistWorkspace;
-        abbrResponseToggle.checked = !!appSettings.allowAbbrResponse;
-        dictArea.value = appSettings.compressDict;
-
-        autoCompressMinLenInput.value = appSettings.autoCompressMinLen;
-        autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
-        autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
-        autoCompressExcludeAlnumInput.checked = !!appSettings.autoCompressExcludeAlnum;
-        autoCompressMergeDialoguesInput.checked = appSettings.autoCompressMergeDialogues !== false;
-        autoCompressTrimWhitespaceInput.checked = appSettings.autoCompressTrimWhitespace !== false;
-        autoCompressReplaceBracketsInput.checked = appSettings.autoCompressReplaceBrackets !== false;
-        
-        useApiTokenToggle.checked = !!appSettings.useApiTokenCount;
-        tokenProviderSelect.value = appSettings.tokenCalcProvider || 'openai';
-        geminiApiKeyInput.value = appSettings.geminiApiKey || '';
-        anthropicApiKeyInput.value = appSettings.anthropicApiKey || '';
-        openaiApiKeyInput.value = appSettings.openaiApiKey || '';
-        grokApiKeyInput.value = appSettings.grokApiKey || '';
-        deepseekApiKeyInput.value = appSettings.deepseekApiKey || '';
-        deepseekPreciseToggle.checked = !!appSettings.deepseekPreciseTokenizer;
-        
-        updateApiKeyVisibility();
-
-        if (appSettings.persistWorkspace) {
-            inputPart1El.value = appSettings.inputTextPart1 || appSettings.inputText || '';
-            inputPart2El.value = appSettings.inputTextPart2 || '';
-            outputEl.value = appSettings.outputText || '';
-            replaceSourceEl.value = appSettings.replaceSource || '';
-            replaceTargetEl.value = appSettings.replaceTarget || '';
-            actionPicker.value = appSettings.selectedAction || '';
-        } else {
-            inputPart1El.value = '';
-            inputPart2El.value = '';
-            outputEl.value = '';
-            replaceSourceEl.value = '';
-            replaceTargetEl.value = '';
-            actionPicker.value = '';
-        }
-
-        applyTheme(appSettings.theme);
-        updateSaveUiState();
-        updateResponseModeStatus();
-        syncCombinedInput();
-        updateActionPickerUi();
-    }
-
-    function collectCurrentState() {
-        appSettings.theme = themeSelect.value;
-        appSettings.autoSave = autoSaveToggle.checked;
-        appSettings.persistWorkspace = persistWorkspaceToggle.checked;
-        appSettings.allowAbbrResponse = abbrResponseToggle.checked;
-        appSettings.compressDict = dictArea.value;
-
-        appSettings.autoCompressMinLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        appSettings.autoCompressExcludeAlnum = autoCompressExcludeAlnumInput.checked;
-        appSettings.autoCompressMergeDialogues = autoCompressMergeDialoguesInput.checked;
-        appSettings.autoCompressTrimWhitespace = autoCompressTrimWhitespaceInput.checked;
-        appSettings.autoCompressReplaceBrackets = autoCompressReplaceBracketsInput.checked;
-        
-        appSettings.useApiTokenCount = useApiTokenToggle.checked;
-        appSettings.tokenCalcProvider = tokenProviderSelect.value;
-        appSettings.geminiApiKey = geminiApiKeyInput.value;
-        appSettings.anthropicApiKey = anthropicApiKeyInput.value;
-        appSettings.openaiApiKey = openaiApiKeyInput.value;
-        appSettings.grokApiKey = grokApiKeyInput.value;
-        appSettings.deepseekApiKey = deepseekApiKeyInput.value;
-        appSettings.deepseekPreciseTokenizer = deepseekPreciseToggle.checked;
-
-        if (appSettings.persistWorkspace) {
-            syncCombinedInput();
-            appSettings.inputText = inputEl.value;
-            appSettings.inputTextPart1 = inputPart1El.value;
-            appSettings.inputTextPart2 = inputPart2El.value;
-            appSettings.outputText = outputEl.value;
-            appSettings.replaceSource = replaceSourceEl.value;
-            appSettings.replaceTarget = replaceTargetEl.value;
-            appSettings.selectedAction = actionPicker.value;
-        } else {
-            appSettings.inputText = '';
-            appSettings.inputTextPart1 = '';
-            appSettings.inputTextPart2 = '';
-            appSettings.outputText = '';
-            appSettings.replaceSource = '';
-            appSettings.replaceTarget = '';
-            appSettings.selectedAction = '';
-        }
-    }
-
-    function saveSettings(showMsg = true) {
-        collectCurrentState();
-        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        localStorage.removeItem('formatter_theme');
-        localStorage.removeItem('formatter_compress_dict');
-        applyTheme(appSettings.theme);
-        updateResponseModeStatus();
-        if (showMsg) showToast('設定を保存しました');
-    }
-
-    let workspaceSaveTimer = null;
-    function saveWorkspaceDebounced() {
-        if (!persistWorkspaceToggle.checked) return;
-        clearTimeout(workspaceSaveTimer);
-        workspaceSaveTimer = setTimeout(() => {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-        }, 500);
-    }
-
-    function updateSaveUiState() {
-        if (autoSaveToggle.checked) {
-            saveNotice.style.display = 'none';
-            saveBtn.style.display = 'none';
-        } else {
-            saveNotice.style.display = 'inline';
-            saveBtn.style.display = 'inline-block';
-        }
-    }
-    
-    function updateApiKeyVisibility() {
-        const provider = tokenProviderSelect.value;
-        document.querySelectorAll('.api-key-container').forEach(c => c.style.display = 'none');
-        const container = document.getElementById(`api-key-container-${provider}`);
-        if (container) container.style.display = 'block';
-        deepseekPreciseContainer.style.display = provider === 'deepseek' ? 'block' : 'none';
-    }
-
-    saveBtn.addEventListener('click', () => saveSettings(true));
-    autoSaveToggle.addEventListener('change', () => {
-        updateSaveUiState();
-        saveSettings(false);
+        count++;
+        return abbr;
     });
-    persistWorkspaceToggle.addEventListener('change', () => {
-        saveSettings(false);
-    });
+    return { text: result, count };
+}
 
-    const handleSettingChange = () => {
-        updateResponseModeStatus();
-        if (autoSaveToggle.checked) saveSettings(false);
-    };
-    themeSelect.addEventListener('change', handleSettingChange);
-    abbrResponseToggle.addEventListener('change', handleSettingChange);
-    dictArea.addEventListener('input', handleSettingChange);
-    autoCompressMinLenInput.addEventListener('change', handleSettingChange);
-    autoCompressMinCountInput.addEventListener('change', handleSettingChange);
-    autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
-    autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
-    autoCompressMergeDialoguesInput.addEventListener('change', handleSettingChange);
-    autoCompressTrimWhitespaceInput.addEventListener('change', handleSettingChange);
-    autoCompressReplaceBracketsInput.addEventListener('change', handleSettingChange);
-    
-    tokenProviderSelect.addEventListener('change', () => {
-        updateApiKeyVisibility();
-        handleSettingChange();
-        initLocalTokenizer();
-        updateCounts();
-    });
-    useApiTokenToggle.addEventListener('change', () => {
-        handleSettingChange();
-        updateCounts();
-    });
-    geminiApiKeyInput.addEventListener('input', handleSettingChange);
-    anthropicApiKeyInput.addEventListener('input', handleSettingChange);
-    openaiApiKeyInput.addEventListener('input', handleSettingChange);
-    grokApiKeyInput.addEventListener('input', handleSettingChange);
-    deepseekApiKeyInput.addEventListener('input', handleSettingChange);
-    
-    deepseekPreciseToggle.addEventListener('change', () => {
-        handleSettingChange();
-        if (tokenProviderSelect.value === 'deepseek') {
-            localTokenizers.deepseek.encoder = null;
-            localTokenizers.deepseek.status = 'idle';
-            localTokenizers.deepseek._precise = false;
-            initLocalTokenizer();
-        }
-        updateCounts();
-    });
 
-    function applyTheme(themeName) {
-        document.body.className = '';
-        if (themeName !== 'light') {
-            document.body.classList.add(themeName + '-mode');
-        }
-        const colors = {
-            'light': '#4a90e2', 'dark': '#007aff', 'pastel-pink': '#ff8fab',
-            'pastel-blue': '#87cefa', 'pastel-yellow': '#ffd700', 'pastel-purple': '#ab47bc',
-            'pastel-rainbow': '#ffadad', 'turf': '#4CAF50'
-        };
-        document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
+const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
+let appSettings = {
+    theme:'light', autoSave:false, persistWorkspace:true, allowAbbrResponse:false,
+    compressDict:defaultDict,
+    autoCompressMinLen:3, autoCompressMinCount:2, autoCompressMaxItems:20,
+    autoCompressExcludeAlnum:false, autoCompressMergeDialogues:true,
+    autoCompressTrimWhitespace:true, autoCompressReplaceBrackets:true,
+    autoCompressApplyUma:false, autoCompressApplyPronoun:false,
+    useApiTokenCount:false, tokenCalcProvider:'openai',
+    geminiApiKey:'', anthropicApiKey:'', openaiApiKey:'', grokApiKey:'', deepseekApiKey:'',
+    deepseekPreciseTokenizer:false,
+    inputText:'', inputTextPart1:'', inputTextPart2:'', outputText:'',
+    replaceSource:'', replaceTarget:'', selectedAction:''
+};
+
+function loadSettings() {
+    const saved=localStorage.getItem('toolbox_settings');
+    if(saved){try{Object.assign(appSettings,JSON.parse(saved));}catch(e){}}
+    const oldTheme=localStorage.getItem('formatter_theme');
+    if(oldTheme&&!saved)appSettings.theme=oldTheme;
+    const oldDict=localStorage.getItem('formatter_compress_dict');
+    if(oldDict&&!saved)appSettings.compressDict=oldDict;
+
+    themeSelect.value=appSettings.theme;
+    autoSaveToggle.checked=appSettings.autoSave;
+    persistWorkspaceToggle.checked=appSettings.persistWorkspace;
+    abbrResponseToggle.checked=!!appSettings.allowAbbrResponse;
+    dictArea.value=appSettings.compressDict;
+    autoCompressMinLenInput.value=appSettings.autoCompressMinLen;
+    autoCompressMinCountInput.value=appSettings.autoCompressMinCount;
+    autoCompressMaxItemsInput.value=appSettings.autoCompressMaxItems;
+    autoCompressExcludeAlnumInput.checked=!!appSettings.autoCompressExcludeAlnum;
+    autoCompressMergeDialoguesInput.checked=appSettings.autoCompressMergeDialogues!==false;
+    autoCompressTrimWhitespaceInput.checked=appSettings.autoCompressTrimWhitespace!==false;
+    autoCompressReplaceBracketsInput.checked=appSettings.autoCompressReplaceBrackets!==false;
+    autoCompressApplyUmaInput.checked=!!appSettings.autoCompressApplyUma;
+    autoCompressApplyPronounInput.checked=!!appSettings.autoCompressApplyPronoun;
+    useApiTokenToggle.checked=!!appSettings.useApiTokenCount;
+    tokenProviderSelect.value=appSettings.tokenCalcProvider||'openai';
+    geminiApiKeyInput.value=appSettings.geminiApiKey||'';
+    anthropicApiKeyInput.value=appSettings.anthropicApiKey||'';
+    openaiApiKeyInput.value=appSettings.openaiApiKey||'';
+    grokApiKeyInput.value=appSettings.grokApiKey||'';
+    deepseekApiKeyInput.value=appSettings.deepseekApiKey||'';
+    deepseekPreciseToggle.checked=!!appSettings.deepseekPreciseTokenizer;
+    updateApiKeyVisibility();
+
+    if(appSettings.persistWorkspace){
+        inputPart1El.value=appSettings.inputTextPart1||appSettings.inputText||'';
+        inputPart2El.value=appSettings.inputTextPart2||'';
+        outputEl.value=appSettings.outputText||'';
+        replaceSourceEl.value=appSettings.replaceSource||'';
+        replaceTargetEl.value=appSettings.replaceTarget||'';
+        actionPicker.value=appSettings.selectedAction||'';
     }
+    applyTheme(appSettings.theme);updateSaveUiState();updateResponseModeStatus();syncCombinedInput();updateActionPickerUi();
+}
 
-    document.getElementById('update-app-btn').addEventListener('click', async () => {
-        const confirmed = await showConfirm("アプリのキャッシュをクリアして最新版を再取得しますか？\n(設定と辞書は保持されます。ページがリロードされます)");
-        if (confirmed) {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.addEventListener('message', function handler(event) {
-                    if (event.data && event.data.action === 'cacheCleared') {
-                        navigator.serviceWorker.removeEventListener('message', handler);
-                        window.location.reload(true);
-                    }
-                });
-                navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
-            } else {
-                window.location.reload(true);
-            }
-        }
-    });
+function collectCurrentState() {
+    appSettings.theme=themeSelect.value;appSettings.autoSave=autoSaveToggle.checked;
+    appSettings.persistWorkspace=persistWorkspaceToggle.checked;appSettings.allowAbbrResponse=abbrResponseToggle.checked;
+    appSettings.compressDict=dictArea.value;
+    appSettings.autoCompressMinLen=parseInt(autoCompressMinLenInput.value,10)||3;
+    appSettings.autoCompressMinCount=parseInt(autoCompressMinCountInput.value,10)||2;
+    appSettings.autoCompressMaxItems=parseInt(autoCompressMaxItemsInput.value,10)||20;
+    appSettings.autoCompressExcludeAlnum=autoCompressExcludeAlnumInput.checked;
+    appSettings.autoCompressMergeDialogues=autoCompressMergeDialoguesInput.checked;
+    appSettings.autoCompressTrimWhitespace=autoCompressTrimWhitespaceInput.checked;
+    appSettings.autoCompressReplaceBrackets=autoCompressReplaceBracketsInput.checked;
+    appSettings.autoCompressApplyUma=autoCompressApplyUmaInput.checked;
+    appSettings.autoCompressApplyPronoun=autoCompressApplyPronounInput.checked;
+    appSettings.useApiTokenCount=useApiTokenToggle.checked;appSettings.tokenCalcProvider=tokenProviderSelect.value;
+    appSettings.geminiApiKey=geminiApiKeyInput.value;appSettings.anthropicApiKey=anthropicApiKeyInput.value;
+    appSettings.openaiApiKey=openaiApiKeyInput.value;appSettings.grokApiKey=grokApiKeyInput.value;
+    appSettings.deepseekApiKey=deepseekApiKeyInput.value;appSettings.deepseekPreciseTokenizer=deepseekPreciseToggle.checked;
+    if(appSettings.persistWorkspace){
+        syncCombinedInput();appSettings.inputText=inputEl.value;
+        appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;
+        appSettings.outputText=outputEl.value;appSettings.replaceSource=replaceSourceEl.value;
+        appSettings.replaceTarget=replaceTargetEl.value;appSettings.selectedAction=actionPicker.value;
+    }else{appSettings.inputText='';appSettings.inputTextPart1='';appSettings.inputTextPart2='';appSettings.outputText='';appSettings.replaceSource='';appSettings.replaceTarget='';appSettings.selectedAction='';}
+}
 
-    document.getElementById('clear-data-btn').addEventListener('click', async () => {
-        const confirmed = await showConfirm("本当にすべてのデータ（圧縮辞書・テーマ設定・作業中テキストなど）を削除しますか？\nこの操作は元に戻せません。");
-        if (confirmed) {
-            localStorage.removeItem('toolbox_settings');
-            localStorage.removeItem('formatter_theme');
-            localStorage.removeItem('formatter_compress_dict');
-            showToast("全データをクリアしました。初期状態に戻ります。");
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 1500);
-        }
-    });
+function saveSettings(showMsg=true){collectCurrentState();localStorage.setItem('toolbox_settings',JSON.stringify(appSettings));localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');applyTheme(appSettings.theme);updateResponseModeStatus();if(showMsg)showToast('設定を保存しました');}
+let workspaceSaveTimer=null;
+function saveWorkspaceDebounced(){if(!persistWorkspaceToggle.checked)return;clearTimeout(workspaceSaveTimer);workspaceSaveTimer=setTimeout(()=>{collectCurrentState();localStorage.setItem('toolbox_settings',JSON.stringify(appSettings));},500);}
+function updateSaveUiState(){if(autoSaveToggle.checked){saveNotice.style.display='none';saveBtn.style.display='none';}else{saveNotice.style.display='inline';saveBtn.style.display='inline-block';}}
+function updateApiKeyVisibility(){const p=tokenProviderSelect.value;document.querySelectorAll('.api-key-container').forEach(c=>c.style.display='none');const c=document.getElementById(`api-key-container-${p}`);if(c)c.style.display='block';deepseekPreciseContainer.style.display=p==='deepseek'?'block':'none';}
 
-    let isHighlightMode = false;
+saveBtn.addEventListener('click',()=>saveSettings(true));
+autoSaveToggle.addEventListener('change',()=>{updateSaveUiState();saveSettings(false);});
+persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
+const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
+[themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+[dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
+[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();});
+useApiTokenToggle.addEventListener('change',()=>{handleSettingChange();updateCounts();});
+deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(tokenProviderSelect.value==='deepseek'){localTokenizers.deepseek.encoder=null;localTokenizers.deepseek.status='idle';localTokenizers.deepseek._precise=false;initLocalTokenizer();}updateCounts();});
 
-    function containsAlnum(str) {
-        return /[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(str);
-    }
+function applyTheme(t){document.body.className='';if(t!=='light')document.body.classList.add(t+'-mode');const c={'light':'#4a90e2','dark':'#007aff','pastel-pink':'#ff8fab','pastel-blue':'#87cefa','pastel-yellow':'#ffd700','pastel-purple':'#ab47bc','pastel-rainbow':'#ffadad','turf':'#4CAF50'};document.getElementById('theme-color-meta').content=c[t]||'#4a90e2';}
 
-    function shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum = false) {
-        if (!phrase) return true;
-        if (phrase.length < minLen) return true;
-        if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) return true;
-        if (/^[!-/:-@[-`{-~]+$/.test(phrase)) return true;
-        if (excludeAlnum && containsAlnum(phrase)) return true;
-        return false;
-    }
+document.getElementById('update-app-btn').addEventListener('click',async()=>{if(await showConfirm("キャッシュクリアして最新版を再取得しますか？")){if('serviceWorker' in navigator&&navigator.serviceWorker.controller){navigator.serviceWorker.addEventListener('message',function h(e){if(e.data&&e.data.action==='cacheCleared'){navigator.serviceWorker.removeEventListener('message',h);window.location.reload(true);}});navigator.serviceWorker.controller.postMessage({action:'clearCache'});}else{window.location.reload(true);}}});
+document.getElementById('clear-data-btn').addEventListener('click',async()=>{if(await showConfirm("全データを削除しますか？この操作は元に戻せません。")){localStorage.removeItem('toolbox_settings');localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');showToast("全データをクリアしました");setTimeout(()=>window.location.reload(true),1500);}});
 
-    function countTokensForPhrase(text) {
-        const provider = appSettings.tokenCalcProvider || 'openai';
-        const local = countTokensLocal(text, provider);
-        if (local !== null) return local;
-        return estimateTokensApprox(text, provider);
-    }
+let isHighlightMode=false;
+function containsAlnum(s){return/[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(s);}
+function shouldSkipCompressionPhrase(p,ml,ea=false){if(!p)return true;if(p.length<ml)return true;if(/^[ぁ-ん]+$/.test(p)&&p.length<3)return true;if(/^[!-/:-@[-`{-~]+$/.test(p))return true;if(ea&&containsAlnum(p))return true;return false;}
+function countTokensForPhrase(t){const p=appSettings.tokenCalcProvider||'openai';const l=countTokensLocal(t,p);if(l!==null)return l;return estimateTokensApprox(t,p);}
 
-    const localTokenizers = {
-        openai:    { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
-        anthropic: { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
-        gemini:    { encoder: null, status: 'idle', _type: 'hf-transformers' },
-        grok:      { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
-        deepseek:  { encoder: null, status: 'idle', _type: 'ai-tokenizer', _precise: false }
-    };
+const localTokenizers={openai:{encoder:null,status:'idle',_type:'ai-tokenizer'},anthropic:{encoder:null,status:'idle',_type:'ai-tokenizer'},gemini:{encoder:null,status:'idle',_type:'hf-transformers'},grok:{encoder:null,status:'idle',_type:'ai-tokenizer'},deepseek:{encoder:null,status:'idle',_type:'ai-tokenizer',_precise:false}};
+let _AiTokenizerClass=null;const _aiTokenizerEncodings={};
+async function getAiTokenizerClass(){if(_AiTokenizerClass)return _AiTokenizerClass;const m=await import('https://esm.sh/ai-tokenizer@latest');_AiTokenizerClass=m.Tokenizer||m.default;return _AiTokenizerClass;}
+async function getAiTokenizerEncoding(n){if(_aiTokenizerEncodings[n])return _aiTokenizerEncodings[n];const m=await import(`https://esm.sh/ai-tokenizer@latest/encoding/${n}`);_aiTokenizerEncodings[n]=m;return m;}
+async function loadAiTokenizer(en){const[T,E]=await Promise.all([getAiTokenizerClass(),getAiTokenizerEncoding(en)]);return new T(E);}
+async function loadGemmaEncoder(){const e=localTokenizers.gemini;if(e.encoder)return e.encoder;const{AutoTokenizer}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');const t=await AutoTokenizer.from_pretrained('onnx-community/gemma-3-1b-it-ONNX');e.encoder=t;return t;}
+async function loadDeepseekPreciseEncoder(){const{AutoTokenizer}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');return await AutoTokenizer.from_pretrained('deepseek-ai/DeepSeek-V3');}
 
-    let _AiTokenizerClass = null;
-    const _aiTokenizerEncodings = {};
+async function initLocalTokenizer(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e)return;if(p==='deepseek'){const w=deepseekPreciseToggle.checked;if(e.status==='ready'&&e.encoder){if(w===e._precise){updateTokenizerStatusUI();return;}e.encoder=null;e.status='idle';}}else{if(e.status==='ready'&&e.encoder){updateTokenizerStatusUI();return;}}if(e.status==='loading')return;e.status='loading';updateTokenizerStatusUI();try{if(p==='openai'){e.encoder=await loadAiTokenizer('o200k_base');e.status='ready';}else if(p==='anthropic'){e.encoder=await loadAiTokenizer('claude');e.status='ready';}else if(p==='gemini'){e.encoder=await loadGemmaEncoder();e.status='ready';}else if(p==='grok'){e.encoder=await loadAiTokenizer('o200k_base');e.status='ready';}else if(p==='deepseek'){if(deepseekPreciseToggle.checked){e.encoder=await loadDeepseekPreciseEncoder();e._precise=true;e._type='hf-transformers';}else{e.encoder=await loadAiTokenizer('o200k_base');e._precise=false;e._type='ai-tokenizer';}e.status='ready';}}catch(err){console.warn(`[TokenEngine] ${p} load failed:`,err);e.status='failed';}updateTokenizerStatusUI();updateCounts();}
 
-    async function getAiTokenizerClass() {
-        if (_AiTokenizerClass) return _AiTokenizerClass;
-        const mod = await import('https://esm.sh/ai-tokenizer@latest');
-        _AiTokenizerClass = mod.Tokenizer || mod.default;
-        return _AiTokenizerClass;
-    }
+function countTokensLocal(t,p){if(!t)return null;const e=localTokenizers[p];if(!e||e.status!=='ready'||!e.encoder)return null;try{if(e._type==='hf-transformers'){return e.encoder.encode(t,null,{add_special_tokens:false}).length;}else{return e.encoder.count(t);}}catch(err){return null;}}
 
-    async function getAiTokenizerEncoding(name) {
-        if (_aiTokenizerEncodings[name]) return _aiTokenizerEncodings[name];
-        const mod = await import(`https://esm.sh/ai-tokenizer@latest/encoding/${name}`);
-        _aiTokenizerEncodings[name] = mod;
-        return mod;
-    }
+function updateTokenizerStatusUI(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e){tokenizerStatusNotice.innerHTML='';return;}const im={openai:{name:'o200k_base',size:'約2-3MB',ready:'GPT-4o/4.1: 100%正確',badge:'🎯'},anthropic:{name:'claude',size:'約2-3MB',ready:'Claude 3/3.5/4/4.5: ≈98-99%',badge:'≈99%'},gemini:{name:'Gemma 3 SentencePiece',size:'約20MB',ready:'Gemini 2.0/2.5/3: 100%正確',badge:'🎯'},grok:{name:'o200k_base',size:'約2-3MB',ready:'Grok-3: ≈99%。Grok-4系は非対応',badge:'≈99%'},deepseek:deepseekPreciseToggle.checked?{name:'DeepSeek-V3公式',size:'約17MB',ready:'DeepSeek V3/R1: 100%正確',badge:'🎯'}:{name:'o200k_base近似',size:'約2-3MB',ready:'DeepSeek: ≈95-98%',badge:'≈95%'}};const i=im[p];if(!i){tokenizerStatusNotice.innerHTML='';return;}if(e.status==='loading')tokenizerStatusNotice.innerHTML=`⏳ ${i.name}（${i.size}）取得中…`;else if(e.status==='ready')tokenizerStatusNotice.innerHTML=`${i.badge} ${i.name}: ${i.ready}`;else if(e.status==='failed')tokenizerStatusNotice.innerHTML=`⚠️ ${i.name} 取得失敗。近似計算使用中。`;else tokenizerStatusNotice.innerHTML=`ℹ️ ${i.name}（${i.size}）を自動取得します。`;}
 
-    async function loadAiTokenizer(encodingName) {
-        const [Tokenizer, encoding] = await Promise.all([
-            getAiTokenizerClass(),
-            getAiTokenizerEncoding(encodingName)
-        ]);
-        return new Tokenizer(encoding);
-    }
+function estimateTokensApprox(text,provider){if(!text)return 0;const co={openai:{h:1.8,k:1.8,j:1.1,a:4.5},anthropic:{h:1.7,k:1.7,j:1.05,a:4.3},gemini:{h:1.5,k:1.5,j:1.0,a:4.0},grok:{h:1.8,k:1.8,j:1.1,a:4.5},deepseek:{h:1.6,k:1.6,j:1.0,a:4.2}};const c=co[provider]||co.openai;let t=0;const aw=text.match(/[a-zA-Z]+/g)||[];for(const w of aw){const l=w.length;if(l<=4)t+=1;else if(l<=8)t+=2;else if(l<=13)t+=3;else t+=Math.ceil(l/c.a);}const nm=text.match(/[0-9０-９]+/g)||[];for(const n of nm)t+=Math.ceil(n.length/3);const js=text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g,'\x00').split('\x00').filter(s=>s.length>0);for(const seg of js){const bl=seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g)||[];for(const b of bl){const l=b.length;if(!l)continue;if(/^[ぁ-ん]+$/.test(b))t+=Math.ceil(l/c.h);else if(/^[ァ-ヶー]+$/.test(b))t+=Math.ceil(l/c.k);else if(/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(b))t+=Math.ceil(l/c.j);else{for(let i=0;i<b.length;i++){const cp=b.codePointAt(i);if(cp>0xFFFF){t+=2.5;i++;}else if(cp>0x7FF)t+=1;else t+=1;}}}}const ws=text.match(/[\s\r\n]+/g)||[];for(const w of ws){const nl=(w.match(/\n/g)||[]).length;t+=nl;const sp=w.length-nl;if(sp>0)t+=Math.ceil(sp/4);}return Math.max(1,Math.ceil(t));}
 
-    async function loadGemmaEncoder() {
-        const entry = localTokenizers.gemini;
-        if (entry.encoder) return entry.encoder;
-        const { AutoTokenizer } = await import(
-            'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'
-        );
-        const tokenizer = await AutoTokenizer.from_pretrained(
-            'onnx-community/gemma-3-1b-it-ONNX'
-        );
-        entry.encoder = tokenizer;
-        return tokenizer;
-    }
+async function fetchExactTokenCount(text,provider,apiKey){if(!text||!apiKey)return null;try{if(provider==='gemini'){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text}]}]})});if(!r.ok)throw 0;return(await r.json()).totalTokens;}else if(provider==='anthropic'){const r=await fetch('https://api.anthropic.com/v1/messages/count_tokens',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).input_tokens;}else if(provider==='openai'){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).usage?.prompt_tokens||null;}else if(provider==='grok'){const r=await fetch('https://api.x.ai/v1/tokenize-text',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'grok-3-mini',text})});if(!r.ok)throw 0;const d=await r.json();return d.token_ids?d.token_ids.length:null;}else if(provider==='deepseek'){const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).usage?.prompt_tokens||null;}}catch(e){return null;}return null;}
 
-    async function loadDeepseekPreciseEncoder() {
-        const { AutoTokenizer } = await import(
-            'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3'
-        );
-        const tokenizer = await AutoTokenizer.from_pretrained(
-            'deepseek-ai/DeepSeek-V3'
-        );
-        return tokenizer;
-    }
+let tokenFetchTimer=null;
+function getTokenCount(t,p){const l=countTokensLocal(t,p);if(l!==null)return{count:l,method:'local'};return{count:estimateTokensApprox(t,p),method:'approx'};}
 
-    async function initLocalTokenizer() {
-        const provider = tokenProviderSelect.value;
-        const entry = localTokenizers[provider];
-        if (!entry) return;
+function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';}}
 
-        if (provider === 'deepseek') {
-            const wantPrecise = deepseekPreciseToggle.checked;
-            if (entry.status === 'ready' && entry.encoder) {
-                if (wantPrecise === entry._precise) {
-                    updateTokenizerStatusUI();
-                    return;
-                }
-                entry.encoder = null;
-                entry.status = 'idle';
-            }
-        } else {
-            if (entry.status === 'ready' && entry.encoder) {
-                updateTokenizerStatusUI();
-                return;
-            }
-        }
+function updateActionPickerUi(){const a=actionPicker.value;replaceFields.classList.toggle('hidden',a!=='replaceText');dictFields.classList.toggle('hidden',a!=='manualCompress');const lm={replaceText:'文字列を置換',extractKeywords:'頻出ワードを抽出',manualCompress:'辞書を使って圧縮',toUmaAbbr:'ウマ娘略称化を実行',mergeDialogues:'同一キャラのセリフを結合',decompressText:'圧縮テキストを復元'};runSelectedActionBtn.textContent=lm[a]||'選択した処理を実行';runSelectedActionBtn.disabled=!a;}
 
-        if (entry.status === 'loading') return;
+[inputPart1El,inputPart2El].forEach(el=>{el.addEventListener('focus',()=>{lastFocusedInputPart=el;});el.addEventListener('input',()=>{syncCombinedInput();updateCounts();saveWorkspaceDebounced();});});
+outputEl.addEventListener('input',()=>{updateCounts();saveWorkspaceDebounced();});
+replaceSourceEl.addEventListener('input',saveWorkspaceDebounced);
+replaceTargetEl.addEventListener('input',saveWorkspaceDebounced);
+actionPicker.addEventListener('change',()=>{updateActionPickerUi();saveWorkspaceDebounced();});
 
-        entry.status = 'loading';
-        updateTokenizerStatusUI();
+function resetHighlightMode(){if(isHighlightMode){isHighlightMode=false;outputEl.style.display='block';outputPreview.style.display='none';toggleHighlightBtn.textContent='🔍 色付け確認';toggleHighlightBtn.classList.remove('active-mode');}}
 
-        try {
-            if (provider === 'openai') {
-                entry.encoder = await loadAiTokenizer('o200k_base');
-                entry.status = 'ready';
-            } else if (provider === 'anthropic') {
-                entry.encoder = await loadAiTokenizer('claude');
-                entry.status = 'ready';
-            } else if (provider === 'gemini') {
-                entry.encoder = await loadGemmaEncoder();
-                entry.status = 'ready';
-            } else if (provider === 'grok') {
-                entry.encoder = await loadAiTokenizer('o200k_base');
-                entry.status = 'ready';
-            } else if (provider === 'deepseek') {
-                if (deepseekPreciseToggle.checked) {
-                    entry.encoder = await loadDeepseekPreciseEncoder();
-                    entry._precise = true;
-                    entry._type = 'hf-transformers';
-                } else {
-                    entry.encoder = await loadAiTokenizer('o200k_base');
-                    entry._precise = false;
-                    entry._type = 'ai-tokenizer';
-                }
-                entry.status = 'ready';
-            }
-        } catch (err) {
-            console.warn(`[TokenEngine] ${provider} tokenizer load failed:`, err);
-            entry.status = 'failed';
-        }
+const kanaMap={'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ','ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ','ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ','ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ','ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト','ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ','ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ','ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン','ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ','｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'};
+const kanaRegex=new RegExp('('+Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|')+')','g');
 
-        updateTokenizerStatusUI();
-        updateCounts();
-    }
+function mergeConsecutiveDialogues(text){const lines=text.split('\n');const parsed=[];const dr=/^([^「」\n]+?)[:：]?\s*「([\s\S]*?)」\s*$/;for(const line of lines){const m=line.match(dr);if(m){parsed.push({type:'dialogue',name:m[1].trim(),content:m[2],original:line});}else{parsed.push({type:'other',original:line});}}const merged=[];let mc=0;for(let i=0;i<parsed.length;i++){const cur=parsed[i];if(cur.type!=='dialogue'){merged.push(cur.original);continue;}let cc=cur.content;let j=i+1;while(j<parsed.length&&parsed[j].type==='dialogue'&&parsed[j].name===cur.name){cc+=parsed[j].content;mc++;j++;}const hc=/[:：]/.test(cur.original.slice(0,cur.original.indexOf('「')));const sep=hc?cur.original.match(/[:：]/)[0]:'';merged.push(`${cur.name}${sep}「${cc}」`);i=j-1;}return{text:merged.join('\n'),mergedCount:mc};}
 
-    function countTokensLocal(text, provider) {
-        if (!text) return null;
-        const entry = localTokenizers[provider];
-        if (!entry || entry.status !== 'ready' || !entry.encoder) return null;
-        try {
-            if (entry._type === 'hf-transformers') {
-                const ids = entry.encoder.encode(text, null, { add_special_tokens: false });
-                return ids.length;
-            } else {
-                return entry.encoder.count(text);
-            }
-        } catch (e) {
-            console.warn(`[TokenEngine] ${provider} encode error:`, e);
-            return null;
-        }
-    }
+function trimWhitespaceForCompression(t){let r=t;r=r.replace(/^\s*[\r\n]/gm,'');r=r.replace(/^[ 　\t]+|[ 　\t]+$/gm,'');r=r.replace(/[ 　\t]{2,}/g,' ');return r;}
 
-    function updateTokenizerStatusUI() {
-        const provider = tokenProviderSelect.value;
-        const entry = localTokenizers[provider];
-        if (!entry) { tokenizerStatusNotice.innerHTML = ''; return; }
+function replaceBracketsLightweight(text){let r=text;let c=0;r=r.replace(/^([^「」\n]+?)[:：]\s*「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{c++;return`${n.trim()}>${ct}`;});r=r.replace(/^([^\s「」\n][^「」\n]*)「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{if(n.includes('>'))return m;c++;return`${n.trim()}>${ct}`;});r=r.replace(/「([^」]*?)」/g,(m,ct)=>{c++;return`"${ct}"`;});r=r.replace(/『([^』]*?)』/g,(m,ct)=>{c++;return`'${ct}'`;});r=r.replace(/（([^）]*?)）/g,(m,ct)=>{c++;return`(${ct})`;});return{text:r,replacedCount:c};}
 
-        const infoMap = {
-            openai: { name: 'ai-tokenizer (o200k_base)', size: '約2-3MB', ready: 'OpenAI GPT-4o/4.1 に対して100%正確。GPT-5系は≈99%。⚠️ GPT-5.1系は短文で最大20%の誤差が生じます。', badge: '🎯' },
-            anthropic: { name: 'ai-tokenizer (claude)', size: '約2-3MB', ready: 'Claude 全モデル (3/3.5/4/4.5) に対して≈98-99%の精度。', badge: '≈99%' },
-            gemini: { name: 'HF Transformers (Gemma 3 SentencePiece 262K)', size: '約20MB', ready: 'Gemini 全モデル（2.0/2.5/3）と同じトークナイザーを使用。100%正確。', badge: '🎯' },
-            grok: { name: 'ai-tokenizer (o200k_base)', size: '約2-3MB', ready: 'Grok-3/3-mini に対して≈99%の精度。⚠️ Grok-4系はトークナイザーが根本的に異なるため非対応（精度67%以下）。Grok-4をお使いの場合はAPI計算を有効にしてください。', badge: '≈99%' },
-            deepseek: deepseekPreciseToggle.checked ? { name: 'HF Transformers (DeepSeek-V3 公式)', size: '約17MB', ready: 'DeepSeek V3/V3.1/R1 に対して100%正確。公式の tokenizer.json を使用。', badge: '🎯' } : { name: 'ai-tokenizer (o200k_base 近似)', size: '約2-3MB', ready: 'DeepSeek V3で≈95%、R1で≈96-98%の近似精度。5%前後の誤差が常に生じます。正確な値が必要な場合は高精度モードを有効にしてください。', badge: '≈95%' }
-        };
+// ==========================================
+// extractExistingMappings (新旧全フォーマット対応)
+// ==========================================
+function extractExistingMappings(text) {
+    const replacedMap = new Map();
+    let bodyText = text;
 
-        const info = infoMap[provider];
-        if (!info) { tokenizerStatusNotice.innerHTML = ''; return; }
-
-        if (entry.status === 'loading') {
-            tokenizerStatusNotice.innerHTML = `⏳ ${info.name}（${info.size}）をダウンロード中…初回のみデータを取得します。`;
-        } else if (entry.status === 'ready') {
-            tokenizerStatusNotice.innerHTML = `${info.badge} ローカルトークナイザー利用中: ${info.name}。${info.ready}`;
-        } else if (entry.status === 'failed') {
-            tokenizerStatusNotice.innerHTML = `⚠️ ${info.name} のダウンロードに失敗しました。近似計算を使用します。`;
-        } else {
-            tokenizerStatusNotice.innerHTML = `ℹ️ ページ読み込み時に ${info.name}（${info.size}）を自動取得します。`;
-        }
-    }
-
-    function estimateTokensApprox(text, provider) {
-        if (!text) return 0;
-        const coefficients = {
-            openai:    { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
-            anthropic: { hiragana: 1.7, katakana: 1.7, kanji: 1.05, asciiPerToken: 4.3 },
-            gemini:    { hiragana: 1.5, katakana: 1.5, kanji: 1.0, asciiPerToken: 4.0 },
-            grok:      { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
-            deepseek:  { hiragana: 1.6, katakana: 1.6, kanji: 1.0, asciiPerToken: 4.2 }
-        };
-        const c = coefficients[provider] || coefficients.openai;
-        let totalTokens = 0;
-
-        const asciiWords = text.match(/[a-zA-Z]+/g) || [];
-        for (const w of asciiWords) {
-            const len = w.length;
-            if (len <= 4) totalTokens += 1;
-            else if (len <= 8) totalTokens += 2;
-            else if (len <= 13) totalTokens += 3;
-            else totalTokens += Math.ceil(len / c.asciiPerToken);
-        }
-
-        const numbers = text.match(/[0-9０-９]+/g) || [];
-        for (const n of numbers) { totalTokens += Math.ceil(n.length / 3); }
-
-        const jaSegments = text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g, '\x00').split('\x00').filter(s => s.length > 0);
-        for (const seg of jaSegments) {
-            const blocks = seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g) || [];
-            for (const block of blocks) {
-                const len = block.length;
-                if (len === 0) continue;
-                if (/^[ぁ-ん]+$/.test(block)) { totalTokens += Math.ceil(len / c.hiragana); }
-                else if (/^[ァ-ヶー]+$/.test(block)) { totalTokens += Math.ceil(len / c.katakana); }
-                else if (/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(block)) { totalTokens += Math.ceil(len / c.kanji); }
-                else {
-                    for (let i = 0; i < block.length; i++) {
-                        const cp = block.codePointAt(i);
-                        if (cp > 0xFFFF) { totalTokens += 2.5; i++; }
-                        else if (cp > 0x7FF) { totalTokens += 1; }
-                        else { totalTokens += 1; }
-                    }
-                }
-            }
-        }
-
-        const whitespaceRuns = text.match(/[\s\r\n]+/g) || [];
-        for (const ws of whitespaceRuns) {
-            const newlines = (ws.match(/\n/g) || []).length;
-            totalTokens += newlines;
-            const spaces = ws.length - newlines;
-            if (spaces > 0) totalTokens += Math.ceil(spaces / 4);
-        }
-        return Math.max(1, Math.ceil(totalTokens));
-    }
-
-    async function fetchExactTokenCount(text, provider, apiKey) {
-        if (!text || !apiKey) return null;
-        if (provider === 'gemini') {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`;
-            try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] }) });
-                if (!response.ok) throw new Error('API Request Failed');
-                const data = await response.json();
-                return data.totalTokens;
-            } catch (error) { console.warn('Geminiトークン取得失敗:', error); return null; }
-        } else if (provider === 'anthropic') {
-            const url = `https://api.anthropic.com/v1/messages/count_tokens`;
-            try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
-                if (!response.ok) throw new Error('API Request Failed');
-                const data = await response.json();
-                return data.input_tokens;
-            } catch (error) { console.warn('Anthropicトークン取得失敗:', error); return null; }
-        } else if (provider === 'openai') {
-            try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
-                if (!response.ok) throw new Error('API Request Failed');
-                const data = await response.json();
-                return data.usage?.prompt_tokens || null;
-            } catch (error) { console.warn('OpenAIトークン取得失敗:', error); return null; }
-        } else if (provider === 'grok') {
-            try {
-                const response = await fetch('https://api.x.ai/v1/tokenize-text', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'grok-3-mini', text: text }) });
-                if (!response.ok) throw new Error('API Request Failed');
-                const data = await response.json();
-                return data.token_ids ? data.token_ids.length : null;
-            } catch (error) { console.warn('Grokトークン取得失敗:', error); return null; }
-        } else if (provider === 'deepseek') {
-            try {
-                const response = await fetch('https://api.deepseek.com/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
-                if (!response.ok) throw new Error('API Request Failed');
-                const data = await response.json();
-                return data.usage?.prompt_tokens || null;
-            } catch (error) { console.warn('DeepSeekトークン取得失敗:', error); return null; }
-        }
-        return null;
-    }
-
-    let tokenFetchTimer = null;
-
-    function getTokenCount(text, provider) {
-        const localCount = countTokensLocal(text, provider);
-        if (localCount !== null) { return { count: localCount, method: 'local' }; }
-        return { count: estimateTokensApprox(text, provider), method: 'approx' };
-    }
-
-    function updateCounts() {
-        syncCombinedInput();
-        const inTxt = inputEl.value;
-        const inTxt1 = inputPart1El.value;
-        const inTxt2 = inputPart2El.value;
-        const outTxt = outputEl.value;
-        const inLen = inTxt.length;
-        const outLen = outTxt.length;
-        const provider = appSettings.tokenCalcProvider || 'openai';
-        let apiKey = '';
-        if (provider === 'gemini') apiKey = appSettings.geminiApiKey;
-        else if (provider === 'anthropic') apiKey = appSettings.anthropicApiKey;
-        else if (provider === 'openai') apiKey = appSettings.openaiApiKey;
-        else if (provider === 'grok') apiKey = appSettings.grokApiKey;
-        else if (provider === 'deepseek') apiKey = appSettings.deepseekApiKey;
-
-        let inResult = getTokenCount(inTxt, provider);
-        let outResult = getTokenCount(outTxt, provider);
-        let inTok = inResult.count;
-        let outTok = outResult.count;
-        let currentMethod = inResult.method;
-
-        const renderCounts = (method) => {
-            const prefix = { 'api': '✨', 'local': '🎯', 'approx': '≈' }[method] || '≈';
-            inputCount.textContent = `合計${inLen}文字 (${prefix}${inTok}ﾄｰｸﾝ)`;
-            inputCountPart1.textContent = `${inTxt1.length}文字`;
-            inputCountPart2.textContent = `${inTxt2.length}文字`;
-            if (outLen > 0 && inTok > outTok) {
-                const diff = inTok - outTok;
-                outputCount.innerHTML = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
-            } else if (outLen > 0 && inTok < outTok) {
-                const diff = outTok - inTok;
-                outputCount.innerHTML = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-delete); font-weight: bold; margin-left: 4px;">↑${diff}増加</span>`;
-            } else {
-                outputCount.textContent = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ)`;
-            }
-        };
-
-        renderCounts(currentMethod);
-
-        if (appSettings.useApiTokenCount && apiKey) {
-            clearTimeout(tokenFetchTimer);
-            inputCount.style.opacity = '0.5';
-            outputCount.style.opacity = '0.5';
-            tokenFetchTimer = setTimeout(async () => {
-                const [exactInTok, exactOutTok] = await Promise.all([
-                    fetchExactTokenCount(inTxt, provider, apiKey),
-                    outTxt ? fetchExactTokenCount(outTxt, provider, apiKey) : Promise.resolve(0)
-                ]);
-                if (exactInTok !== null) inTok = exactInTok;
-                if (exactOutTok !== null) outTok = exactOutTok;
-                inputCount.style.opacity = '1';
-                outputCount.style.opacity = '1';
-                renderCounts(exactInTok !== null ? 'api' : currentMethod);
-            }, 800);
-        } else {
-            inputCount.style.opacity = '1';
-            outputCount.style.opacity = '1';
-        }
-    }
-
-    function updateActionPickerUi() {
-        const action = actionPicker.value;
-        replaceFields.classList.toggle('hidden', action !== 'replaceText');
-        dictFields.classList.toggle('hidden', action !== 'manualCompress');
-        const labelMap = {
-            replaceText: '文字列を置換',
-            extractKeywords: '頻出ワードを抽出',
-            manualCompress: '辞書を使って圧縮',
-            toUmaAbbr: 'ウマ娘略称化を実行',
-            mergeDialogues: '同一キャラのセリフを結合'
-        };
-        runSelectedActionBtn.textContent = labelMap[action] || '選択した処理を実行';
-        runSelectedActionBtn.disabled = !action;
-    }
-
-    [inputPart1El, inputPart2El].forEach(el => {
-        el.addEventListener('focus', () => { lastFocusedInputPart = el; });
-        el.addEventListener('input', () => {
-            syncCombinedInput();
-            updateCounts();
-            saveWorkspaceDebounced();
+    // 新フォーマット: [ABBR_MAP]...[/ABBR_MAP]
+    const newRe = /^\[ABBR_MAP\]\n([\s\S]*?)\n\[\/ABBR_MAP\]\n(?:\[RESP:(?:FULL|ABBR)\])?(?:\[FMT:[^\]]*\])?\n?[^\n]*\n?\n?/;
+    let m = text.match(newRe);
+    if (m) {
+        m[1].split('\n').forEach(line => {
+            const eq = line.indexOf('=');
+            if (eq !== -1) { const a = line.substring(0, eq).trim(), o = line.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); }
         });
-    });
-
-    outputEl.addEventListener('input', () => { updateCounts(); saveWorkspaceDebounced(); });
-    replaceSourceEl.addEventListener('input', saveWorkspaceDebounced);
-    replaceTargetEl.addEventListener('input', saveWorkspaceDebounced);
-    actionPicker.addEventListener('change', () => { updateActionPickerUi(); saveWorkspaceDebounced(); });
-
-    function resetHighlightMode() {
-        if (isHighlightMode) {
-            isHighlightMode = false;
-            outputEl.style.display = 'block';
-            outputPreview.style.display = 'none';
-            toggleHighlightBtn.textContent = '🔍 色付け確認';
-            toggleHighlightBtn.classList.remove('active-mode');
-        }
-    }
-
-    const kanaMap = {
-        'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
-        'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
-        'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ',
-        'ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ',
-        'ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト',
-        'ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ',
-        'ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ',
-        'ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン',
-        'ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ',
-        '｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'
-    };
-    const kanaRegex = new RegExp('(' + Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-    const umaMap = {
-        'スペシャルウィーク': 'SW', 'スペ': 'SP', 'サイレンススズカ': 'SSZ', 'スズカ': 'SZK',
-        'トウカイテイオー': 'TT', 'テイオー': 'TO', 'マルゼンスキー': 'MZ', 'マルゼン': 'MRZ',
-        'フジキセキ': 'FK', 'フジ': 'FJ', 'オグリキャップ': 'OC', 'オグリ': 'OG',
-        'ゴールドシップ': 'GS', 'ゴルシ': 'GOS', 'ウオッカ': 'VDK',
-        'ダイワスカーレット': 'DS', 'ダスカ': 'DSK', 'スカーレット': 'SCL',
-        'タイキシャトル': 'TS', 'タイキ': 'TIK', 'シャトル': 'SHT',
-        'グラスワンダー': 'GW', 'グラス': 'GRS', 'ヒシアマゾン': 'HA', 'アマゾン': 'AMZ',
-        'メジロマックイーン': 'MMQ', 'マックイーン': 'MCQ',
-        'エルコンドルパサー': 'ECP', 'エル': 'EL',
-        'テイエムオペラオー': 'TMO', 'オペラオー': 'OPO',
-        'ナリタブライアン': 'NB', 'ブライアン': 'BRI',
-        'シンボリルドルフ': 'SR', 'ルドルフ': 'RDF', '会長': 'KCH',
-        'エアグルーヴ': 'AG', 'グルーヴ': 'GRV',
-        'アグネスデジタル': 'AD', 'デジタル': 'DGT',
-        'セイウンスカイ': 'SUS', 'スカイ': 'SKY',
-        'タマモクロス': 'TC', 'タマモ': 'TMM', 'タマ': 'TMA',
-        'ファインモーション': 'FM', 'ファイン': 'FIN',
-        'ビワハヤヒデ': 'BHH', 'ハヤヒデ': 'HYH',
-        'マヤノトップガン': 'MTG', 'マヤノ': 'MYN', 'マヤ': 'MYA',
-        'マンハッタンカフェ': 'MC', 'カフェ': 'CAF',
-        'ミホノブルボン': 'MB', 'ブルボン': 'BRB',
-        'メジロライアン': 'MR', 'ライアン': 'RYN',
-        'ヒシアケボノ': 'HAK', 'アケボノ': 'AKB',
-        'ユキノビジン': 'YB', 'ユキノ': 'YKN',
-        'ライスシャワー': 'RS', 'ライス': 'RIC',
-        'アイネスフウジン': 'AF', 'アイネス': 'INS',
-        'アグネスタキオン': 'AT', 'タキオン': 'TKO',
-        'アドマイヤベガ': 'AV', 'アヤベ': 'AYB',
-        'イナリワン': 'IW', 'イナリ': 'INR',
-        'ウイニングチケット': 'WT', 'チケゾー': 'TKZ', 'チケット': 'TCK',
-        'エアシャカール': 'ASK', 'シャカール': 'SHK',
-        'エイシンフラッシュ': 'EF', 'フラッシュ': 'FLS',
-        'カレンチャン': 'CC', 'カレン': 'KRN',
-        'カワカミプリンセス': 'KP', 'カワカミ': 'KWK',
-        'ゴールドシチー': 'GC', 'シチー': 'CTY',
-        'サクラバクシンオー': 'SBO', 'バクシンオー': 'BSO', 'バクシン': 'BKS',
-        'シーキングザパール': 'SZP', 'パール': 'PRL',
-        'シンコウウインディ': 'SKW', 'ウインディ': 'WND',
-        'スイープトウショウ': 'SWT', 'スイープ': 'SWP',
-        'スーパークリーク': 'SCR', 'クリーク': 'CRK',
-        'スマートファルコン': 'SF', 'ファル子': 'FLK', 'ファルコン': 'FLC',
-        'ゼンノロブロイ': 'ZRR', 'ロブロイ': 'RBR',
-        'トーセンジョーダン': 'TJ', 'ジョーダン': 'JDN',
-        'ナカヤマフェスタ': 'NF', 'ナカヤマ': 'NKY', 'フェスタ': 'FST',
-        'ナリタタイシン': 'NT', 'タイシン': 'TSN',
-        'ニシノフラワー': 'NIF', 'ニシノ': 'NSN', 'フラワー': 'FLW',
-        'ハルウララ': 'HU', 'ウララ': 'URR',
-        'バンブーメモリー': 'BM', 'バンブー': 'BNB',
-        'ビコーペガサス': 'BP', 'ビコー': 'BKO',
-        'マーベラスサンデー': 'MVS', 'マーベラス': 'MRV',
-        'マチカネフクキタル': 'MFK', 'フクキタル': 'FKK',
-        'ミスターシービー': 'MCB', 'シービー': 'CB',
-        'メイショウドトウ': 'MSD', 'ドトウ': 'DTO',
-        'メジロドーベル': 'MD', 'ドーベル': 'DBL',
-        'ナイスネイチャ': 'NN', 'ネイチャ': 'NTC',
-        'キングヘイロー': 'KH', 'キング': 'KNG',
-        'マチカネタンホイザ': 'MTH', 'タンホイザ': 'THZ', 'マチタン': 'MCT',
-        'イクノディクタス': 'ID', 'イクノ': 'IKN',
-        'メジロパーマー': 'MP', 'パーマー': 'PAM', 'パマ': 'PMA',
-        'ダイタクヘリオス': 'DTH', 'ヘリオス': 'HRO',
-        'ツインターボ': 'TTB', 'ターボ': 'TRB',
-        'サトノダイヤモンド': 'SDD', 'ダイヤ': 'DIA',
-        'キタサンブラック': 'KB', 'キタサン': 'KTS',
-        'サクラチヨノオー': 'SCO', 'チヨノオー': 'CYO',
-        'シリウスシンボリ': 'SSB', 'シリウス': 'SRS',
-        'メジロアルダン': 'MA', 'アルダン': 'ARD',
-        'ヤエノムテキ': 'YM', 'ヤエノ': 'YEN',
-        'ツルマルツヨシ': 'TMT', 'ツヨシ': 'TYS',
-        'メジロブライト': 'MBR', 'ブライト': 'BRT',
-        'サクラローレル': 'SL', 'ローレル': 'LRL',
-        'ナリタトップロード': 'NTR', 'トップロード': 'TPR', 'トプロ': 'TPR2',
-        'ヤマニンゼファー': 'YZ', 'ゼファー': 'ZPH',
-        'フリオーソ': 'FRI', 'トランセンド': 'TRC',
-        'エスポワールシチー': 'ESC', 'エスポワール': 'ESP',
-        'ノースフライト': 'NFL', 'フライト': 'FRT',
-        'シンボリクリスエス': 'SKS', 'クリスエス': 'KRS', 'ボリクリ': 'BKR',
-        'タニノギムレット': 'TG', 'ギムレット': 'GMR',
-        'ダイイチルビー': 'DIR', 'ルビー': 'RBY',
-        'メジロラモーヌ': 'MLM', 'ラモーヌ': 'RMN',
-        'アストンマーチャン': 'AM', 'マーチャン': 'MCH',
-        'サトノクラウン': 'SCW', 'クラウン': 'CRW',
-        'シュヴァルグラン': 'SVG', 'シュヴァル': 'CHV',
-        'ヴィルシーナ': 'VRS', 'ヴィブロス': 'VIV',
-        'ダンツフレーム': 'DF', 'ダンツ': 'DNT',
-        'ケイエスミラクル': 'KSM', 'ミラクル': 'MRC',
-        'ジャングルポケット': 'JP', 'ポッケ': 'POK',
-        'ビリーヴ': 'BLV', 'ノーリーズン': 'NR',
-        'スティルインラブ': 'SIL', 'スティル': 'STL',
-        'コパノリッキー': 'CPR', 'リッキー': 'RCK',
-        'ホッコータルマエ': 'HT', 'タルマエ': 'TRM',
-        'ワンダーアキュート': 'WA', 'アキュート': 'ACT',
-        'サウンズオブアース': 'SOE', 'アース': 'ERS',
-        'ロイスアンドロイス': 'RAR', 'ロイス': 'ROI',
-        'カツラギエース': 'KA', 'エース': 'ACE',
-        'ネオユニヴァース': 'NU', 'ネオユニ': 'NEY',
-        'ヒシミラクル': 'HM', 'ヒシミ': 'HSM',
-        'タップダンスシチー': 'TDS', 'タップ': 'TAP',
-        'ドゥラメンテ': 'DRM', 'ドゥラ': 'DUR',
-        'ラインクラフト': 'RK', 'クラフト': 'CRF',
-        'シーザリオ': 'CZR', 'エアメサイア': 'AMS', 'メサイア': 'MSI',
-        'フサイチパンドラ': 'FP', 'パンドラ': 'PND',
-        'ブエナビスタ': 'BV', 'ブエナ': 'BUE',
-        'オルフェーヴル': 'ORF', 'オルフェ': 'ORP',
-        'ジェンティルドンナ': 'GD', 'ジェンティル': 'GNT',
-        'ウインバリアシオン': 'WV', 'バリアシオン': 'VAR',
-        'ドリームジャーニー': 'DJ', 'ジャーニー': 'JRN',
-        'カルストンライトオ': 'CLO', 'ライトオ': 'RTO',
-        'デュランダル': 'DRD',
-        'バブルガムフェロー': 'BGF', 'バブル': 'BBL',
-        'フェノーメノ': 'FNM',
-        'グランアレグリア': 'GAL', 'グラン': 'GRN',
-        'ラヴズオンリーユー': 'LOY', 'ラヴズ': 'LOV',
-        'クロノジェネシス': 'CG', 'クロノ': 'CRN',
-        'ステイゴールド': 'STG', 'ステゴ': 'STG2',
-        'キセキ': 'KSK',
-        'デアリングタクト': 'DAT', 'デアタク': 'DAT2',
-        'デアリングハート': 'DAH',
-        'アドマイヤグルーヴ': 'AMG',
-        'サクラチトセオー': 'SCT', 'チトセオー': 'CTO',
-        'ブラストワンピース': 'BWP', 'ブラスト': 'BLS',
-        'アーモンドアイ': 'AAI',
-        'ラッキーライラック': 'LL', 'ライラック': 'LIL',
-        'カレンブーケドール': 'CBD', 'ブーケドール': 'BKD',
-        'レッドディザイア': 'RD', 'ディザイア': 'DZI',
-        'ダーレーアラビアン': 'DLA', 'ダーレー': 'DRL',
-        'ゴドルフィンバルブ': 'GOB', 'ゴドルフィン': 'GDF',
-        'バイアリーターク': 'BYT', 'バイアリー': 'BYA',
-        'セントライト': 'SNL', 'スピードシンボリ': 'SPS',
-        'ハイセイコー': 'HSK', 'モンジュー': 'MNJ',
-        'ハッピーミーク': 'HPM', 'ミーク': 'MEK',
-        'ビターグラッセ': 'BTG', 'グラッセ': 'GLS',
-        'リトルココン': 'LCC', 'ココン': 'CCN',
-        'ライトハロー': 'LH', 'ハロー': 'HLO',
-        'ヴェニュスパーク': 'VP', 'ヴェニュス': 'VNS',
-        'リガントーナ': 'RGT', 'リガン': 'RGN',
-        'ソノンエルフィー': 'SEF', 'エルフィー': 'ELF',
-        'シュガーライツ': 'SGL', 'シュガー': 'SGR',
-        'タッカーブライン': 'TKB', 'タッカー': 'TAK',
-        'ユノハナブルーム': 'YHB', 'ユノハナ': 'YNH',
-        '駿川たづな': 'HT2', 'たづな': 'TDN',
-        '秋川やよい': 'AY', '理事長': 'RJC',
-        '乙名史悦子': 'OE', '乙名史': 'OTN', '記者': 'KSH',
-        '桐生院葵': 'KA2', '桐生院': 'KRY',
-        '安心沢刺々美': 'ASS', '安心沢': 'ANS',
-        '樫本理子': 'KR', '樫本': 'KSM2', '代理': 'DIR2',
-        '佐岳メイ': 'SM', 'メイ': 'MEI',
-        '都留岐涼花': 'TR', '都留岐': 'TRG',
-        '保科健子': 'HK', '保科': 'HSN',
-        '赤坂美聡': 'AKM', '赤坂': 'AKS', '実況': 'JKY',
-        '細江純子': 'HJ', '細江': 'HSE', '解説': 'KAI',
-        'トレーナー': 'TNR',
-        '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
-        'あたし': 'ATH', 'アタシ': 'ATK',
-        '僕': 'BOK', 'ぼく': 'BKH', 'ボク': 'BKK',
-        '俺': 'ORE', 'おれ': 'ORH', 'オレ': 'ORK',
-        '自分': 'JBN', 'じぶん': 'JBH', 'ジブン': 'JBK',
-        'ウチ': 'UCK', 'うち': 'UCH',
-        'わたくし': 'WTX', 'ワタクシ': 'WTZ',
-        '余': 'YOO', '妾': 'WRW',
-        'あなた': 'YUA', 'アナタ': 'YUK', '貴方': 'YUJ', '貴女': 'YUW',
-        'あんた': 'ANA', 'アンタ': 'ANK',
-        'きみ': 'KIM', 'キミ': 'KMK', '君': 'KMJ',
-        'おまえ': 'OMA', 'オマエ': 'OMK', 'お前': 'OMJ',
-        'てめえ': 'TME', 'テメエ': 'TMK', 'てめぇ': 'TMm', '手前': 'TMJ',
-        'きさま': 'KSA', 'キサマ': 'KSK2', '貴様': 'KSJ',
-        'おのれ': 'ONO', 'オノレ': 'ONK', '己': 'ONJ',
-        'おぬし': 'ONU', 'オヌシ': 'ONK2', 'お主': 'ONZ',
-        'なんじ': 'NAN', 'ナンジ': 'NNK', '汝': 'NNZ',
-        'そなた': 'SNT', 'ソナタ': 'SNK', '其方': 'SNJ',
-        'そっち': 'SOC', 'ソッチ': 'SCK',
-        'おたく': 'OTA', 'オタク': 'OTK', 'お宅': 'OTJ',
-        'ウマ娘': 'UMA', 'レース': 'RAC', 'ターフ': 'TRF', 'ダート': 'DRT',
-        'ジュニア': 'JNR', 'クラシック': 'CLS', 'シニア': 'SNR', 'ティアラ': 'TIR',
-        'コース': 'CRS', 'ゲート': 'GAT', 'コーナー': 'CNR', '重賞': 'JUS',
-        'マイル': 'MIL', '短距離': 'SRT', '中距離': 'MID', '長距離': 'LNG',
-        '勝負服': 'SBF', 'ダービー': 'DRB', '有馬': 'ARM', '宝塚': 'TKR',
-        '安田': 'YSD', '記念': 'KIN', '菊花賞': 'KIK', '皐月賞': 'SAT',
-        '桜花賞': 'OKA', '天皇賞': 'TEN', 'ヴィクトリア': 'VCT', 'オークス': 'OAK',
-        'スプリンター': 'SPR', '秋華賞': 'SYU', 'エリザベス': 'ELZ', '女王': 'JOU',
-        'フューチャリティ': 'FUT', 'チャンピオン': 'CHP', 'ジャパン': 'JAP', 'カップ': 'CUP',
-        'ホープフル': 'HPF', 'ジュベナイル': 'JUV', '日本': 'NIH', '福岡': 'FUK',
-        '札幌': 'SAP', '新潟': 'NIG', '船橋': 'FNB', '大井': 'OOI',
-        '小倉': 'KOK', '大阪': 'OSK', '阪神': 'HAN', '東京': 'TKY',
-        'トゥインクル': 'TWK', 'シリーズ': 'SRZ','トレーニング': 'TRN', 'トレセン': 'TRS',
-        'パドック': 'PDK', '感謝祭': 'KAN', 'ハロン': 'FRL', 'ファンファーレ': 'FNF',
-        '併走': 'HEI', '本格化': 'HNK', 'マイラー': 'MLR', 'デビュー': 'DBY',
-        'ライブ': 'LIV', 'レッスン': 'LSN', '蹄鉄': 'TEI', 'にんじん': 'NIN',
-        'ニンジン': 'NNJ', '先輩': 'SEN', '後輩': 'KOH', '合宿': 'GSK',
-        '練習': 'REN'
-    };
-    const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
-
-    // ==========================================
-    // セリフ結合ユーティリティ関数
-    // ==========================================
-    function mergeConsecutiveDialogues(text) {
-        const lines = text.split('\n');
-        const parsed = [];
-        const dialogueRegex = /^([^「」\n]+?)[:：]?\s*「([\s\S]*?)」\s*$/;
-        for (const line of lines) {
-            const match = line.match(dialogueRegex);
-            if (match) {
-                const name = match[1].trim();
-                const content = match[2];
-                parsed.push({ type: 'dialogue', name, content, original: line });
-            } else {
-                parsed.push({ type: 'other', original: line });
-            }
-        }
-        const merged = [];
-        let mergedCount = 0;
-        for (let i = 0; i < parsed.length; i++) {
-            const current = parsed[i];
-            if (current.type !== 'dialogue') {
-                merged.push(current.original);
-                continue;
-            }
-            let combinedContent = current.content;
-            let j = i + 1;
-            while (j < parsed.length
-                && parsed[j].type === 'dialogue'
-                && parsed[j].name === current.name) {
-                combinedContent += parsed[j].content;
-                mergedCount++;
-                j++;
-            }
-            const hadColon = /[:：]/.test(
-                current.original.slice(0, current.original.indexOf('「'))
-            );
-            const separator = hadColon
-                ? current.original.match(/[:：]/)[0]
-                : '';
-            merged.push(`${current.name}${separator}「${combinedContent}」`);
-            i = j - 1;
-        }
-        return { text: merged.join('\n'), mergedCount };
-    }
-
-    // ==========================================
-    // 空白削除ユーティリティ関数
-    // ==========================================
-    function trimWhitespaceForCompression(text) {
-        let result = text;
-        // 空行を削除
-        result = result.replace(/^\s*[\r\n]/gm, '');
-        // 行頭・行末の空白を削除
-        result = result.replace(/^[ 　\t]+|[ 　\t]+$/gm, '');
-        // 連続空白を1つに
-        result = result.replace(/[ 　\t]{2,}/g, ' ');
-        return result;
-    }
-
-    // ==========================================
-    // 鉤括弧置換ユーティリティ関数
-    // ==========================================
-    function replaceBracketsLightweight(text) {
-        let result = text;
-        let replacedCount = 0;
-
-        // セリフ行: 名前:「セリフ」 → 名前>セリフ
-        result = result.replace(/^([^「」\n]+?)[:：]\s*「([\s\S]*?)」\s*$/gm, (match, name, content) => {
-            replacedCount++;
-            return `${name.trim()}>${content}`;
-        });
-        // コロンなしセリフ行: 名前「セリフ」（行頭で名前部分がある場合）
-        result = result.replace(/^([^\s「」\n][^「」\n]*)「([\s\S]*?)」\s*$/gm, (match, name, content) => {
-            if (name.includes('>')) return match;
-            replacedCount++;
-            return `${name.trim()}>${content}`;
-        });
-
-        // 残った地の文中の「」→ ""
-        result = result.replace(/「([^」]*?)」/g, (match, content) => {
-            replacedCount++;
-            return `"${content}"`;
-        });
-
-        // 『』→ ''
-        result = result.replace(/『([^』]*?)』/g, (match, content) => {
-            replacedCount++;
-            return `'${content}'`;
-        });
-
-        // （）→ ()
-        result = result.replace(/（([^）]*?)）/g, (match, content) => {
-            replacedCount++;
-            return `(${content})`;
-        });
-
-        return { text: result, replacedCount };
-    }
-
-    // ==========================================
-    // extractExistingMappings / buildCompressedHeader / processAbbreviation
-    // ==========================================
-    function extractExistingMappings(text) {
-        const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
-        const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
-        let match = text.match(headerRegex);
-        let oldMatch = text.match(oldHeaderRegex);
-        const replacedMap = new Map();
-        let bodyText = text;
-        if (match) {
-            const mapStr = match[1];
-            const pairs = mapStr.split(',');
-            pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) replacedMap.set(abbr, original);
-            });
-            bodyText = text.replace(headerRegex, '');
-        } else if (oldMatch) {
-            const mapStr = oldMatch[1];
-            const pairs = mapStr.split(',');
-            pairs.forEach(pair => {
-                const [abbr, original] = pair.split('=').map(s => s.trim());
-                if (abbr && original) replacedMap.set(abbr, original);
-            });
-            bodyText = text.replace(oldHeaderRegex, '');
-        }
+        bodyText = text.replace(newRe, '');
         return { replacedMap, bodyText };
     }
 
-        function buildCompressedHeader(replacedMap, formatOptions) {
-        if (!replacedMap || replacedMap.size === 0) {
-            if (formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets)) {
-                let header = getCompressionHeaderPrefix(formatOptions);
-                header += "(none)\n</system>\n\n";
-                return header;
-            }
-            return '';
-        }
-        let header = getCompressionHeaderPrefix(formatOptions);
-        replacedMap.forEach((originalWord, abbr) => {
-            header += `${abbr}=${originalWord}, `;
-        });
-        header = header.slice(0, -2) + "\n</system>\n\n";
-        return header;
-    }
-
-
-    function processAbbreviation(text, regex, dictCallback, successMessage) {
-        const { replacedMap, bodyText } = extractExistingMappings(text);
-        let isReplaced = false;
-        const newText = bodyText.replace(regex, matchStr => {
-            isReplaced = true;
-            return dictCallback(matchStr, replacedMap);
-        });
-        if (isReplaced || replacedMap.size > 0) {
-            outputEl.value = buildCompressedHeader(replacedMap) + newText;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast(successMessage);
-        } else {
-            outputEl.value = text;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('略称化できる単語が見つかりませんでした');
-        }
-    }
-
-    function formatText(action) {
-        syncCombinedInput();
-        let text = inputEl.value;
-        if (!text) { showToast('入力テキストがありません'); return; }
-        resetHighlightMode();
-
-        switch (action) {
-            case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
-            case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
-            case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
-            case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
-            case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
-            case 'toFullWidthKana': text = text.replace(kanaRegex, match => kanaMap[match]); break;
-            case 'toUpperCase': text = text.toUpperCase(); break;
-            case 'toLowerCase': text = text.toLowerCase(); break;
-            case 'reverseDialogues': {
-                const regex = /「[\s\S]*?」/g;
-                const matches = text.match(regex);
-                if (matches && matches.length > 1) {
-                    matches.reverse();
-                    let i = 0;
-                    text = text.replace(regex, () => matches[i++]);
-                    showToast('セリフの順序を反転しました');
-                } else {
-                    showToast('反転するセリフ(「」)が2つ以上ありません');
-                    return;
-                }
-                break;
-            }
-            case 'mergeDialogues': {
-                const result = mergeConsecutiveDialogues(text);
-                text = result.text;
-                if (result.mergedCount > 0) {
-                    showToast(`${result.mergedCount}行のセリフを結合しました`);
-                } else {
-                    showToast('結合できる連続セリフがありませんでした');
-                }
-                break;
-            }
-            case 'extractBrackets': {
-                const regex = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
-                const matches = text.match(regex);
-                if (matches && matches.length > 0) {
-                    text = matches.join('\n');
-                    showToast(`カッコ内の文章を ${matches.length}件 抽出しました`);
-                } else {
-                    showToast('カッコで囲まれた部分が見つかりませんでした');
-                    return;
-                }
-                break;
-            }
-            case 'toUmaAbbr': {
-                processAbbreviation(text, umaRegex, (matchStr, map) => {
-                    const abbr = umaMap[matchStr];
-                    if (!map.has(abbr) || matchStr.length > map.get(abbr).length) {
-                        map.set(abbr, matchStr);
-                    }
-                    return abbr;
-                }, 'AI向けウマ娘略称化を行いました');
-                return;
-            }
-        }
-
-        outputEl.value = text;
-        updateCounts();
-        saveWorkspaceDebounced();
-    }
-
-    document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => formatText(e.target.getAttribute('data-action')));
-    });
-
-    document.getElementById('pasteBtn').addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (!text) { showToast('クリップボードが空です'); return; }
-            const targetEl =
-                document.activeElement === inputPart1El ? inputPart1El :
-                document.activeElement === inputPart2El ? inputPart2El :
-                (lastFocusedInputPart || inputPart1El);
-            const selectionStart = targetEl.selectionStart ?? targetEl.value.length;
-            const selectionEnd = targetEl.selectionEnd ?? targetEl.value.length;
-            const currentText = targetEl.value;
-            targetEl.value =
-                currentText.substring(0, selectionStart) +
-                text +
-                currentText.substring(selectionEnd);
-            targetEl.selectionStart = targetEl.selectionEnd = selectionStart + text.length;
-            targetEl.focus();
-            syncCombinedInput();
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('貼り付けました');
-        } catch (err) { showToast('貼り付けが許可されていません'); }
-    });
-
-    clearPart1Btn.addEventListener('click', () => {
-        inputPart1El.value = '';
-        syncCombinedInput();
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('前半入力欄を削除しました');
-    });
-
-    clearPart2Btn.addEventListener('click', () => {
-        inputPart2El.value = '';
-        syncCombinedInput();
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('後半入力欄を削除しました');
-    });
-
-    document.getElementById('replaceBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const source = replaceSourceEl.value;
-        const target = replaceTargetEl.value;
-        let text = inputEl.value;
-        if (!text) { showToast('入力テキストがありません'); return; }
-        if (!source) { showToast('検索文字列を入力してください'); return; }
-        resetHighlightMode();
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escapeRegExp(source), 'g');
-        outputEl.value = text.replace(regex, target);
-        updateCounts();
-        saveWorkspaceDebounced();
-        showToast('置換しました');
-    });
-
-    document.getElementById('compressBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        const dictText = dictArea.value;
-        if (!text) { showToast('入力テキストがありません'); return; }
-        if (!dictText.trim()) { showToast('圧縮用辞書が空です'); return; }
-        resetHighlightMode();
-        const dict = {};
-        const lines = dictText.split('\n');
-        lines.forEach(line => {
-            const parts = line.split('=');
-            if (parts.length === 2) {
-                const key = parts[0].trim();
-                const val = parts[1].trim();
-                if (key && val) dict[key] = val;
-            }
-        });
-        const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-        if (keys.length === 0) { showToast('有効な辞書指定がありません (例: 魔法少女=MG)'); return; }
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('(' + keys.map(escapeRegExp).join('|') + ')', 'g');
-        processAbbreviation(text, regex, (matchStr, map) => {
-            const abbr = dict[matchStr];
-            map.set(abbr, matchStr);
-            return abbr;
-        }, 'AI向けに圧縮しました');
-    });
-
-    document.getElementById('autoCompressBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        if (!text) { showToast('入力テキストがありません'); return; }
-        if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは自動抽出に非対応です。手動圧縮をお使いください。');
-            return;
-        }
-        resetHighlightMode();
-
-        const { replacedMap, bodyText } = extractExistingMappings(text);
-
-        // ★ Step 1: 空白削除オプション
-        let processedBody = bodyText;
-        if (autoCompressTrimWhitespaceInput.checked) {
-            processedBody = trimWhitespaceForCompression(processedBody);
-        }
-
-        // ★ Step 2: セリフ自動結合オプション
-        let dialogueMergeCount = 0;
-        if (autoCompressMergeDialoguesInput.checked) {
-            const mergeResult = mergeConsecutiveDialogues(processedBody);
-            processedBody = mergeResult.text;
-            dialogueMergeCount = mergeResult.mergedCount;
-        }
-
-        // ★ Step 3: 鉤括弧廃止オプション
-        let bracketReplacedCount = 0;
-        if (autoCompressReplaceBracketsInput.checked) {
-            const bracketResult = replaceBracketsLightweight(processedBody);
-            processedBody = bracketResult.text;
-            bracketReplacedCount = bracketResult.replacedCount;
-        }
-
-        // ★ Step 4: トークン圧縮
-        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
-        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(processedBody)).filter(s => s.segment.trim().length > 0);
-
-        const ngrams = new Map();
-        for (let n = 1; n <= 6; n++) {
-            for (let i = 0; i <= segments.length - n; i++) {
-                let phrase = '';
-                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-                phrase = phrase.trim();
-                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-            }
-        }
-
-        const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count >= minCount) {
-                const phraseTokens = countTokensForPhrase(phrase);
-                const abbrTokens = 1;
-                const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
-                const saving = (phraseTokens * count) - (abbrTokens * count + dictEntryCost);
-                if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
-            }
-        }
-
-        results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults = [];
-        for (const item of results) {
-            let isSubphrase = false;
-            for (const kept of filteredResults) {
-                if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) { isSubphrase = true; break; }
-                }
-            }
-            if (!isSubphrase) filteredResults.push(item);
-        }
-
-        filteredResults.sort((a, b) => b.saving - a.saving);
-        const targets = filteredResults.slice(0, maxItems);
-
-        if (targets.length === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0) {
-            showToast('指定条件で自動圧縮できるワードがありませんでした');
-            return;
-        }
-
-        let newText = processedBody;
-        let isReplaced = false;
-
-        targets.sort((a, b) => b.saving - a.saving);
-
-        const abbrPool = [];
-        let abbrIdx = replacedMap.size + 1;
-        for (let i = 0; i < targets.length + 10; i++) {
-            let candidate = generateAbbr(abbrIdx);
-            while (replacedMap.has(candidate)) { abbrIdx++; candidate = generateAbbr(abbrIdx); }
-            abbrPool.push(candidate);
-            abbrIdx++;
-        }
-
-        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        let poolIndex = 0;
-
-        const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
-        const abbrAssignment = new Map();
-        for (const target of targets) {
-            abbrAssignment.set(target.phrase, abbrPool[poolIndex++]);
-        }
-
-        for (const target of sortedForReplace) {
-            const original = target.phrase;
-            let alreadyExists = false;
-            for (const [, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) { alreadyExists = true; break; }
-            }
-            if (alreadyExists) continue;
-            const abbr = abbrAssignment.get(original);
-            const regex = new RegExp(escapeRegExp(original), 'g');
-            if (regex.test(newText)) {
-                newText = newText.replace(regex, abbr);
-                replacedMap.set(abbr, original);
-                isReplaced = true;
-            }
-        }
-
-                const formatOptions = {
-            mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
-            replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
-        };
-
-        if (isReplaced || replacedMap.size > 0) {
-            outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
-            updateCounts();
-            saveWorkspaceDebounced();
-            const parts = [];
-            if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
-            if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
-            const extra = parts.length > 0 ? `（${parts.join('・')}）` : '';
-            showToast(`🚀 完全自動でプロンプトを圧縮しました！${extra}`);
-        } else if (dialogueMergeCount > 0 || bracketReplacedCount > 0) {
-            outputEl.value = buildCompressedHeader(new Map(), formatOptions) + processedBody;
-            updateCounts();
-            saveWorkspaceDebounced();
-            const parts = [];
-            if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
-            if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
-            showToast(`${parts.join('・')}しました（圧縮対象ワードなし）`);
-        } else {
-            outputEl.value = text;
-            updateCounts();
-            saveWorkspaceDebounced();
-            showToast('自動圧縮できるワードがありませんでした');
-        }
-
-    });
-
-    document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
-        syncCombinedInput();
-        const text = inputEl.value;
-        if (!text) { showToast('入力テキストがありません'); return; }
-        if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出機能に非対応です'); return; }
-
-        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
-        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
-
-        const ngrams = new Map();
-        for (let n = 1; n <= 6; n++) {
-            for (let i = 0; i <= segments.length - n; i++) {
-                let phrase = '';
-                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-                phrase = phrase.trim();
-                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-            }
-        }
-
-        const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count >= minCount) {
-                const phraseTokens = countTokensForPhrase(phrase);
-                const abbrTokens = 1;
-                const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
-                const saving = (phraseTokens * count) - (abbrTokens * count + dictEntryCost);
-                if (saving > 2) results.push({ phrase, count, saving });
-            }
-        }
-
-        results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults = [];
-        for (const item of results) {
-            let isSubphrase = false;
-            for (const kept of filteredResults) {
-                if (kept.phrase.includes(item.phrase)) {
-                    if (item.count <= kept.count + 2) { isSubphrase = true; break; }
-                }
-            }
-            if (!isSubphrase) filteredResults.push(item);
-        }
-        filteredResults.sort((a, b) => b.saving - a.saving);
-
-        const listContainer = document.getElementById('keywordList');
-        listContainer.innerHTML = '';
-
-        if (filteredResults.length === 0) {
-            listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">抽出できるキーワードがありませんでした。</p>';
-        } else {
-            const topResults = filteredResults.slice(0, maxItems);
-            topResults.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'keyword-item';
-                let autoAbbr = generateAbbr(index + 1);
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'keyword-info';
-                const wordDiv = document.createElement('div');
-                wordDiv.className = 'keyword-word';
-                wordDiv.textContent = item.phrase;
-                const statsDiv = document.createElement('div');
-                statsDiv.className = 'keyword-stats';
-                statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
-                infoDiv.appendChild(wordDiv);
-                infoDiv.appendChild(statsDiv);
-                const addBtn = document.createElement('button');
-                addBtn.className = 'add-keyword-btn';
-                addBtn.textContent = '+ 辞書へ';
-                addBtn.addEventListener('click', () => {
-                    const currentDict = dictArea.value;
-                    const newEntry = `${item.phrase}=${autoAbbr}`;
-                    if (currentDict.includes(item.phrase + '=')) { showToast('既に辞書に登録されています'); return; }
-                    if (currentDict.trim() === '') { dictArea.value = newEntry; } else { dictArea.value = currentDict + '\n' + newEntry; }
-                    if (autoSaveToggle.checked) saveSettings(false);
-                    addBtn.textContent = '追加済';
-                    addBtn.disabled = true;
-                    showToast(`「${item.phrase}」を辞書に追加しました`);
-                    saveWorkspaceDebounced();
-                });
-                div.appendChild(infoDiv);
-                div.appendChild(addBtn);
-                listContainer.appendChild(div);
+    // 旧フォーマット: ---ABBREVIATION-MAP-START---...---ABBREVIATION-MAP-END---
+    const midRe = /^---ABBREVIATION-MAP-START---\n([\s\S]*?)\n---ABBREVIATION-MAP-END---\n+/;
+    m = text.match(midRe);
+    if (m) {
+        const mi = m[1].indexOf('[Mapping]');
+        if (mi !== -1) {
+            m[1].substring(mi + 9).trim().split('\n').forEach(line => {
+                const eq = line.indexOf('=');
+                if (eq !== -1) { const a = line.substring(0, eq).trim(), o = line.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); }
             });
         }
+        bodyText = text.replace(midRe, '');
+        return { replacedMap, bodyText };
+    }
 
-        const dialog = document.getElementById('keywordDialog');
-        dialog.showModal();
-    });
+    // 旧フォーマット: <system>...[Mapping]...csv...</system>
+    const oldRe1 = /^<system>\n[\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
+    m = text.match(oldRe1);
+    if (m) {
+        m[1].split(',').forEach(pair => { const eq = pair.indexOf('='); if (eq !== -1) { const a = pair.substring(0, eq).trim(), o = pair.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); } });
+        bodyText = text.replace(oldRe1, '');
+        return { replacedMap, bodyText };
+    }
 
-    document.getElementById('closeKeywordDialog').addEventListener('click', () => {
-        document.getElementById('keywordDialog').close();
-    });
+    // 旧フォーマット: [System Note:...]...---
+    const oldRe2 = /^\[System Note:[^\]]*\]\n([\s\S]*?)\n---\n+/;
+    m = text.match(oldRe2);
+    if (m) {
+        m[1].split(',').forEach(pair => { const eq = pair.indexOf('='); if (eq !== -1) { const a = pair.substring(0, eq).trim(), o = pair.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); } });
+        bodyText = text.replace(oldRe2, '');
+        return { replacedMap, bodyText };
+    }
 
-    function getHighlightedHTML(text, searchStr = '') {
-        if (!text) return '';
-        if (searchStr) {
-            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${escapeRegExp(searchStr)})`, 'g');
-            const parts = text.split(regex);
-            let html = '';
-            for (let i = 0; i < parts.length; i++) {
-                if (i % 2 === 1) {
-                    html += `<mark style="background-color: #ff9800; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">${escapeHtml(parts[i])}</mark>`;
-                } else {
-                    html += escapeHtml(parts[i]);
-                }
-            }
-            return html;
-        } else {
-            const minLength = 8;
-            if (text.length < minLength) return escapeHtml(text);
-            let highlightMap = new Array(text.length).fill(false);
-            let ngrams = new Map();
-            for (let i = 0; i <= text.length - minLength; i++) {
-                let sub = text.substring(i, i + minLength);
-                if (/^[\s\r\n]+$/.test(sub)) continue;
-                if (ngrams.has(sub)) { ngrams.get(sub).push(i); } else { ngrams.set(sub, [i]); }
-            }
-            for (let [, indices] of ngrams.entries()) {
-                if (indices.length > 1) {
-                    for (let idx of indices) {
-                        for (let k = 0; k < minLength; k++) { highlightMap[idx + k] = true; }
-                    }
-                }
-            }
-            let html = '';
-            let inHighlight = false;
-            for (let i = 0; i < text.length; i++) {
-                if (highlightMap[i] && !inHighlight) {
-                    html += `<mark style="background-color: #03a9f4; color: #000; font-weight: bold; padding: 0 2px; border-radius: 2px;">`;
-                    inHighlight = true;
-                } else if (!highlightMap[i] && inHighlight) {
-                    html += `</mark>`;
-                    inHighlight = false;
-                }
-                html += escapeHtml(text[i]);
-            }
-            if (inHighlight) html += `</mark>`;
-            return html;
+    return { replacedMap, bodyText };
+}
+
+function processAbbreviation(text, regex, dictCallback, successMessage) {
+    const { replacedMap, bodyText } = extractExistingMappings(text);
+    let isReplaced = false;
+    const newText = bodyText.replace(regex, matchStr => { isReplaced = true; return dictCallback(matchStr, replacedMap); });
+    if (isReplaced || replacedMap.size > 0) {
+        outputEl.value = buildCompressedHeader(replacedMap) + newText;
+        updateCounts(); saveWorkspaceDebounced(); showToast(successMessage);
+    } else {
+        outputEl.value = text; updateCounts(); saveWorkspaceDebounced(); showToast('略称化できる単語が見つかりませんでした');
+    }
+}
+
+function decompressText(text) {
+    const { replacedMap, bodyText } = extractExistingMappings(text);
+    if (replacedMap.size === 0) return { text, restoredCount: 0 };
+    let restored = bodyText, rc = 0;
+    const sorted = [...replacedMap.entries()].sort((a, b) => b[0].length - a[0].length);
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const [abbr, original] of sorted) {
+        const re = new RegExp(esc(abbr), 'g');
+        const ms = restored.match(re);
+        if (ms) { rc += ms.length; restored = restored.replace(re, original); }
+    }
+    return { text: restored, restoredCount: rc };
+}
+
+function formatText(action) {
+    syncCombinedInput();
+    let text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    resetHighlightMode();
+
+    switch (action) {
+        case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
+        case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
+        case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
+        case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
+        case 'toHalfWidth': text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); break;
+        case 'toFullWidthKana': text = text.replace(kanaRegex, m => kanaMap[m]); break;
+        case 'toUpperCase': text = text.toUpperCase(); break;
+        case 'toLowerCase': text = text.toLowerCase(); break;
+        case 'reverseDialogues': {
+            const re = /「[\s\S]*?」/g; const ms = text.match(re);
+            if (ms && ms.length > 1) { ms.reverse(); let i = 0; text = text.replace(re, () => ms[i++]); showToast('セリフの順序を反転しました'); }
+            else { showToast('反転するセリフが2つ以上ありません'); return; } break;
+        }
+        case 'mergeDialogues': {
+            const r = mergeConsecutiveDialogues(text); text = r.text;
+            if (r.mergedCount > 0) showToast(`${r.mergedCount}行のセリフを結合しました`);
+            else showToast('結合できる連続セリフがありませんでした');
+            break;
+        }
+        case 'extractBrackets': {
+            const re = /(「[\s\S]*?」|『[\s\S]*?』|（[\s\S]*?）|\([\s\S]*?\)|【[\s\S]*?】|《[\s\S]*?》|〈[\s\S]*?〉|［[\s\S]*?］|\[[\s\S]*?\]|｛[\s\S]*?｝|\{[\s\S]*?\})/g;
+            const ms = text.match(re);
+            if (ms && ms.length > 0) { text = ms.join('\n'); showToast(`カッコ内を${ms.length}件抽出しました`); }
+            else { showToast('カッコで囲まれた部分が見つかりませんでした'); return; } break;
+        }
+        case 'toUmaAbbr': {
+            processAbbreviation(text, umaRegex, (matchStr, map) => {
+                const abbr = umaMap[matchStr];
+                if (!map.has(abbr) || matchStr.length > map.get(abbr).length) map.set(abbr, matchStr);
+                return abbr;
+            }, 'AI向けウマ娘略称化を行いました');
+            return;
+        }
+        case 'decompressText': {
+            const r = decompressText(text);
+            if (r.restoredCount > 0) { text = r.text; showToast(`${r.restoredCount}箇所を復元しました`); }
+            else { showToast('復元できるマッピングが見つかりませんでした'); return; } break;
+        }
+    }
+    outputEl.value = text; updateCounts(); saveWorkspaceDebounced();
+}
+
+document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => {
+    btn.addEventListener('click', e => formatText(e.target.getAttribute('data-action')));
+});
+
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (!text) { showToast('クリップボードが空です'); return; }
+        const targetEl = document.activeElement === inputPart1El ? inputPart1El : document.activeElement === inputPart2El ? inputPart2El : (lastFocusedInputPart || inputPart1El);
+        const ss = targetEl.selectionStart ?? targetEl.value.length, se = targetEl.selectionEnd ?? targetEl.value.length;
+        const ct = targetEl.value;
+        targetEl.value = ct.substring(0, ss) + text + ct.substring(se);
+        targetEl.selectionStart = targetEl.selectionEnd = ss + text.length;
+        targetEl.focus(); syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('貼り付けました');
+    } catch (err) { showToast('貼り付けが許可されていません'); }
+});
+
+clearPart1Btn.addEventListener('click', () => { inputPart1El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('前半を削除しました'); });
+clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
+
+document.getElementById('replaceBtn').addEventListener('click', () => {
+    syncCombinedInput(); const src = replaceSourceEl.value, tgt = replaceTargetEl.value; let text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!src) { showToast('検索文字列を入力してください'); return; }
+    resetHighlightMode();
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    outputEl.value = text.replace(new RegExp(esc(src), 'g'), tgt);
+    updateCounts(); saveWorkspaceDebounced(); showToast('置換しました');
+});
+
+document.getElementById('compressBtn').addEventListener('click', () => {
+    syncCombinedInput(); const text = inputEl.value, dt = dictArea.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!dt.trim()) { showToast('圧縮用辞書が空です'); return; }
+    resetHighlightMode();
+    const dict = {}; dt.split('\n').forEach(line => { const p = line.split('='); if (p.length === 2) { const k = p[0].trim(), v = p[1].trim(); if (k && v) dict[k] = v; } });
+    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+    if (keys.length === 0) { showToast('有効な辞書指定がありません'); return; }
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('(' + keys.map(esc).join('|') + ')', 'g');
+    processAbbreviation(text, regex, (matchStr, map) => { const abbr = dict[matchStr]; map.set(abbr, matchStr); return abbr; }, 'AI向けに圧縮しました');
+});
+
+document.getElementById('decompressBtn').addEventListener('click', () => {
+    syncCombinedInput(); const text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    resetHighlightMode();
+    const r = decompressText(text);
+    if (r.restoredCount > 0) { outputEl.value = r.text; updateCounts(); saveWorkspaceDebounced(); showToast(`${r.restoredCount}箇所を復元しました`); }
+    else { outputEl.value = text; updateCounts(); saveWorkspaceDebounced(); showToast('復元できるマッピングが見つかりませんでした'); }
+});
+
+// ==========================================
+// 自動圧縮（内蔵辞書ステップ追加・衝突チェック付き）
+// ==========================================
+document.getElementById('autoCompressBtn').addEventListener('click', () => {
+    syncCombinedInput();
+    const text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは自動抽出に非対応です'); return; }
+    resetHighlightMode();
+
+    const { replacedMap, bodyText } = extractExistingMappings(text);
+
+    // Step 0: 内蔵辞書による一括置換（最初に適用）
+    let processedBody = bodyText;
+    let builtinCount = 0;
+
+    if (autoCompressApplyUmaInput.checked) {
+        const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+    }
+    if (autoCompressApplyPronounInput.checked) {
+        const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+    }
+
+    // Step 1: 空白削除
+    if (autoCompressTrimWhitespaceInput.checked) {
+        processedBody = trimWhitespaceForCompression(processedBody);
+    }
+
+    // Step 2: セリフ結合
+    let dialogueMergeCount = 0;
+    if (autoCompressMergeDialoguesInput.checked) {
+        const r = mergeConsecutiveDialogues(processedBody);
+        processedBody = r.text; dialogueMergeCount = r.mergedCount;
+    }
+
+    // Step 3: 括弧置換
+    let bracketReplacedCount = 0;
+    if (autoCompressReplaceBracketsInput.checked) {
+        const r = replaceBracketsLightweight(processedBody);
+        processedBody = r.text; bracketReplacedCount = r.replacedCount;
+    }
+
+    // Step 4: 頻出ワード自動圧縮
+    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+    const segments = Array.from(segmenter.segment(processedBody)).filter(s => s.segment.trim().length > 0);
+
+    const ngrams = new Map();
+    for (let n = 1; n <= 6; n++) {
+        for (let i = 0; i <= segments.length - n; i++) {
+            let phrase = '';
+            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+            phrase = phrase.trim();
+            if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
+            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
         }
     }
 
-    toggleHighlightBtn.addEventListener('click', () => {
-        isHighlightMode = !isHighlightMode;
-        if (isHighlightMode) {
-            const text = outputEl.value;
-            if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }
-            const searchStr = replaceSourceEl.value;
-            outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
-            outputEl.style.display = 'none';
-            outputPreview.style.display = 'block';
-            toggleHighlightBtn.innerHTML = '✏️ 編集に戻る';
-            toggleHighlightBtn.classList.add('active-mode');
-            if (searchStr) { showToast(`「${searchStr}」をハイライトしました`); } else { showToast('8文字以上の重複箇所をハイライトしました'); }
-        } else {
-            resetHighlightMode();
+    const results = [];
+    for (let [phrase, count] of ngrams.entries()) {
+        if (count >= minCount) {
+            const phraseTokens = countTokensForPhrase(phrase);
+            const dictEntryCost = countTokensForPhrase(`v0=${phrase}, `);
+            const saving = (phraseTokens * count) - (1 * count + dictEntryCost);
+            if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
         }
-    });
+    }
 
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        inputPart1El.value = '';
-        inputPart2El.value = '';
-        syncCombinedInput();
-        outputEl.value = '';
-        updateCounts();
-        resetHighlightMode();
-        saveWorkspaceDebounced();
-    });
-
-    document.getElementById('applyToInputBtn').addEventListener('click', () => {
-        if (outputEl.value) {
-            setSplitInputText(outputEl.value);
-            outputEl.value = '';
-            updateCounts();
-            resetHighlightMode();
-            saveWorkspaceDebounced();
-            showToast('結果を前半入力欄に反映しました');
+    results.sort((a, b) => b.phrase.length - a.phrase.length);
+    const filteredResults = [];
+    for (const item of results) {
+        let isSub = false;
+        for (const kept of filteredResults) {
+            if (kept.phrase.includes(item.phrase) && item.count <= kept.count + 2) { isSub = true; break; }
         }
-    });
+        if (!isSub) filteredResults.push(item);
+    }
+    filteredResults.sort((a, b) => b.saving - a.saving);
+    const targets = filteredResults.slice(0, maxItems);
 
-    document.getElementById('copyBtn').addEventListener('click', async () => {
-        if (!outputEl.value) return;
-        try {
-            await navigator.clipboard.writeText(outputEl.value);
-            showToast('コピーしました！');
-        } catch (err) { showToast('コピーに失敗しました'); }
-    });
+    if (targets.length === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
+        showToast('自動圧縮できるワードがありませんでした'); return;
+    }
 
-    runSelectedActionBtn.addEventListener('click', () => {
-        const action = actionPicker.value;
-        if (!action) { showToast('処理を選択してください'); return; }
-        if (action === 'replaceText') { document.getElementById('replaceBtn').click(); return; }
-        if (action === 'extractKeywords') { document.getElementById('extractKeywordsBtn').click(); return; }
-        if (action === 'manualCompress') { document.getElementById('compressBtn').click(); return; }
-        const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
-        if (!legacyBtn) { showToast('処理の実行に失敗しました'); return; }
-        legacyBtn.click();
-    });
+    let newText = processedBody;
+    let isReplaced = false;
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let nextAbbrIndex = replacedMap.size + 1;
+    const abbrAssignment = new Map();
 
-    loadSettings();
-    syncCombinedInput();
-    updateCounts();
-    initLocalTokenizer();
+    for (const target of targets) {
+        const { abbr, nextIndex } = generateSafeAbbr(nextAbbrIndex, processedBody, replacedMap);
+        abbrAssignment.set(target.phrase, abbr);
+        nextAbbrIndex = nextIndex;
+    }
 
-    window.addEventListener('beforeunload', () => {
-        if (persistWorkspaceToggle.checked) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+    const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
+    for (const target of sortedForReplace) {
+        const original = target.phrase;
+        let alreadyExists = false;
+        for (const [, existingOriginal] of replacedMap.entries()) {
+            if (existingOriginal === original) { alreadyExists = true; break; }
         }
-    });
-
-    window.addEventListener('pagehide', () => {
-        if (persistWorkspaceToggle.checked) {
-            collectCurrentState();
-            localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+        if (alreadyExists) continue;
+        const abbr = abbrAssignment.get(original);
+        const regex = new RegExp(esc(original), 'g');
+        if (regex.test(newText)) {
+            newText = newText.replace(regex, abbr);
+            replacedMap.set(abbr, original);
+            isReplaced = true;
         }
-    });
+    }
+
+    const formatOptions = {
+        mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
+        replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
+    };
+
+    if (isReplaced || replacedMap.size > 0) {
+        outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
+        updateCounts(); saveWorkspaceDebounced();
+        const parts = [];
+        if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
+        if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
+        const extra = parts.length > 0 ? `（${parts.join('・')}）` : '';
+        showToast(`🚀 自動圧縮完了！${extra}`);
+    } else if (dialogueMergeCount > 0 || bracketReplacedCount > 0 || builtinCount > 0) {
+        outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
+        updateCounts(); saveWorkspaceDebounced();
+        const parts = [];
+        if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
+        if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
+        showToast(`${parts.join('・')}しました`);
+    } else {
+        outputEl.value = text; updateCounts(); saveWorkspaceDebounced();
+        showToast('自動圧縮できるワードがありませんでした');
+    }
+});
+
+document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
+    syncCombinedInput(); const text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出に非対応です'); return; }
+
+    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+    const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
+    const ngrams = new Map();
+    for (let n = 1; n <= 6; n++) {
+        for (let i = 0; i <= segments.length - n; i++) {
+            let phrase = '';
+            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+            phrase = phrase.trim();
+            if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
+            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+        }
+    }
+    const results = [];
+    for (let [phrase, count] of ngrams.entries()) {
+        if (count >= minCount) {
+            const pt = countTokensForPhrase(phrase);
+            const dc = countTokensForPhrase(`v0=${phrase}, `);
+            const saving = (pt * count) - (1 * count + dc);
+            if (saving > 2) results.push({ phrase, count, saving });
+        }
+    }
+    results.sort((a, b) => b.phrase.length - a.phrase.length);
+    const filtered = [];
+    for (const item of results) {
+        let isSub = false;
+        for (const kept of filtered) { if (kept.phrase.includes(item.phrase) && item.count <= kept.count + 2) { isSub = true; break; } }
+        if (!isSub) filtered.push(item);
+    }
+    filtered.sort((a, b) => b.saving - a.saving);
+
+    const listContainer = document.getElementById('keywordList');
+    listContainer.innerHTML = '';
+    if (filtered.length === 0) {
+        listContainer.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">抽出できるキーワードがありませんでした。</p>';
+    } else {
+        filtered.slice(0, maxItems).forEach((item, index) => {
+            const div = document.createElement('div'); div.className = 'keyword-item';
+            let autoAbbr = generateAbbr(index + 1);
+            const infoDiv = document.createElement('div'); infoDiv.className = 'keyword-info';
+            const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
+            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats'; statsDiv.textContent = `出現:${item.count}回 / 節約:約${item.saving}ﾄｰｸﾝ`;
+            infoDiv.appendChild(wordDiv); infoDiv.appendChild(statsDiv);
+            const addBtn = document.createElement('button'); addBtn.className = 'add-keyword-btn'; addBtn.textContent = '+ 辞書へ';
+            addBtn.addEventListener('click', () => {
+                const cd = dictArea.value; const ne = `${item.phrase}=${autoAbbr}`;
+                if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }
+                dictArea.value = cd.trim() === '' ? ne : cd + '\n' + ne;
+                if (autoSaveToggle.checked) saveSettings(false);
+                addBtn.textContent = '追加済'; addBtn.disabled = true;
+                showToast(`「${item.phrase}」を辞書に追加`); saveWorkspaceDebounced();
+            });
+            div.appendChild(infoDiv); div.appendChild(addBtn); listContainer.appendChild(div);
+        });
+    }
+    document.getElementById('keywordDialog').showModal();
+});
+
+document.getElementById('closeKeywordDialog').addEventListener('click', () => { document.getElementById('keywordDialog').close(); });
+
+function getHighlightedHTML(text, searchStr = '') {
+    if (!text) return '';
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (searchStr) {
+        const re = new RegExp(`(${esc(searchStr)})`, 'g'); const parts = text.split(re); let html = '';
+        for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 1) html += `<mark style="background-color:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">${escapeHtml(parts[i])}</mark>`;
+            else html += escapeHtml(parts[i]);
+        }
+        return html;
+    } else {
+        const ml = 8; if (text.length < ml) return escapeHtml(text);
+        let hm = new Array(text.length).fill(false); let ng = new Map();
+        for (let i = 0; i <= text.length - ml; i++) { let sub = text.substring(i, i + ml); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }
+        for (let [, indices] of ng.entries()) { if (indices.length > 1) { for (let idx of indices) { for (let k = 0; k < ml; k++) hm[idx + k] = true; } } }
+        let html = '', inH = false;
+        for (let i = 0; i < text.length; i++) {
+            if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`; inH = true; }
+            else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
+            html += escapeHtml(text[i]);
+        }
+        if (inH) html += `</mark>`; return html;
+    }
+}
+
+toggleHighlightBtn.addEventListener('click', () => {
+    isHighlightMode = !isHighlightMode;
+    if (isHighlightMode) {
+        const text = outputEl.value;
+        if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }
+        const ss = replaceSourceEl.value;
+        outputPreview.innerHTML = getHighlightedHTML(text, ss);
+        outputEl.style.display = 'none'; outputPreview.style.display = 'block';
+        toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');
+        if (ss) showToast(`「${ss}」をハイライトしました`); else showToast('8文字以上の重複箇所をハイライトしました');
+    } else { resetHighlightMode(); }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => { inputPart1El.value = ''; inputPart2El.value = ''; syncCombinedInput(); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); });
+document.getElementById('applyToInputBtn').addEventListener('click', () => { if (outputEl.value) { setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました'); } });
+document.getElementById('copyBtn').addEventListener('click', async () => { if (!outputEl.value) return; try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); } catch (err) { showToast('コピーに失敗しました'); } });
+
+runSelectedActionBtn.addEventListener('click', () => {
+    const action = actionPicker.value;
+    if (!action) { showToast('処理を選択してください'); return; }
+    if (action === 'replaceText') { document.getElementById('replaceBtn').click(); return; }
+    if (action === 'extractKeywords') { document.getElementById('extractKeywordsBtn').click(); return; }
+    if (action === 'manualCompress') { document.getElementById('compressBtn').click(); return; }
+    if (action === 'decompressText') { document.getElementById('decompressBtn').click(); return; }
+    const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
+    if (!legacyBtn) { formatText(action); return; }
+    legacyBtn.click();
+});
+
+loadSettings();
+syncCombinedInput();
+updateCounts();
+initLocalTokenizer();
+
+window.addEventListener('beforeunload', () => { if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); } });
+window.addEventListener('pagehide', () => { if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); } });
 </script>
 </body>
 </html>
