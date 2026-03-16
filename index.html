@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -596,6 +595,10 @@
                             <span>英数字を含む候補を除外:</span>
                             <input type="checkbox" id="autoCompressExcludeAlnum">
                         </label>
+                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                            <span>圧縮前にセリフを自動結合:</span>
+                            <input type="checkbox" id="autoCompressMergeDialogues" checked>
+                        </label>
                     </div>
                 </details>
             </div>
@@ -626,6 +629,7 @@
                     <optgroup label="抽出・特殊処理">
                         <option value="extractBrackets">カッコ抽出</option>
                         <option value="reverseDialogues">セリフ順反転</option>
+                        <option value="mergeDialogues">同一キャラのセリフ結合</option>
                         <option value="toUmaAbbr">ウマ娘略称化</option>
                         <option value="replaceText">文字列置換</option>
                         <option value="extractKeywords">頻出ワード抽出</option>
@@ -663,6 +667,7 @@
                     <button class="tool-btn" data-action="toLowerCase" type="button"></button>
                     <button class="tool-btn" data-action="extractBrackets" type="button"></button>
                     <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
+                    <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
                     <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
                 </div>
 
@@ -811,7 +816,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 6.4 (Gemma 3 Tokenizer via HF Transformers)
+                    バージョン: 6.5 (セリフ結合機能追加)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -1036,6 +1041,7 @@
     const autoCompressMinCountInput = document.getElementById('autoCompressMinCount');
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
     const autoCompressExcludeAlnumInput = document.getElementById('autoCompressExcludeAlnum');
+    const autoCompressMergeDialoguesInput = document.getElementById('autoCompressMergeDialogues');
 
     const inputEl = document.getElementById('inputText');
     const inputPart1El = document.getElementById('inputTextPart1');
@@ -1115,6 +1121,7 @@
         autoCompressMinCount: 2,
         autoCompressMaxItems: 20,
         autoCompressExcludeAlnum: false,
+        autoCompressMergeDialogues: true,
         
         useApiTokenCount: false,
         tokenCalcProvider: 'openai',
@@ -1162,6 +1169,7 @@
         autoCompressMinCountInput.value = appSettings.autoCompressMinCount;
         autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
         autoCompressExcludeAlnumInput.checked = !!appSettings.autoCompressExcludeAlnum;
+        autoCompressMergeDialoguesInput.checked = appSettings.autoCompressMergeDialogues !== false;
         
         useApiTokenToggle.checked = !!appSettings.useApiTokenCount;
         tokenProviderSelect.value = appSettings.tokenCalcProvider || 'openai';
@@ -1208,6 +1216,7 @@
         appSettings.autoCompressMinCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
         appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
         appSettings.autoCompressExcludeAlnum = autoCompressExcludeAlnumInput.checked;
+        appSettings.autoCompressMergeDialogues = autoCompressMergeDialoguesInput.checked;
         
         appSettings.useApiTokenCount = useApiTokenToggle.checked;
         appSettings.tokenCalcProvider = tokenProviderSelect.value;
@@ -1298,6 +1307,7 @@
     autoCompressMinCountInput.addEventListener('change', handleSettingChange);
     autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
     autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
+    autoCompressMergeDialoguesInput.addEventListener('change', handleSettingChange);
     
     tokenProviderSelect.addEventListener('change', () => {
         updateApiKeyVisibility();
@@ -1404,14 +1414,12 @@
     const localTokenizers = {
         openai:    { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
         anthropic: { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
-        gemini:    { encoder: null, status: 'idle', _type: 'hf-transformers' }, // GeminiはHF Transformersを使用
+        gemini:    { encoder: null, status: 'idle', _type: 'hf-transformers' },
         grok:      { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
         deepseek:  { encoder: null, status: 'idle', _type: 'ai-tokenizer', _precise: false }
     };
 
-    // ai-tokenizer の Tokenizer クラスをキャッシュ
     let _AiTokenizerClass = null;
-    // ai-tokenizer のエンコーディングデータをキャッシュ
     const _aiTokenizerEncodings = {};
 
     async function getAiTokenizerClass() {
@@ -1464,7 +1472,6 @@
         const entry = localTokenizers[provider];
         if (!entry) return;
 
-        // DeepSeek 高精度モードの切り替え判定
         if (provider === 'deepseek') {
             const wantPrecise = deepseekPreciseToggle.checked;
             if (entry.status === 'ready' && entry.encoder) {
@@ -1472,7 +1479,6 @@
                     updateTokenizerStatusUI();
                     return;
                 }
-                // モード変更 → 再ロード
                 entry.encoder = null;
                 entry.status = 'idle';
             }
@@ -1613,9 +1619,6 @@
     function estimateTokensApprox(text, provider) {
         if (!text) return 0;
 
-        // プロバイダ別の補正係数
-        // BPE系 (OpenAI, Anthropic, Grok) と SentencePiece系 (Gemini) で分岐
-        // DeepSeek は独自BPEだが、日本語で若干大きめにカウントする傾向
         const coefficients = {
             openai:    { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
             anthropic: { hiragana: 1.7, katakana: 1.7, kanji: 1.05, asciiPerToken: 4.3 },
@@ -1891,7 +1894,8 @@
             replaceText: '文字列を置換',
             extractKeywords: '頻出ワードを抽出',
             manualCompress: '辞書を使って圧縮',
-            toUmaAbbr: 'ウマ娘略称化を実行'
+            toUmaAbbr: 'ウマ娘略称化を実行',
+            mergeDialogues: '同一キャラのセリフを結合'
         };
 
         runSelectedActionBtn.textContent = labelMap[action] || '選択した処理を実行';
@@ -2141,6 +2145,62 @@
     };
     const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
+    // ==========================================
+    // セリフ結合ユーティリティ関数
+    // ==========================================
+    function mergeConsecutiveDialogues(text) {
+        const lines = text.split('\n');
+        const parsed = [];
+
+        const dialogueRegex = /^([^「」\n]+?)[:：]?\s*「([\s\S]*?)」\s*$/;
+
+        for (const line of lines) {
+            const match = line.match(dialogueRegex);
+            if (match) {
+                const name = match[1].trim();
+                const content = match[2];
+                parsed.push({ type: 'dialogue', name, content, original: line });
+            } else {
+                parsed.push({ type: 'other', original: line });
+            }
+        }
+
+        const merged = [];
+        let mergedCount = 0;
+        for (let i = 0; i < parsed.length; i++) {
+            const current = parsed[i];
+            if (current.type !== 'dialogue') {
+                merged.push(current.original);
+                continue;
+            }
+
+            let combinedContent = current.content;
+            let j = i + 1;
+            while (j < parsed.length
+                && parsed[j].type === 'dialogue'
+                && parsed[j].name === current.name) {
+                combinedContent += parsed[j].content;
+                mergedCount++;
+                j++;
+            }
+
+            const hadColon = /[:：]/.test(
+                current.original.slice(0, current.original.indexOf('「'))
+            );
+            const separator = hadColon
+                ? current.original.match(/[:：]/)[0]
+                : '';
+
+            merged.push(`${current.name}${separator}「${combinedContent}」`);
+            i = j - 1;
+        }
+
+        return { text: merged.join('\n'), mergedCount };
+    }
+
+    // ==========================================
+    // extractExistingMappings / buildCompressedHeader / processAbbreviation
+    // ==========================================
     function extractExistingMappings(text) {
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
         const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
@@ -2230,6 +2290,16 @@
                 } else {
                     showToast('反転するセリフ(「」)が2つ以上ありません');
                     return;
+                }
+                break;
+            }
+            case 'mergeDialogues': {
+                const result = mergeConsecutiveDialogues(text);
+                text = result.text;
+                if (result.mergedCount > 0) {
+                    showToast(`${result.mergedCount}行のセリフを結合しました`);
+                } else {
+                    showToast('結合できる連続セリフがありませんでした');
                 }
                 break;
             }
@@ -2390,13 +2460,22 @@
 
         const { replacedMap, bodyText } = extractExistingMappings(text);
 
+        // ★ セリフ自動結合オプション
+        let processedBody = bodyText;
+        let dialogueMergeCount = 0;
+        if (autoCompressMergeDialoguesInput.checked) {
+            const mergeResult = mergeConsecutiveDialogues(processedBody);
+            processedBody = mergeResult.text;
+            dialogueMergeCount = mergeResult.mergedCount;
+        }
+
         const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
         const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
         const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
         const excludeAlnum = autoCompressExcludeAlnumInput.checked;
 
         const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(bodyText)).filter(s => s.segment.trim().length > 0);
+        const segments = Array.from(segmenter.segment(processedBody)).filter(s => s.segment.trim().length > 0);
 
         const ngrams = new Map();
         for (let n = 1; n <= 6; n++) {
@@ -2437,12 +2516,12 @@
 
         const targets = filteredResults.slice(0, maxItems);
 
-        if (targets.length === 0) {
+        if (targets.length === 0 && dialogueMergeCount === 0) {
             showToast('指定条件で自動圧縮できるワードがありませんでした');
             return;
         }
 
-        let newText = bodyText;
+        let newText = processedBody;
         let isReplaced = false;
 
         targets.sort((a, b) => b.saving - a.saving);
@@ -2488,7 +2567,14 @@
             outputEl.value = buildCompressedHeader(replacedMap) + newText;
             updateCounts();
             saveWorkspaceDebounced();
-            showToast('🚀 完全自動でプロンプトを圧縮しました！');
+            const mergeMsg = dialogueMergeCount > 0 ? `（セリフ${dialogueMergeCount}行結合）` : '';
+            showToast(`🚀 完全自動でプロンプトを圧縮しました！${mergeMsg}`);
+        } else if (dialogueMergeCount > 0) {
+            // 圧縮対象はなかったがセリフ結合はできた場合
+            outputEl.value = processedBody;
+            updateCounts();
+            saveWorkspaceDebounced();
+            showToast(`セリフ${dialogueMergeCount}行を結合しました（圧縮対象ワードなし）`);
         } else {
             outputEl.value = text;
             updateCounts();
