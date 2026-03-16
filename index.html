@@ -10,9 +10,6 @@
     <meta name="theme-color" id="theme-color-meta" content="#4a90e2">
 
     <style>
-        /* =========================================
-           カラーテーマ定義
-        ========================================= */
         :root {
             --bg-primary: #ffffff;
             --bg-secondary: #f0f2f5;
@@ -112,9 +109,6 @@
             --text-primary: #2e7d32;
         }
 
-        /* =========================================
-           基本レイアウト & スクリーン
-        ========================================= */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: var(--font-family);
@@ -596,8 +590,16 @@
                             <input type="checkbox" id="autoCompressExcludeAlnum">
                         </label>
                         <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                            <span>圧縮前に空行・余分な空白を削除:</span>
+                            <input type="checkbox" id="autoCompressTrimWhitespace" checked>
+                        </label>
+                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
                             <span>圧縮前にセリフを自動結合:</span>
                             <input type="checkbox" id="autoCompressMergeDialogues" checked>
+                        </label>
+                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                            <span>鉤括弧を軽量な記号に置換:</span>
+                            <input type="checkbox" id="autoCompressReplaceBrackets" checked>
                         </label>
                     </div>
                 </details>
@@ -816,7 +818,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 6.5 (セリフ結合機能追加)
+                    バージョン: 6.6 (セリフ結合・括弧置換・空白削除)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px; text-align:center;">
@@ -858,9 +860,6 @@
 </dialog>
 
 <script>
-    // ==========================================
-    // 1. PWA インストール対応 & ServiceWorker
-    // ==========================================
     (function initPWA() {
         const manifestJSON = {
             name: "Toolbox PWA",
@@ -901,9 +900,6 @@
         }
     })();
 
-    // ==========================================
-    // Base62 エンコーダ（略称生成用）
-    // ==========================================
     const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     function toBase62(num) {
@@ -920,9 +916,6 @@
         return 'v' + toBase62(index);
     }
 
-    // ==========================================
-    // 共通UIユーティリティ
-    // ==========================================
     function escapeHtml(str) {
         return String(str).replace(/[&<>"']/g, function(match) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -943,29 +936,21 @@
         return new Promise((resolve) => {
             const dialog = document.getElementById('confirmDialog');
             document.getElementById('confirmMessage').textContent = message;
-            
             const okBtn = document.getElementById('confirmOkBtn');
             const cancelBtn = document.getElementById('confirmCancelBtn');
-            
             const cleanup = () => {
                 okBtn.removeEventListener('click', onOk);
                 cancelBtn.removeEventListener('click', onCancel);
                 dialog.close();
             };
-            
             const onOk = () => { cleanup(); resolve(true); };
             const onCancel = () => { cleanup(); resolve(false); };
-            
             okBtn.addEventListener('click', onOk);
             cancelBtn.addEventListener('click', onCancel);
-            
             dialog.showModal();
         });
     }
 
-    // ==========================================
-    // 2. 画面遷移ロジック
-    // ==========================================
     const screens = {
         main: document.getElementById('main-screen'),
         menu: document.getElementById('menu-screen'),
@@ -977,7 +962,6 @@
             screen.classList.remove('active');
             screen.classList.remove('dormant');
         });
-
         if (targetScreen === 'main') {
             screens.main.style.transform = 'translateX(0)';
             screens.menu.style.transform = 'translateX(-100%)';
@@ -994,7 +978,6 @@
             screens.settings.style.transform = 'translateX(0)';
             screens.settings.classList.add('active');
         }
-
         setTimeout(() => {
             Object.values(screens).forEach(screen => {
                 if (!screen.classList.contains('active')) {
@@ -1009,9 +992,6 @@
     document.getElementById('back-to-main-from-menu').addEventListener('click', () => showScreen('main'));
     document.getElementById('back-to-main-from-settings').addEventListener('click', () => showScreen('main'));
 
-    // ==========================================
-    // 3. 要素取得
-    // ==========================================
     const themeSelect = document.getElementById('theme-select');
     const autoSaveToggle = document.getElementById('auto-save-settings-toggle');
     const persistWorkspaceToggle = document.getElementById('persist-workspace-toggle');
@@ -1042,6 +1022,8 @@
     const autoCompressMaxItemsInput = document.getElementById('autoCompressMaxItems');
     const autoCompressExcludeAlnumInput = document.getElementById('autoCompressExcludeAlnum');
     const autoCompressMergeDialoguesInput = document.getElementById('autoCompressMergeDialogues');
+    const autoCompressTrimWhitespaceInput = document.getElementById('autoCompressTrimWhitespace');
+    const autoCompressReplaceBracketsInput = document.getElementById('autoCompressReplaceBrackets');
 
     const inputEl = document.getElementById('inputText');
     const inputPart1El = document.getElementById('inputTextPart1');
@@ -1068,9 +1050,6 @@
     const outputPreview = document.getElementById('outputPreview');
     const tokenizerStatusNotice = document.getElementById('tokenizerStatusNotice');
 
-    // ==========================================
-    // 分割入力ヘルパー
-    // ==========================================
     const INPUT_JOINER = '';
     let lastFocusedInputPart = inputPart1El;
 
@@ -1100,16 +1079,30 @@
         }
     }
 
-    function getCompressionHeaderPrefix() {
+        function getCompressionHeaderPrefix(formatOptions) {
+        let header = '';
         if (abbrResponseToggle.checked) {
-            return "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. In your responses, use the SAME abbreviations from the mapping below whenever possible. The client will restore them to the original names later.\n【重要指示】以下の対応表にある語については、あなたの出力（返答）でも可能な限り同じ略称を使ってください。後でクライアント側で正式名称に復元します。\n[ResponseMode] ABBR\n\n[Mapping]\n";
+            header += "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. In your responses, use the SAME abbreviations from the mapping below whenever possible. The client will restore them to the original names later.\n【重要指示】以下の対応表にある語については、あなたの出力（返答）でも可能な限り同じ略称を使ってください。後でクライアント側で正式名称に復元します。\n[ResponseMode] ABBR\n";
+        } else {
+            header += "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n[ResponseMode] FULL\n";
         }
-        return "<system>\n[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.\n【重要指示】あなたの出力（返答）内では、以下の略称を絶対に避け、必ず右記の正式名称（元の言葉）で出力してください。\n[ResponseMode] FULL\n\n[Mapping]\n";
+        if (formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets)) {
+            header += "\n[Format Notes]\n";
+            if (formatOptions.mergedDialogues) {
+                header += "- Consecutive lines from the same speaker have been merged into one line.\n";
+            }
+            if (formatOptions.replacedBrackets) {
+                header += "- \"Name>text\" = dialogue line (originally Name:「text」)\n";
+                header += "- 'text' = title/name brackets (originally 『text』)\n";
+                header += "- \"text\" in prose = quoted speech (originally 「text」)\n";
+                header += "- (text) = parenthetical note (originally （text）)\n";
+            }
+        }
+        header += "\n[Mapping]\n";
+        return header;
     }
 
-    // ==========================================
-    // 4. 設定保存・読み込みロジック
-    // ==========================================
+
     const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
     let appSettings = {
         theme: 'light',
@@ -1122,6 +1115,8 @@
         autoCompressMaxItems: 20,
         autoCompressExcludeAlnum: false,
         autoCompressMergeDialogues: true,
+        autoCompressTrimWhitespace: true,
+        autoCompressReplaceBrackets: true,
         
         useApiTokenCount: false,
         tokenCalcProvider: 'openai',
@@ -1156,7 +1151,6 @@
         const oldDict = localStorage.getItem('formatter_compress_dict');
         if (oldDict && !saved) appSettings.compressDict = oldDict;
 
-        // v5 → v6 マイグレーション: 旧設定キーを削除
         if (appSettings.claudePreciseTokenizer !== undefined) delete appSettings.claudePreciseTokenizer;
 
         themeSelect.value = appSettings.theme;
@@ -1170,6 +1164,8 @@
         autoCompressMaxItemsInput.value = appSettings.autoCompressMaxItems;
         autoCompressExcludeAlnumInput.checked = !!appSettings.autoCompressExcludeAlnum;
         autoCompressMergeDialoguesInput.checked = appSettings.autoCompressMergeDialogues !== false;
+        autoCompressTrimWhitespaceInput.checked = appSettings.autoCompressTrimWhitespace !== false;
+        autoCompressReplaceBracketsInput.checked = appSettings.autoCompressReplaceBrackets !== false;
         
         useApiTokenToggle.checked = !!appSettings.useApiTokenCount;
         tokenProviderSelect.value = appSettings.tokenCalcProvider || 'openai';
@@ -1217,6 +1213,8 @@
         appSettings.autoCompressMaxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
         appSettings.autoCompressExcludeAlnum = autoCompressExcludeAlnumInput.checked;
         appSettings.autoCompressMergeDialogues = autoCompressMergeDialoguesInput.checked;
+        appSettings.autoCompressTrimWhitespace = autoCompressTrimWhitespaceInput.checked;
+        appSettings.autoCompressReplaceBrackets = autoCompressReplaceBracketsInput.checked;
         
         appSettings.useApiTokenCount = useApiTokenToggle.checked;
         appSettings.tokenCalcProvider = tokenProviderSelect.value;
@@ -1252,7 +1250,6 @@
         localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
         localStorage.removeItem('formatter_theme');
         localStorage.removeItem('formatter_compress_dict');
-
         applyTheme(appSettings.theme);
         updateResponseModeStatus();
         if (showMsg) showToast('設定を保存しました');
@@ -1283,7 +1280,6 @@
         document.querySelectorAll('.api-key-container').forEach(c => c.style.display = 'none');
         const container = document.getElementById(`api-key-container-${provider}`);
         if (container) container.style.display = 'block';
-
         deepseekPreciseContainer.style.display = provider === 'deepseek' ? 'block' : 'none';
     }
 
@@ -1308,6 +1304,8 @@
     autoCompressMaxItemsInput.addEventListener('change', handleSettingChange);
     autoCompressExcludeAlnumInput.addEventListener('change', handleSettingChange);
     autoCompressMergeDialoguesInput.addEventListener('change', handleSettingChange);
+    autoCompressTrimWhitespaceInput.addEventListener('change', handleSettingChange);
+    autoCompressReplaceBracketsInput.addEventListener('change', handleSettingChange);
     
     tokenProviderSelect.addEventListener('change', () => {
         updateApiKeyVisibility();
@@ -1328,7 +1326,6 @@
     deepseekPreciseToggle.addEventListener('change', () => {
         handleSettingChange();
         if (tokenProviderSelect.value === 'deepseek') {
-            // 高精度モード切替時はトークナイザーを再初期化
             localTokenizers.deepseek.encoder = null;
             localTokenizers.deepseek.status = 'idle';
             localTokenizers.deepseek._precise = false;
@@ -1350,9 +1347,6 @@
         document.getElementById('theme-color-meta').content = colors[themeName] || '#4a90e2';
     }
 
-    // ==========================================
-    // Danger Zone
-    // ==========================================
     document.getElementById('update-app-btn').addEventListener('click', async () => {
         const confirmed = await showConfirm("アプリのキャッシュをクリアして最新版を再取得しますか？\n(設定と辞書は保持されます。ページがリロードされます)");
         if (confirmed) {
@@ -1383,9 +1377,6 @@
         }
     });
 
-    // ==========================================
-    // 5. ★★★ トークン計算エンジン v6.4 ★★★
-    // ==========================================
     let isHighlightMode = false;
 
     function containsAlnum(str) {
@@ -1408,9 +1399,6 @@
         return estimateTokensApprox(text, provider);
     }
 
-    // ------------------------------------------
-    // 5a. マルチプロバイダ対応ローカルトークナイザー
-    // ------------------------------------------
     const localTokenizers = {
         openai:    { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
         anthropic: { encoder: null, status: 'idle', _type: 'ai-tokenizer' },
@@ -1498,34 +1486,24 @@
             if (provider === 'openai') {
                 entry.encoder = await loadAiTokenizer('o200k_base');
                 entry.status = 'ready';
-                console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for OpenAI');
-
             } else if (provider === 'anthropic') {
                 entry.encoder = await loadAiTokenizer('claude');
                 entry.status = 'ready';
-                console.log('[TokenEngine] ai-tokenizer (claude) loaded for Anthropic');
-
             } else if (provider === 'gemini') {
                 entry.encoder = await loadGemmaEncoder();
                 entry.status = 'ready';
-                console.log('[TokenEngine] HF Transformers (Gemma 3 SentencePiece 262K) loaded for Gemini');
-
             } else if (provider === 'grok') {
                 entry.encoder = await loadAiTokenizer('o200k_base');
                 entry.status = 'ready';
-                console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for Grok');
-
             } else if (provider === 'deepseek') {
                 if (deepseekPreciseToggle.checked) {
                     entry.encoder = await loadDeepseekPreciseEncoder();
                     entry._precise = true;
                     entry._type = 'hf-transformers';
-                    console.log('[TokenEngine] HF Transformers (DeepSeek-V3) loaded — precise mode');
                 } else {
                     entry.encoder = await loadAiTokenizer('o200k_base');
                     entry._precise = false;
                     entry._type = 'ai-tokenizer';
-                    console.log('[TokenEngine] ai-tokenizer (o200k_base) loaded for DeepSeek — approx mode');
                 }
                 entry.status = 'ready';
             }
@@ -1542,7 +1520,6 @@
         if (!text) return null;
         const entry = localTokenizers[provider];
         if (!entry || entry.status !== 'ready' || !entry.encoder) return null;
-
         try {
             if (entry._type === 'hf-transformers') {
                 const ids = entry.encoder.encode(text, null, { add_special_tokens: false });
@@ -1562,41 +1539,11 @@
         if (!entry) { tokenizerStatusNotice.innerHTML = ''; return; }
 
         const infoMap = {
-            openai: {
-                name: 'ai-tokenizer (o200k_base)',
-                size: '約2-3MB',
-                ready: 'OpenAI GPT-4o/4.1 に対して100%正確。GPT-5系は≈99%。⚠️ GPT-5.1系は短文で最大20%の誤差が生じます。',
-                badge: '🎯'
-            },
-            anthropic: {
-                name: 'ai-tokenizer (claude)',
-                size: '約2-3MB',
-                ready: 'Claude 全モデル (3/3.5/4/4.5) に対して≈98-99%の精度。',
-                badge: '≈99%'
-            },
-            gemini: {
-                name: 'HF Transformers (Gemma 3 SentencePiece 262K)',
-                size: '約20MB',
-                ready: 'Gemini 全モデル（2.0/2.5/3）と同じトークナイザーを使用。100%正確。',
-                badge: '🎯'
-            },
-            grok: {
-                name: 'ai-tokenizer (o200k_base)',
-                size: '約2-3MB',
-                ready: 'Grok-3/3-mini に対して≈99%の精度。⚠️ Grok-4系はトークナイザーが根本的に異なるため非対応（精度67%以下）。Grok-4をお使いの場合はAPI計算を有効にしてください。',
-                badge: '≈99%'
-            },
-            deepseek: deepseekPreciseToggle.checked ? {
-                name: 'HF Transformers (DeepSeek-V3 公式)',
-                size: '約17MB',
-                ready: 'DeepSeek V3/V3.1/R1 に対して100%正確。公式の tokenizer.json を使用。',
-                badge: '🎯'
-            } : {
-                name: 'ai-tokenizer (o200k_base 近似)',
-                size: '約2-3MB',
-                ready: 'DeepSeek V3で≈95%、R1で≈96-98%の近似精度。5%前後の誤差が常に生じます。正確な値が必要な場合は高精度モードを有効にしてください。',
-                badge: '≈95%'
-            }
+            openai: { name: 'ai-tokenizer (o200k_base)', size: '約2-3MB', ready: 'OpenAI GPT-4o/4.1 に対して100%正確。GPT-5系は≈99%。⚠️ GPT-5.1系は短文で最大20%の誤差が生じます。', badge: '🎯' },
+            anthropic: { name: 'ai-tokenizer (claude)', size: '約2-3MB', ready: 'Claude 全モデル (3/3.5/4/4.5) に対して≈98-99%の精度。', badge: '≈99%' },
+            gemini: { name: 'HF Transformers (Gemma 3 SentencePiece 262K)', size: '約20MB', ready: 'Gemini 全モデル（2.0/2.5/3）と同じトークナイザーを使用。100%正確。', badge: '🎯' },
+            grok: { name: 'ai-tokenizer (o200k_base)', size: '約2-3MB', ready: 'Grok-3/3-mini に対して≈99%の精度。⚠️ Grok-4系はトークナイザーが根本的に異なるため非対応（精度67%以下）。Grok-4をお使いの場合はAPI計算を有効にしてください。', badge: '≈99%' },
+            deepseek: deepseekPreciseToggle.checked ? { name: 'HF Transformers (DeepSeek-V3 公式)', size: '約17MB', ready: 'DeepSeek V3/V3.1/R1 に対して100%正確。公式の tokenizer.json を使用。', badge: '🎯' } : { name: 'ai-tokenizer (o200k_base 近似)', size: '約2-3MB', ready: 'DeepSeek V3で≈95%、R1で≈96-98%の近似精度。5%前後の誤差が常に生じます。正確な値が必要な場合は高精度モードを有効にしてください。', badge: '≈95%' }
         };
 
         const info = infoMap[provider];
@@ -1613,12 +1560,8 @@
         }
     }
 
-    // ------------------------------------------
-    // 5b. フォールバック近似計算（プロバイダ別係数）
-    // ------------------------------------------
     function estimateTokensApprox(text, provider) {
         if (!text) return 0;
-
         const coefficients = {
             openai:    { hiragana: 1.8, katakana: 1.8, kanji: 1.1, asciiPerToken: 4.5 },
             anthropic: { hiragana: 1.7, katakana: 1.7, kanji: 1.05, asciiPerToken: 4.3 },
@@ -1627,7 +1570,6 @@
             deepseek:  { hiragana: 1.6, katakana: 1.6, kanji: 1.0, asciiPerToken: 4.2 }
         };
         const c = coefficients[provider] || coefficients.openai;
-
         let totalTokens = 0;
 
         const asciiWords = text.match(/[a-zA-Z]+/g) || [];
@@ -1640,26 +1582,18 @@
         }
 
         const numbers = text.match(/[0-9０-９]+/g) || [];
-        for (const n of numbers) {
-            totalTokens += Math.ceil(n.length / 3);
-        }
+        for (const n of numbers) { totalTokens += Math.ceil(n.length / 3); }
 
         const jaSegments = text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g, '\x00').split('\x00').filter(s => s.length > 0);
-
         for (const seg of jaSegments) {
             const blocks = seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g) || [];
-
             for (const block of blocks) {
                 const len = block.length;
                 if (len === 0) continue;
-
-                if (/^[ぁ-ん]+$/.test(block)) {
-                    totalTokens += Math.ceil(len / c.hiragana);
-                } else if (/^[ァ-ヶー]+$/.test(block)) {
-                    totalTokens += Math.ceil(len / c.katakana);
-                } else if (/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(block)) {
-                    totalTokens += Math.ceil(len / c.kanji);
-                } else {
+                if (/^[ぁ-ん]+$/.test(block)) { totalTokens += Math.ceil(len / c.hiragana); }
+                else if (/^[ァ-ヶー]+$/.test(block)) { totalTokens += Math.ceil(len / c.katakana); }
+                else if (/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(block)) { totalTokens += Math.ceil(len / c.kanji); }
+                else {
                     for (let i = 0; i < block.length; i++) {
                         const cp = block.codePointAt(i);
                         if (cp > 0xFFFF) { totalTokens += 2.5; i++; }
@@ -1677,150 +1611,68 @@
             const spaces = ws.length - newlines;
             if (spaces > 0) totalTokens += Math.ceil(spaces / 4);
         }
-
         return Math.max(1, Math.ceil(totalTokens));
     }
 
-    // ------------------------------------------
-    // 5c. API による正確なトークン計算
-    // ------------------------------------------
     async function fetchExactTokenCount(text, provider, apiKey) {
         if (!text || !apiKey) return null;
-        
         if (provider === 'gemini') {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`;
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
-                });
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] }) });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
                 return data.totalTokens;
-            } catch (error) {
-                console.warn('Geminiトークン取得失敗:', error);
-                return null;
-            }
-        } 
-        else if (provider === 'anthropic') {
+            } catch (error) { console.warn('Geminiトークン取得失敗:', error); return null; }
+        } else if (provider === 'anthropic') {
             const url = `https://api.anthropic.com/v1/messages/count_tokens`;
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': apiKey,
-                        'anthropic-version': '2023-06-01',
-                        'anthropic-dangerous-direct-browser-access': 'true' 
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        messages: [{ role: 'user', content: text }],
-                        max_tokens: 1
-                    })
-                });
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
                 return data.input_tokens;
-            } catch (error) {
-                console.warn('Anthropicトークン取得失敗:', error);
-                return null;
-            }
-        }
-        else if (provider === 'openai') {
+            } catch (error) { console.warn('Anthropicトークン取得失敗:', error); return null; }
+        } else if (provider === 'openai') {
             try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [{ role: 'user', content: text }],
-                        max_tokens: 1
-                    })
-                });
+                const response = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
                 return data.usage?.prompt_tokens || null;
-            } catch (error) {
-                console.warn('OpenAIトークン取得失敗(CORS制限の可能性あり):', error);
-                return null;
-            }
-        }
-        else if (provider === 'grok') {
+            } catch (error) { console.warn('OpenAIトークン取得失敗:', error); return null; }
+        } else if (provider === 'grok') {
             try {
-                const response = await fetch('https://api.x.ai/v1/tokenize-text', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'grok-3-mini',
-                        text: text
-                    })
-                });
+                const response = await fetch('https://api.x.ai/v1/tokenize-text', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'grok-3-mini', text: text }) });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
                 return data.token_ids ? data.token_ids.length : null;
-            } catch (error) {
-                console.warn('Grokトークン取得失敗:', error);
-                return null;
-            }
-        }
-        else if (provider === 'deepseek') {
+            } catch (error) { console.warn('Grokトークン取得失敗:', error); return null; }
+        } else if (provider === 'deepseek') {
             try {
-                const response = await fetch('https://api.deepseek.com/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'deepseek-chat',
-                        messages: [{ role: 'user', content: text }],
-                        max_tokens: 1
-                    })
-                });
+                const response = await fetch('https://api.deepseek.com/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: text }], max_tokens: 1 }) });
                 if (!response.ok) throw new Error('API Request Failed');
                 const data = await response.json();
                 return data.usage?.prompt_tokens || null;
-            } catch (error) {
-                console.warn('DeepSeekトークン取得失敗:', error);
-                return null;
-            }
+            } catch (error) { console.warn('DeepSeekトークン取得失敗:', error); return null; }
         }
-        
         return null;
     }
 
-    // ------------------------------------------
-    // 5d. 統合トークン計算 & UI更新
-    // ------------------------------------------
     let tokenFetchTimer = null;
 
     function getTokenCount(text, provider) {
         const localCount = countTokensLocal(text, provider);
-        if (localCount !== null) {
-            return { count: localCount, method: 'local' };
-        }
+        if (localCount !== null) { return { count: localCount, method: 'local' }; }
         return { count: estimateTokensApprox(text, provider), method: 'approx' };
     }
 
     function updateCounts() {
         syncCombinedInput();
-
         const inTxt = inputEl.value;
         const inTxt1 = inputPart1El.value;
         const inTxt2 = inputPart2El.value;
         const outTxt = outputEl.value;
-        
         const inLen = inTxt.length;
         const outLen = outTxt.length;
-        
         const provider = appSettings.tokenCalcProvider || 'openai';
         let apiKey = '';
         if (provider === 'gemini') apiKey = appSettings.geminiApiKey;
@@ -1828,7 +1680,7 @@
         else if (provider === 'openai') apiKey = appSettings.openaiApiKey;
         else if (provider === 'grok') apiKey = appSettings.grokApiKey;
         else if (provider === 'deepseek') apiKey = appSettings.deepseekApiKey;
-        
+
         let inResult = getTokenCount(inTxt, provider);
         let outResult = getTokenCount(outTxt, provider);
         let inTok = inResult.count;
@@ -1836,16 +1688,10 @@
         let currentMethod = inResult.method;
 
         const renderCounts = (method) => {
-            const prefix = {
-                'api':    '✨',
-                'local':  '🎯',
-                'approx': '≈'
-            }[method] || '≈';
-
+            const prefix = { 'api': '✨', 'local': '🎯', 'approx': '≈' }[method] || '≈';
             inputCount.textContent = `合計${inLen}文字 (${prefix}${inTok}ﾄｰｸﾝ)`;
             inputCountPart1.textContent = `${inTxt1.length}文字`;
             inputCountPart2.textContent = `${inTxt2.length}文字`;
-            
             if (outLen > 0 && inTok > outTok) {
                 const diff = inTok - outTok;
                 outputCount.innerHTML = `${outLen}文字 (${prefix}${outTok}ﾄｰｸﾝ) <span style="color: var(--bg-button-save); font-weight: bold; margin-left: 4px;">↓${diff}節約</span>`;
@@ -1861,19 +1707,15 @@
 
         if (appSettings.useApiTokenCount && apiKey) {
             clearTimeout(tokenFetchTimer);
-            
             inputCount.style.opacity = '0.5';
             outputCount.style.opacity = '0.5';
-            
             tokenFetchTimer = setTimeout(async () => {
                 const [exactInTok, exactOutTok] = await Promise.all([
                     fetchExactTokenCount(inTxt, provider, apiKey),
                     outTxt ? fetchExactTokenCount(outTxt, provider, apiKey) : Promise.resolve(0)
                 ]);
-                
                 if (exactInTok !== null) inTok = exactInTok;
                 if (exactOutTok !== null) outTok = exactOutTok;
-                
                 inputCount.style.opacity = '1';
                 outputCount.style.opacity = '1';
                 renderCounts(exactInTok !== null ? 'api' : currentMethod);
@@ -1886,10 +1728,8 @@
 
     function updateActionPickerUi() {
         const action = actionPicker.value;
-
         replaceFields.classList.toggle('hidden', action !== 'replaceText');
         dictFields.classList.toggle('hidden', action !== 'manualCompress');
-
         const labelMap = {
             replaceText: '文字列を置換',
             extractKeywords: '頻出ワードを抽出',
@@ -1897,16 +1737,12 @@
             toUmaAbbr: 'ウマ娘略称化を実行',
             mergeDialogues: '同一キャラのセリフを結合'
         };
-
         runSelectedActionBtn.textContent = labelMap[action] || '選択した処理を実行';
         runSelectedActionBtn.disabled = !action;
     }
 
     [inputPart1El, inputPart2El].forEach(el => {
-        el.addEventListener('focus', () => {
-            lastFocusedInputPart = el;
-        });
-
+        el.addEventListener('focus', () => { lastFocusedInputPart = el; });
         el.addEventListener('input', () => {
             syncCombinedInput();
             updateCounts();
@@ -1914,16 +1750,10 @@
         });
     });
 
-    outputEl.addEventListener('input', () => {
-        updateCounts();
-        saveWorkspaceDebounced();
-    });
+    outputEl.addEventListener('input', () => { updateCounts(); saveWorkspaceDebounced(); });
     replaceSourceEl.addEventListener('input', saveWorkspaceDebounced);
     replaceTargetEl.addEventListener('input', saveWorkspaceDebounced);
-    actionPicker.addEventListener('change', () => {
-        updateActionPickerUi();
-        saveWorkspaceDebounced();
-    });
+    actionPicker.addEventListener('change', () => { updateActionPickerUi(); saveWorkspaceDebounced(); });
 
     function resetHighlightMode() {
         if (isHighlightMode) {
@@ -1935,9 +1765,6 @@
         }
     }
 
-    // ==========================================
-    // 6. テキスト整形ロジック
-    // ==========================================
     const kanaMap = {
         'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
         'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
@@ -2151,9 +1978,7 @@
     function mergeConsecutiveDialogues(text) {
         const lines = text.split('\n');
         const parsed = [];
-
         const dialogueRegex = /^([^「」\n]+?)[:：]?\s*「([\s\S]*?)」\s*$/;
-
         for (const line of lines) {
             const match = line.match(dialogueRegex);
             if (match) {
@@ -2164,7 +1989,6 @@
                 parsed.push({ type: 'other', original: line });
             }
         }
-
         const merged = [];
         let mergedCount = 0;
         for (let i = 0; i < parsed.length; i++) {
@@ -2173,7 +1997,6 @@
                 merged.push(current.original);
                 continue;
             }
-
             let combinedContent = current.content;
             let j = i + 1;
             while (j < parsed.length
@@ -2183,19 +2006,70 @@
                 mergedCount++;
                 j++;
             }
-
             const hadColon = /[:：]/.test(
                 current.original.slice(0, current.original.indexOf('「'))
             );
             const separator = hadColon
                 ? current.original.match(/[:：]/)[0]
                 : '';
-
             merged.push(`${current.name}${separator}「${combinedContent}」`);
             i = j - 1;
         }
-
         return { text: merged.join('\n'), mergedCount };
+    }
+
+    // ==========================================
+    // 空白削除ユーティリティ関数
+    // ==========================================
+    function trimWhitespaceForCompression(text) {
+        let result = text;
+        // 空行を削除
+        result = result.replace(/^\s*[\r\n]/gm, '');
+        // 行頭・行末の空白を削除
+        result = result.replace(/^[ 　\t]+|[ 　\t]+$/gm, '');
+        // 連続空白を1つに
+        result = result.replace(/[ 　\t]{2,}/g, ' ');
+        return result;
+    }
+
+    // ==========================================
+    // 鉤括弧置換ユーティリティ関数
+    // ==========================================
+    function replaceBracketsLightweight(text) {
+        let result = text;
+        let replacedCount = 0;
+
+        // セリフ行: 名前:「セリフ」 → 名前>セリフ
+        result = result.replace(/^([^「」\n]+?)[:：]\s*「([\s\S]*?)」\s*$/gm, (match, name, content) => {
+            replacedCount++;
+            return `${name.trim()}>${content}`;
+        });
+        // コロンなしセリフ行: 名前「セリフ」（行頭で名前部分がある場合）
+        result = result.replace(/^([^\s「」\n][^「」\n]*)「([\s\S]*?)」\s*$/gm, (match, name, content) => {
+            if (name.includes('>')) return match;
+            replacedCount++;
+            return `${name.trim()}>${content}`;
+        });
+
+        // 残った地の文中の「」→ ""
+        result = result.replace(/「([^」]*?)」/g, (match, content) => {
+            replacedCount++;
+            return `"${content}"`;
+        });
+
+        // 『』→ ''
+        result = result.replace(/『([^』]*?)』/g, (match, content) => {
+            replacedCount++;
+            return `'${content}'`;
+        });
+
+        // （）→ ()
+        result = result.replace(/（([^）]*?)）/g, (match, content) => {
+            replacedCount++;
+            return `(${content})`;
+        });
+
+        return { text: result, replacedCount };
     }
 
     // ==========================================
@@ -2204,12 +2078,10 @@
     function extractExistingMappings(text) {
         const headerRegex = /^<system>\n\[IMPORTANT\][\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
         const oldHeaderRegex = /^\[System Note: Abbreviations are used below to save tokens\. MUST use the full original names in your response\.\]\n([\s\S]*?)\n---\n+/;
-
         let match = text.match(headerRegex);
         let oldMatch = text.match(oldHeaderRegex);
         const replacedMap = new Map();
         let bodyText = text;
-
         if (match) {
             const mapStr = match[1];
             const pairs = mapStr.split(',');
@@ -2227,13 +2099,19 @@
             });
             bodyText = text.replace(oldHeaderRegex, '');
         }
-
         return { replacedMap, bodyText };
     }
 
-    function buildCompressedHeader(replacedMap) {
-        if (!replacedMap || replacedMap.size === 0) return '';
-        let header = getCompressionHeaderPrefix();
+        function buildCompressedHeader(replacedMap, formatOptions) {
+        if (!replacedMap || replacedMap.size === 0) {
+            if (formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets)) {
+                let header = getCompressionHeaderPrefix(formatOptions);
+                header += "(none)\n</system>\n\n";
+                return header;
+            }
+            return '';
+        }
+        let header = getCompressionHeaderPrefix(formatOptions);
         replacedMap.forEach((originalWord, abbr) => {
             header += `${abbr}=${originalWord}, `;
         });
@@ -2241,15 +2119,14 @@
         return header;
     }
 
+
     function processAbbreviation(text, regex, dictCallback, successMessage) {
         const { replacedMap, bodyText } = extractExistingMappings(text);
         let isReplaced = false;
-
         const newText = bodyText.replace(regex, matchStr => {
             isReplaced = true;
             return dictCallback(matchStr, replacedMap);
         });
-
         if (isReplaced || replacedMap.size > 0) {
             outputEl.value = buildCompressedHeader(replacedMap) + newText;
             updateCounts();
@@ -2267,7 +2144,6 @@
         syncCombinedInput();
         let text = inputEl.value;
         if (!text) { showToast('入力テキストがありません'); return; }
-
         resetHighlightMode();
 
         switch (action) {
@@ -2339,35 +2215,25 @@
     document.getElementById('pasteBtn').addEventListener('click', async () => {
         try {
             const text = await navigator.clipboard.readText();
-            if (!text) {
-                showToast('クリップボードが空です');
-                return;
-            }
-
+            if (!text) { showToast('クリップボードが空です'); return; }
             const targetEl =
                 document.activeElement === inputPart1El ? inputPart1El :
                 document.activeElement === inputPart2El ? inputPart2El :
                 (lastFocusedInputPart || inputPart1El);
-
             const selectionStart = targetEl.selectionStart ?? targetEl.value.length;
             const selectionEnd = targetEl.selectionEnd ?? targetEl.value.length;
             const currentText = targetEl.value;
-
             targetEl.value =
                 currentText.substring(0, selectionStart) +
                 text +
                 currentText.substring(selectionEnd);
-
             targetEl.selectionStart = targetEl.selectionEnd = selectionStart + text.length;
             targetEl.focus();
-
             syncCombinedInput();
             updateCounts();
             saveWorkspaceDebounced();
             showToast('貼り付けました');
-        } catch (err) {
-            showToast('貼り付けが許可されていません');
-        }
+        } catch (err) { showToast('貼り付けが許可されていません'); }
     });
 
     clearPart1Btn.addEventListener('click', () => {
@@ -2388,38 +2254,27 @@
 
     document.getElementById('replaceBtn').addEventListener('click', () => {
         syncCombinedInput();
-
         const source = replaceSourceEl.value;
         const target = replaceTargetEl.value;
         let text = inputEl.value;
-
         if (!text) { showToast('入力テキストがありません'); return; }
         if (!source) { showToast('検索文字列を入力してください'); return; }
-
         resetHighlightMode();
-
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapeRegExp(source), 'g');
-
         outputEl.value = text.replace(regex, target);
         updateCounts();
         saveWorkspaceDebounced();
         showToast('置換しました');
     });
 
-    // ==========================================
-    // 🚀 頻出ワード自動抽出 ＆ プロンプト圧縮
-    // ==========================================
     document.getElementById('compressBtn').addEventListener('click', () => {
         syncCombinedInput();
         const text = inputEl.value;
         const dictText = dictArea.value;
-        
         if (!text) { showToast('入力テキストがありません'); return; }
         if (!dictText.trim()) { showToast('圧縮用辞書が空です'); return; }
-
         resetHighlightMode();
-
         const dict = {};
         const lines = dictText.split('\n');
         lines.forEach(line => {
@@ -2430,16 +2285,10 @@
                 if (key && val) dict[key] = val;
             }
         });
-
         const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-        if (keys.length === 0) {
-            showToast('有効な辞書指定がありません (例: 魔法少女=MG)');
-            return;
-        }
-
+        if (keys.length === 0) { showToast('有効な辞書指定がありません (例: 魔法少女=MG)'); return; }
         const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp('(' + keys.map(escapeRegExp).join('|') + ')', 'g');
-
         processAbbreviation(text, regex, (matchStr, map) => {
             const abbr = dict[matchStr];
             map.set(abbr, matchStr);
@@ -2455,13 +2304,17 @@
             showToast('お使いのブラウザは自動抽出に非対応です。手動圧縮をお使いください。');
             return;
         }
-
         resetHighlightMode();
 
         const { replacedMap, bodyText } = extractExistingMappings(text);
 
-        // ★ セリフ自動結合オプション
+        // ★ Step 1: 空白削除オプション
         let processedBody = bodyText;
+        if (autoCompressTrimWhitespaceInput.checked) {
+            processedBody = trimWhitespaceForCompression(processedBody);
+        }
+
+        // ★ Step 2: セリフ自動結合オプション
         let dialogueMergeCount = 0;
         if (autoCompressMergeDialoguesInput.checked) {
             const mergeResult = mergeConsecutiveDialogues(processedBody);
@@ -2469,6 +2322,15 @@
             dialogueMergeCount = mergeResult.mergedCount;
         }
 
+        // ★ Step 3: 鉤括弧廃止オプション
+        let bracketReplacedCount = 0;
+        if (autoCompressReplaceBracketsInput.checked) {
+            const bracketResult = replaceBracketsLightweight(processedBody);
+            processedBody = bracketResult.text;
+            bracketReplacedCount = bracketResult.replacedCount;
+        }
+
+        // ★ Step 4: トークン圧縮
         const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
         const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
         const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
@@ -2483,7 +2345,6 @@
                 let phrase = '';
                 for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
-
                 if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
                 ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
             }
@@ -2513,10 +2374,9 @@
         }
 
         filteredResults.sort((a, b) => b.saving - a.saving);
-
         const targets = filteredResults.slice(0, maxItems);
 
-        if (targets.length === 0 && dialogueMergeCount === 0) {
+        if (targets.length === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0) {
             showToast('指定条件で自動圧縮できるワードがありませんでした');
             return;
         }
@@ -2546,16 +2406,13 @@
 
         for (const target of sortedForReplace) {
             const original = target.phrase;
-
             let alreadyExists = false;
             for (const [, existingOriginal] of replacedMap.entries()) {
                 if (existingOriginal === original) { alreadyExists = true; break; }
             }
             if (alreadyExists) continue;
-
             const abbr = abbrAssignment.get(original);
             const regex = new RegExp(escapeRegExp(original), 'g');
-
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
@@ -2563,36 +2420,42 @@
             }
         }
 
+                const formatOptions = {
+            mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
+            replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
+        };
+
         if (isReplaced || replacedMap.size > 0) {
-            outputEl.value = buildCompressedHeader(replacedMap) + newText;
+            outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
             updateCounts();
             saveWorkspaceDebounced();
-            const mergeMsg = dialogueMergeCount > 0 ? `（セリフ${dialogueMergeCount}行結合）` : '';
-            showToast(`🚀 完全自動でプロンプトを圧縮しました！${mergeMsg}`);
-        } else if (dialogueMergeCount > 0) {
-            // 圧縮対象はなかったがセリフ結合はできた場合
-            outputEl.value = processedBody;
+            const parts = [];
+            if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+            if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
+            const extra = parts.length > 0 ? `（${parts.join('・')}）` : '';
+            showToast(`🚀 完全自動でプロンプトを圧縮しました！${extra}`);
+        } else if (dialogueMergeCount > 0 || bracketReplacedCount > 0) {
+            outputEl.value = buildCompressedHeader(new Map(), formatOptions) + processedBody;
             updateCounts();
             saveWorkspaceDebounced();
-            showToast(`セリフ${dialogueMergeCount}行を結合しました（圧縮対象ワードなし）`);
+            const parts = [];
+            if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+            if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
+            showToast(`${parts.join('・')}しました（圧縮対象ワードなし）`);
         } else {
             outputEl.value = text;
             updateCounts();
             saveWorkspaceDebounced();
             showToast('自動圧縮できるワードがありませんでした');
         }
+
     });
 
-    // ＝＝＝ 頻出ワード抽出（手動用） ＝＝＝
     document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
         syncCombinedInput();
         const text = inputEl.value;
         if (!text) { showToast('入力テキストがありません'); return; }
-
-        if (!window.Intl || !Intl.Segmenter) {
-            showToast('お使いのブラウザは単語抽出機能に非対応です');
-            return;
-        }
+        if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出機能に非対応です'); return; }
 
         const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
         const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
@@ -2608,7 +2471,6 @@
                 let phrase = '';
                 for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
                 phrase = phrase.trim();
-
                 if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
                 ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
             }
@@ -2636,7 +2498,6 @@
             }
             if (!isSubphrase) filteredResults.push(item);
         }
-
         filteredResults.sort((a, b) => b.saving - a.saving);
 
         const listContainer = document.getElementById('keywordList');
@@ -2649,50 +2510,31 @@
             topResults.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'keyword-item';
-
                 let autoAbbr = generateAbbr(index + 1);
-
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'keyword-info';
-
                 const wordDiv = document.createElement('div');
                 wordDiv.className = 'keyword-word';
                 wordDiv.textContent = item.phrase;
-
                 const statsDiv = document.createElement('div');
                 statsDiv.className = 'keyword-stats';
                 statsDiv.textContent = `出現: ${item.count}回 / 節約見込: 約${item.saving}ﾄｰｸﾝ`;
-
                 infoDiv.appendChild(wordDiv);
                 infoDiv.appendChild(statsDiv);
-
                 const addBtn = document.createElement('button');
                 addBtn.className = 'add-keyword-btn';
                 addBtn.textContent = '+ 辞書へ';
-
                 addBtn.addEventListener('click', () => {
                     const currentDict = dictArea.value;
                     const newEntry = `${item.phrase}=${autoAbbr}`;
-
-                    if (currentDict.includes(item.phrase + '=')) {
-                        showToast('既に辞書に登録されています');
-                        return;
-                    }
-
-                    if (currentDict.trim() === '') {
-                        dictArea.value = newEntry;
-                    } else {
-                        dictArea.value = currentDict + '\n' + newEntry;
-                    }
-
+                    if (currentDict.includes(item.phrase + '=')) { showToast('既に辞書に登録されています'); return; }
+                    if (currentDict.trim() === '') { dictArea.value = newEntry; } else { dictArea.value = currentDict + '\n' + newEntry; }
                     if (autoSaveToggle.checked) saveSettings(false);
-
                     addBtn.textContent = '追加済';
                     addBtn.disabled = true;
                     showToast(`「${item.phrase}」を辞書に追加しました`);
                     saveWorkspaceDebounced();
                 });
-
                 div.appendChild(infoDiv);
                 div.appendChild(addBtn);
                 listContainer.appendChild(div);
@@ -2709,7 +2551,6 @@
 
     function getHighlightedHTML(text, searchStr = '') {
         if (!text) return '';
-
         if (searchStr) {
             const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapeRegExp(searchStr)})`, 'g');
@@ -2726,31 +2567,20 @@
         } else {
             const minLength = 8;
             if (text.length < minLength) return escapeHtml(text);
-
             let highlightMap = new Array(text.length).fill(false);
             let ngrams = new Map();
-
             for (let i = 0; i <= text.length - minLength; i++) {
                 let sub = text.substring(i, i + minLength);
                 if (/^[\s\r\n]+$/.test(sub)) continue;
-
-                if (ngrams.has(sub)) {
-                    ngrams.get(sub).push(i);
-                } else {
-                    ngrams.set(sub, [i]);
-                }
+                if (ngrams.has(sub)) { ngrams.get(sub).push(i); } else { ngrams.set(sub, [i]); }
             }
-
             for (let [, indices] of ngrams.entries()) {
                 if (indices.length > 1) {
                     for (let idx of indices) {
-                        for (let k = 0; k < minLength; k++) {
-                            highlightMap[idx + k] = true;
-                        }
+                        for (let k = 0; k < minLength; k++) { highlightMap[idx + k] = true; }
                     }
                 }
             }
-
             let html = '';
             let inHighlight = false;
             for (let i = 0; i < text.length; i++) {
@@ -2772,24 +2602,14 @@
         isHighlightMode = !isHighlightMode;
         if (isHighlightMode) {
             const text = outputEl.value;
-            if (!text) {
-                showToast('結果テキストがありません');
-                isHighlightMode = false;
-                return;
-            }
+            if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }
             const searchStr = replaceSourceEl.value;
-
             outputPreview.innerHTML = getHighlightedHTML(text, searchStr);
             outputEl.style.display = 'none';
             outputPreview.style.display = 'block';
             toggleHighlightBtn.innerHTML = '✏️ 編集に戻る';
             toggleHighlightBtn.classList.add('active-mode');
-
-            if (searchStr) {
-                showToast(`「${searchStr}」をハイライトしました`);
-            } else {
-                showToast('8文字以上の重複箇所をハイライトしました');
-            }
+            if (searchStr) { showToast(`「${searchStr}」をハイライトしました`); } else { showToast('8文字以上の重複箇所をハイライトしました'); }
         } else {
             resetHighlightMode();
         }
@@ -2799,7 +2619,6 @@
         inputPart1El.value = '';
         inputPart2El.value = '';
         syncCombinedInput();
-
         outputEl.value = '';
         updateCounts();
         resetHighlightMode();
@@ -2822,48 +2641,25 @@
         try {
             await navigator.clipboard.writeText(outputEl.value);
             showToast('コピーしました！');
-        } catch (err) {
-            showToast('コピーに失敗しました');
-        }
+        } catch (err) { showToast('コピーに失敗しました'); }
     });
 
     runSelectedActionBtn.addEventListener('click', () => {
         const action = actionPicker.value;
-
         if (!action) { showToast('処理を選択してください'); return; }
-
-        if (action === 'replaceText') {
-            document.getElementById('replaceBtn').click();
-            return;
-        }
-
-        if (action === 'extractKeywords') {
-            document.getElementById('extractKeywordsBtn').click();
-            return;
-        }
-
-        if (action === 'manualCompress') {
-            document.getElementById('compressBtn').click();
-            return;
-        }
-
+        if (action === 'replaceText') { document.getElementById('replaceBtn').click(); return; }
+        if (action === 'extractKeywords') { document.getElementById('extractKeywordsBtn').click(); return; }
+        if (action === 'manualCompress') { document.getElementById('compressBtn').click(); return; }
         const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
         if (!legacyBtn) { showToast('処理の実行に失敗しました'); return; }
-
         legacyBtn.click();
     });
 
-    // ==========================================
-    // 7. 初期化
-    // ==========================================
     loadSettings();
     syncCombinedInput();
     updateCounts();
-
-    // ローカルトークナイザーのバックグラウンドロード開始
     initLocalTokenizer();
 
-    // ページ離脱時に作業状態を保存
     window.addEventListener('beforeunload', () => {
         if (persistWorkspaceToggle.checked) {
             collectCurrentState();
@@ -2871,7 +2667,6 @@
         }
     });
 
-    // iOS Safari ではpagehideの方が確実
     window.addEventListener('pagehide', () => {
         if (persistWorkspaceToggle.checked) {
             collectCurrentState();
