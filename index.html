@@ -574,7 +574,7 @@
                     <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
                 </div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    本文中の長い頻出単語を自動で検出し、短い略称(v1, v2...)に置き換えてAIのトークン消費を抑えます。
+                    トークナイザーを実際に使い、トークンコストが最も高い部分文字列を検出してASCII略称に最適置換します。
                 </div>
 
                 <div id="responseModeStatus" class="mode-notice" style="margin-bottom: 8px;"></div>
@@ -824,7 +824,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 7.1 (最小ヘッダー・内蔵辞書・復元・衝突チェック)
+                    バージョン: 8.0 (トークナイザー認識型圧縮エンジン)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
@@ -882,10 +882,8 @@
 
 const BASE62='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function toBase62(n){if(n===0)return BASE62[0];let r='';while(n>0){r=BASE62[n%62]+r;n=Math.floor(n/62);}return r;}
-function generateAbbr(i){return 'v'+toBase62(i);}
-function isAbbrSafe(a,t){return !t.includes(a);}
-function generateSafeAbbr(si,t,m){let i=si,a=generateAbbr(i),c=0;while((!isAbbrSafe(a,t)||m.has(a))&&c<200){i++;a=generateAbbr(i);c++;}return{abbr:a,nextIndex:i+1};}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function escRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
 let toastTimeout;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),2000);}
@@ -950,7 +948,7 @@ const tokenizerStatusNotice=document.getElementById('tokenizerStatusNotice');
 
 const INPUT_JOINER='';
 let lastFocusedInputPart=inputPart1El;
-function buildCombinedInputText(){const p1=inputPart1El.value||'',p2=inputPart2El.value||'',p3=inputPart3El.value||'';return p1+INPUT_JOINER+p2+INPUT_JOINER+p3;}
+function buildCombinedInputText(){return (inputPart1El.value||'')+(inputPart2El.value||'')+(inputPart3El.value||'');}
 function syncCombinedInput(){inputEl.value=buildCombinedInputText();}
 function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';inputPart3El.value='';syncCombinedInput();}
 
@@ -966,49 +964,37 @@ function buildCompressedHeader(replacedMap, formatOptions = {}) {
     const hasMap = replacedMap && replacedMap.size > 0;
     const hasFmt = !!(formatOptions.mergedDialogues || formatOptions.replacedBrackets);
     if (!hasMap && !hasFmt) return '';
-
     const lines = [];
     lines.push('【圧縮ルール】');
     lines.push('- このヘッダーは本文ではありません。');
-
     if (hasMap) {
-        lines.push('- 本文中の v1、v2 などの略号は、下の対応表の正式名称として読んでください。');
-
+        lines.push('- 本文中の略号は、下の対応表の正式名称として読んでください。');
         if (abbrResponseToggle.checked) {
             lines.push('- 返答では、対応表にある略号だけを使ってください。新しい略号は作らないでください。');
         } else {
             lines.push('- 返答では略号を使わず、正式名称で書いてください。');
         }
     }
-
     if (formatOptions.replacedBrackets) {
         lines.push('- 「名前>セリフ」は、その名前の発言です。');
         lines.push('- "..." は引用、\'...\' は題名、(...) は注釈です。');
-
         if (hasMap) {
             const firstEntry = replacedMap.entries().next();
             if (!firstEntry.done) {
                 const [abbr, original] = firstEntry.value;
                 lines.push(`- 例: ${abbr}>おはよう = ${original}が「おはよう」と話した。`);
-            } else {
-                lines.push('- 例: 名前>おはよう = その名前が「おはよう」と話した。');
             }
-        } else {
-            lines.push('- 例: トレーナー>おはよう = トレーナーが「おはよう」と話した。');
         }
     }
-
     if (formatOptions.mergedDialogues) {
         lines.push('- 同じ話者の連続発言は、1行に結合されていることがあります。');
     }
-
     if (hasMap) {
         lines.push('【対応表】');
         replacedMap.forEach((original, abbr) => {
             lines.push(`${abbr}=${original}`);
         });
     }
-
     lines.push('【本文】');
     return lines.join('\n') + '\n';
 }
@@ -1040,13 +1026,11 @@ const pronounMap = {
 };
 
 const umaNameOnlyMap = {};
-const umaTermMap = {};
-// umaMap から人称以外を分離（人称は pronounMap に統合済み）
 (function separateUmaMap() {
     const umaFullMap = {
         'スペシャルウィーク':'SW','スペ':'SP','サイレンススズカ':'SSZ','スズカ':'SZK',
         'トウカイテイオー':'TT','テイオー':'TO','マルゼンスキー':'MZ','マルゼン':'MRZ',
-        'フジキセキ':'FK','フジ':'FJ','オグリキャップ':'OC','オグリ':'OG',
+        'フジキセキ':'FK','オグリキャップ':'OC','オグリ':'OG',
         'ゴールドシップ':'GS','ゴルシ':'GOS','ウオッカ':'VDK',
         'ダイワスカーレット':'DS','ダスカ':'DSK','スカーレット':'SCL',
         'タイキシャトル':'TS','タイキ':'TIK','シャトル':'SHT',
@@ -1218,17 +1202,14 @@ const umaTermMap = {};
     }
 })();
 
-// umaMap は旧来の「その他の処理 > ウマ娘略称化」用にまだ使う（人称含む全部入り）
 const umaMap = Object.assign({}, umaNameOnlyMap, pronounMap);
 const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
 
 function buildDictRegex(dict) {
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const keys = Object.keys(dict).sort((a,b) => b.length - a.length);
-    return new RegExp('(' + keys.map(esc).join('|') + ')', 'g');
+    return new RegExp('(' + keys.map(escRegex).join('|') + ')', 'g');
 }
 
-// 内蔵辞書を本文に適用し、replacedMapに登録
 function applyBuiltinDict(text, dict, replacedMap) {
     const regex = buildDictRegex(dict);
     let count = 0;
@@ -1242,7 +1223,6 @@ function applyBuiltinDict(text, dict, replacedMap) {
     });
     return { text: result, count };
 }
-
 
 const defaultDict = "主人公=MC\n幼馴染=CF\n魔法少女=MG";
 let appSettings = {
@@ -1355,9 +1335,10 @@ document.getElementById('clear-data-btn').addEventListener('click',async()=>{if(
 
 let isHighlightMode=false;
 function containsAlnum(s){return/[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(s);}
-function shouldSkipCompressionPhrase(p,ml,ea=false){if(!p)return true;if(p.length<ml)return true;if(/^[ぁ-ん]+$/.test(p)&&p.length<3)return true;if(/^[!-/:-@[-`{-~]+$/.test(p))return true;if(ea&&containsAlnum(p))return true;return false;}
-function countTokensForPhrase(t){const p=appSettings.tokenCalcProvider||'openai';const l=countTokensLocal(t,p);if(l!==null)return l;return estimateTokensApprox(t,p);}
 
+// ==========================================
+// トークナイザー基盤
+// ==========================================
 const localTokenizers={openai:{encoder:null,status:'idle',_type:'ai-tokenizer'},anthropic:{encoder:null,status:'idle',_type:'ai-tokenizer'},gemini:{encoder:null,status:'idle',_type:'hf-transformers'},grok:{encoder:null,status:'idle',_type:'ai-tokenizer'},deepseek:{encoder:null,status:'idle',_type:'ai-tokenizer',_precise:false}};
 let _AiTokenizerClass=null;const _aiTokenizerEncodings={};
 async function getAiTokenizerClass(){if(_AiTokenizerClass)return _AiTokenizerClass;const m=await import('https://esm.sh/ai-tokenizer@latest');_AiTokenizerClass=m.Tokenizer||m.default;return _AiTokenizerClass;}
@@ -1370,7 +1351,234 @@ async function initLocalTokenizer(){const p=tokenProviderSelect.value;const e=lo
 
 function countTokensLocal(t,p){if(!t)return null;const e=localTokenizers[p];if(!e||e.status!=='ready'||!e.encoder)return null;try{if(e._type==='hf-transformers'){return e.encoder.encode(t,null,{add_special_tokens:false}).length;}else{return e.encoder.count(t);}}catch(err){return null;}}
 
-function updateTokenizerStatusUI(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e){tokenizerStatusNotice.innerHTML='';return;}const im={openai:{name:'o200k_base',size:'約2-3MB',ready:'GPT-4o/4.1: 100%正確',badge:'🎯'},anthropic:{name:'claude',size:'約2-3MB',ready:'Claude 3/3.5/4/4.5: ≈98-99%',badge:'≈99%'},gemini:{name:'Gemma 3 SentencePiece',size:'約20MB',ready:'Gemini 2.0/2.5/3: 100%正確',badge:'🎯'},grok:{name:'o200k_base',size:'約2-3MB',ready:'Grok-3: ≈99%。Grok-4系は非対応',badge:'≈99%'},deepseek:deepseekPreciseToggle.checked?{name:'DeepSeek-V3公式',size:'約17MB',ready:'DeepSeek V3/R1: 100%正確',badge:'🎯'}:{name:'o200k_base近似',size:'約2-3MB',ready:'DeepSeek: ≈95-98%',badge:'≈95%'}};const i=im[p];if(!i){tokenizerStatusNotice.innerHTML='';return;}if(e.status==='loading')tokenizerStatusNotice.innerHTML=`⏳ ${i.name}（${i.size}）取得中…`;else if(e.status==='ready')tokenizerStatusNotice.innerHTML=`${i.badge} ${i.name}: ${i.ready}`;else if(e.status==='failed')tokenizerStatusNotice.innerHTML=`⚠️ ${i.name} 取得失敗。近似計算使用中。`;else tokenizerStatusNotice.innerHTML=`ℹ️ ${i.name}（${i.size}）を自動取得します。`;}
+// ==========================================
+// ★ 新機能: トークナイザーによるエンコード配列取得
+// 圧縮アルゴリズムの中核
+// ==========================================
+function encodeToTokenIds(text, provider) {
+    if (!text) return null;
+    const e = localTokenizers[provider];
+    if (!e || e.status !== 'ready' || !e.encoder) return null;
+    try {
+        if (e._type === 'hf-transformers') {
+            const ids = e.encoder.encode(text, null, { add_special_tokens: false });
+            return Array.from(ids);
+        } else {
+            // ai-tokenizer: .tokenize() returns array of token strings, .encode() returns ids
+            if (typeof e.encoder.encode === 'function') {
+                return Array.from(e.encoder.encode(text));
+            }
+            return null;
+        }
+    } catch (err) { return null; }
+}
+
+function decodeTokenIds(ids, provider) {
+    if (!ids || !ids.length) return null;
+    const e = localTokenizers[provider];
+    if (!e || e.status !== 'ready' || !e.encoder) return null;
+    try {
+        if (e._type === 'hf-transformers') {
+            return e.encoder.decode(ids);
+        } else {
+            if (typeof e.encoder.decode === 'function') {
+                return e.encoder.decode(ids);
+            }
+            return null;
+        }
+    } catch (err) { return null; }
+}
+
+// 文字列のトークン数を正確に取得（ローカル）、取れなければ近似
+function getExactTokenCount(text) {
+    if (!text) return 0;
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const local = countTokensLocal(text, p);
+    if (local !== null) return local;
+    return estimateTokensApprox(text, p);
+}
+
+// ==========================================
+// ★ トークナイザー認識型 略称生成
+// ASCII文字列の中で、1トークンとして認識される最短の略称を生成
+// ==========================================
+
+// 使用済みの略称を追跡
+const _usedAbbrs = new Set();
+
+function generateOptimalAbbr(index, textContext, replacedMap) {
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    
+    // 戦略: 短いASCII文字列を生成して、トークナイザーで1トークンになるかチェック
+    // ASCII文字列は ~4文字で1トークンなので、2-3文字のASCIIは確実に1トークン
+    
+    // 候補プール: 大文字2文字 → 大文字+数字2文字 → 大文字3文字 → ...
+    // 大文字2文字: 26*26 = 676通り (十分大きい)
+    // ただし本文中に既に存在しないことを確認
+    
+    const candidates = [];
+    
+    // Phase 1: 大文字2文字 (AA-ZZ) — 全て1トークン確定
+    const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (let a = 0; a < 26; a++) {
+        for (let b = 0; b < 26; b++) {
+            candidates.push(alpha[a] + alpha[b]);
+        }
+    }
+    
+    // Phase 2: 大文字2文字+数字 (AA0-ZZ9) — ほぼ1トークン
+    for (let a = 0; a < 26; a++) {
+        for (let b = 0; b < 26; b++) {
+            for (let d = 0; d < 10; d++) {
+                candidates.push(alpha[a] + alpha[b] + d);
+            }
+        }
+    }
+    
+    for (const c of candidates) {
+        if (_usedAbbrs.has(c)) continue;
+        if (replacedMap.has(c)) continue;
+        // テキスト中に既に存在しないか確認
+        if (textContext.includes(c)) continue;
+        
+        // トークナイザーで確認: 1トークンであるか
+        if (hasEncoder) {
+            const tokenCount = countTokensLocal(c, p);
+            if (tokenCount !== null && tokenCount > 1) continue;
+        }
+        
+        _usedAbbrs.add(c);
+        return c;
+    }
+    
+    // フォールバック: v + base62
+    let fi = index;
+    for (let tries = 0; tries < 500; tries++) {
+        const fallback = 'v' + toBase62(fi);
+        fi++;
+        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {
+            _usedAbbrs.add(fallback);
+            return fallback;
+        }
+    }
+    return 'v' + toBase62(Date.now() % 10000);
+}
+
+// ==========================================
+// ★ トークナイザー認識型 候補発見アルゴリズム
+// トークン境界ベースのN-gramスキャン
+// ==========================================
+function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum) {
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    
+    // ---- Step A: Intl.Segmenter による単語境界ベースN-gram (従来手法の改良) ----
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+    const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
+    
+    const ngrams = new Map();
+    for (let n = 1; n <= 6; n++) {
+        for (let i = 0; i <= segments.length - n; i++) {
+            let phrase = '';
+            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+            phrase = phrase.trim();
+            if (!phrase || phrase.length < minLen) continue;
+            if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) continue;
+            if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;
+            if (excludeAlnum && containsAlnum(phrase)) continue;
+            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+        }
+    }
+    
+    // ---- Step B: トークン境界ベースの部分文字列発見 (新手法) ----
+    // トークナイザーが利用可能な場合、テキストをトークン列にエンコードし、
+    // 連続トークン列（2〜8トークン列）の頻出パターンを発見する
+    if (hasEncoder) {
+        const tokenIds = encodeToTokenIds(text, p);
+        if (tokenIds && tokenIds.length > 0) {
+            // トークン列のN-gramパターン検出 (2〜8トークン)
+            for (let n = 2; n <= 8; n++) {
+                const tokenNgramMap = new Map(); // JSON(ids) -> count
+                for (let i = 0; i <= tokenIds.length - n; i++) {
+                    const slice = tokenIds.slice(i, i + n);
+                    const key = slice.join(',');
+                    if (!tokenNgramMap.has(key)) {
+                        tokenNgramMap.set(key, { ids: slice, count: 0 });
+                    }
+                    tokenNgramMap.get(key).count++;
+                }
+                
+                for (const [, entry] of tokenNgramMap) {
+                    if (entry.count < minCount) continue;
+                    // このトークン列をデコードして文字列に
+                    const decoded = decodeTokenIds(entry.ids, p);
+                    if (!decoded || decoded.length < minLen) continue;
+                    const trimmed = decoded.trim();
+                    if (!trimmed || trimmed.length < minLen) continue;
+                    if (/^[\s\r\n]+$/.test(trimmed)) continue;
+                    if (excludeAlnum && containsAlnum(trimmed)) continue;
+                    
+                    // 実際にテキスト中に何回出現するか正確にカウント
+                    const re = new RegExp(escRegex(trimmed), 'g');
+                    const matches = text.match(re);
+                    const realCount = matches ? matches.length : 0;
+                    if (realCount < minCount) continue;
+                    
+                    // 既存のngramsにない or より高い出現数なら追加
+                    if (!ngrams.has(trimmed) || ngrams.get(trimmed) < realCount) {
+                        ngrams.set(trimmed, realCount);
+                    }
+                }
+            }
+        }
+    }
+    
+    // ---- Step C: 節約効果計算 (トークナイザー使用) ----
+    const results = [];
+    for (const [phrase, count] of ngrams) {
+        if (count < minCount) continue;
+        
+        // 元のフレーズのトークンコスト（正確に計算）
+        const phraseTokCost = getExactTokenCount(phrase);
+        
+        // 略称のトークンコスト: 2文字の大文字ASCII → ほぼ確実に1トークン
+        const abbrTokCost = 1;
+        
+        // ヘッダーのコスト: "XX=<phrase>\n" のトークン数
+        const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);
+        
+        // 純節約量: (元のコスト × 出現数) - (略称コスト × 出現数 + ヘッダーコスト)
+        const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);
+        
+        if (saving > 0) {
+            results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });
+        }
+    }
+    
+    // ---- Step D: 重複除去（包含関係の処理） ----
+    results.sort((a, b) => b.phrase.length - a.phrase.length);
+    const filtered = [];
+    for (const item of results) {
+        let isSub = false;
+        for (const kept of filtered) {
+            if (kept.phrase.includes(item.phrase)) {
+                // 親フレーズが既にある場合、残りの出現数で節約効果を再計算
+                const remainingCount = Math.max(0, item.count - kept.count);
+                const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);
+                if (remainingSaving <= 0) { isSub = true; break; }
+            }
+        }
+        if (!isSub) filtered.push(item);
+    }
+    
+    // 節約効果でソートして上位を返す
+    filtered.sort((a, b) => b.saving - a.saving);
+    return filtered.slice(0, maxItems);
+}
+
+
+function updateTokenizerStatusUI(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e){tokenizerStatusNotice.innerHTML='';return;}const im={openai:{name:'o200k_base',size:'約2-3MB',ready:'GPT-4o/4.1/5: 100%正確',badge:'🎯'},anthropic:{name:'claude',size:'約2-3MB',ready:'Claude 3/3.5/4/4.5: ≈98-99%',badge:'≈99%'},gemini:{name:'Gemma 3 SentencePiece',size:'約20MB',ready:'Gemini 2.0/2.5/3: 100%正確',badge:'🎯'},grok:{name:'o200k_base',size:'約2-3MB',ready:'Grok-3: ≈99%。Grok-4系は非対応',badge:'≈99%'},deepseek:deepseekPreciseToggle.checked?{name:'DeepSeek-V3公式',size:'約17MB',ready:'DeepSeek V3/R1: 100%正確',badge:'🎯'}:{name:'o200k_base近似',size:'約2-3MB',ready:'DeepSeek: ≈95-98%',badge:'≈95%'}};const i=im[p];if(!i){tokenizerStatusNotice.innerHTML='';return;}if(e.status==='loading')tokenizerStatusNotice.innerHTML=`⏳ ${i.name}（${i.size}）取得中…`;else if(e.status==='ready')tokenizerStatusNotice.innerHTML=`${i.badge} ${i.name}: ${i.ready}。<strong>圧縮にも使用中 ✨</strong>`;else if(e.status==='failed')tokenizerStatusNotice.innerHTML=`⚠️ ${i.name} 取得失敗。近似計算使用中。`;else tokenizerStatusNotice.innerHTML=`ℹ️ ${i.name}（${i.size}）を自動取得します。`;}
 
 function estimateTokensApprox(text,provider){if(!text)return 0;const co={openai:{h:1.8,k:1.8,j:1.1,a:4.5},anthropic:{h:1.7,k:1.7,j:1.05,a:4.3},gemini:{h:1.5,k:1.5,j:1.0,a:4.0},grok:{h:1.8,k:1.8,j:1.1,a:4.5},deepseek:{h:1.6,k:1.6,j:1.0,a:4.2}};const c=co[provider]||co.openai;let t=0;const aw=text.match(/[a-zA-Z]+/g)||[];for(const w of aw){const l=w.length;if(l<=4)t+=1;else if(l<=8)t+=2;else if(l<=13)t+=3;else t+=Math.ceil(l/c.a);}const nm=text.match(/[0-9０-９]+/g)||[];for(const n of nm)t+=Math.ceil(n.length/3);const js=text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g,'\x00').split('\x00').filter(s=>s.length>0);for(const seg of js){const bl=seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g)||[];for(const b of bl){const l=b.length;if(!l)continue;if(/^[ぁ-ん]+$/.test(b))t+=Math.ceil(l/c.h);else if(/^[ァ-ヶー]+$/.test(b))t+=Math.ceil(l/c.k);else if(/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(b))t+=Math.ceil(l/c.j);else{for(let i=0;i<b.length;i++){const cp=b.codePointAt(i);if(cp>0xFFFF){t+=2.5;i++;}else if(cp>0x7FF)t+=1;else t+=1;}}}}const ws=text.match(/[\s\r\n]+/g)||[];for(const w of ws){const nl=(w.match(/\n/g)||[]).length;t+=nl;const sp=w.length-nl;if(sp>0)t+=Math.ceil(sp/4);}return Math.max(1,Math.ceil(t));}
 
@@ -1379,7 +1587,7 @@ async function fetchExactTokenCount(text,provider,apiKey){if(!text||!apiKey)retu
 let tokenFetchTimer=null;
 function getTokenCount(t,p){const l=countTokensLocal(t,p);if(l!==null)return{count:l,method:'local'};return{count:estimateTokensApprox(t,p),method:'approx'};}
 
-function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,in3=inputPart3El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;inputCountPart3.textContent=`${in3.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';}}
+function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,in3=inputPart3El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;inputCountPart3.textContent=`${in3.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';outputCount.style.opacity='1';}}
 
 function updateActionPickerUi(){const a=actionPicker.value;replaceFields.classList.toggle('hidden',a!=='replaceText');dictFields.classList.toggle('hidden',a!=='manualCompress');const lm={replaceText:'文字列を置換',extractKeywords:'頻出ワードを抽出',manualCompress:'辞書を使って圧縮',toUmaAbbr:'ウマ娘略称化を実行',mergeDialogues:'同一キャラのセリフを結合',decompressText:'圧縮テキストを復元'};runSelectedActionBtn.textContent=lm[a]||'選択した処理を実行';runSelectedActionBtn.disabled=!a;}
 
@@ -1407,7 +1615,6 @@ function parseMapLines(block, replacedMap) {
         if (!trimmed) return;
         const eq = trimmed.indexOf('=');
         if (eq === -1) return;
-
         const abbr = trimmed.substring(0, eq).trim();
         const original = trimmed.substring(eq + 1).trim();
         if (abbr && original && !replacedMap.has(abbr)) {
@@ -1508,9 +1715,8 @@ function decompressText(text) {
     if (replacedMap.size === 0) return { text, restoredCount: 0 };
     let restored = bodyText, rc = 0;
     const sorted = [...replacedMap.entries()].sort((a, b) => b[0].length - a[0].length);
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const [abbr, original] of sorted) {
-        const re = new RegExp(esc(abbr), 'g');
+        const re = new RegExp(escRegex(abbr), 'g');
         const ms = restored.match(re);
         if (ms) { rc += ms.length; restored = restored.replace(re, original); }
     }
@@ -1524,7 +1730,7 @@ function formatText(action) {
     resetHighlightMode();
 
     switch (action) {
-        case 'trimSpace': text =text.replace(/[ 　\t]+/g, ''); break;
+        case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
         case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
         case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
         case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
@@ -1592,8 +1798,7 @@ document.getElementById('replaceBtn').addEventListener('click', () => {
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!src) { showToast('検索文字列を入力してください'); return; }
     resetHighlightMode();
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    outputEl.value = text.replace(new RegExp(esc(src), 'g'), tgt);
+    outputEl.value = text.replace(new RegExp(escRegex(src), 'g'), tgt);
     updateCounts(); saveWorkspaceDebounced(); showToast('置換しました');
 });
 
@@ -1605,8 +1810,7 @@ document.getElementById('compressBtn').addEventListener('click', () => {
     const dict = {}; dt.split('\n').forEach(line => { const p = line.split('='); if (p.length === 2) { const k = p[0].trim(), v = p[1].trim(); if (k && v) dict[k] = v; } });
     const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
     if (keys.length === 0) { showToast('有効な辞書指定がありません'); return; }
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp('(' + keys.map(esc).join('|') + ')', 'g');
+    const regex = new RegExp('(' + keys.map(escRegex).join('|') + ')', 'g');
     processAbbreviation(text, regex, (matchStr, map) => { const abbr = dict[matchStr]; map.set(abbr, matchStr); return abbr; }, 'AI向けに圧縮しました');
 });
 
@@ -1620,7 +1824,7 @@ document.getElementById('decompressBtn').addEventListener('click', () => {
 });
 
 // ==========================================
-// 自動圧縮（内蔵辞書ステップ追加・衝突チェック付き）
+// ★ トークナイザー認識型 自動圧縮エンジン (v8.0)
 // ==========================================
 document.getElementById('autoCompressBtn').addEventListener('click', () => {
     syncCombinedInput();
@@ -1629,19 +1833,34 @@ document.getElementById('autoCompressBtn').addEventListener('click', () => {
     if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは自動抽出に非対応です'); return; }
     resetHighlightMode();
 
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+
+    // 入力全体のトークン数を記録（効果測定用）
+    const inputTokensBefore = getExactTokenCount(text);
+
     const { replacedMap, bodyText } = extractExistingMappings(text);
 
-    // Step 0: 内蔵辞書による一括置換（最初に適用）
+    // 使用済み略称をリセットしてから既存マッピングを登録
+    _usedAbbrs.clear();
+    for (const [abbr] of replacedMap) {
+        _usedAbbrs.add(abbr);
+    }
+
+    // Step 0: 内蔵辞書による一括置換
     let processedBody = bodyText;
     let builtinCount = 0;
 
     if (autoCompressApplyUmaInput.checked) {
         const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
         processedBody = r.text; builtinCount += r.count;
+        // 内蔵辞書の略称も使用済みに追加
+        for (const [, abbr] of Object.entries(umaNameOnlyMap)) { _usedAbbrs.add(abbr); }
     }
     if (autoCompressApplyPronounInput.checked) {
         const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
         processedBody = r.text; builtinCount += r.count;
+        for (const [, abbr] of Object.entries(pronounMap)) { _usedAbbrs.add(abbr); }
     }
 
     // Step 1: 空白削除
@@ -1668,78 +1887,41 @@ document.getElementById('autoCompressBtn').addEventListener('click', () => {
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
     const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
 
     let newText = processedBody;
-    let isReplaced = false;
-    let nextAbbrIndex = replacedMap.size + 1;
     let totalCompressedCount = 0;
+    let abbrIndex = replacedMap.size + 1;
 
     for (let pass = 0; pass < maxPasses; pass++) {
-        const segments = Array.from(segmenter.segment(newText)).filter(s => s.segment.trim().length > 0);
+        // ★ トークナイザー認識型候補発見
+        const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
 
-        const ngrams = new Map();
-        for (let n = 1; n <= 6; n++) {
-            for (let i = 0; i <= segments.length - n; i++) {
-                let phrase = '';
-                for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-                phrase = phrase.trim();
-                if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-                ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-            }
-        }
-
-        const results = [];
-        for (let [phrase, count] of ngrams.entries()) {
-            if (count >= minCount) {
-                const phraseTokens = countTokensForPhrase(phrase);
-                const dictEntryCost = countTokensForPhrase(`v0=${phrase}\n`);
-                const saving = (phraseTokens * count) - (1 * count + dictEntryCost);
-                if (saving > 2) results.push({ phrase, count, saving, phraseTokens });
-            }
-        }
-
-        results.sort((a, b) => b.phrase.length - a.phrase.length);
-        const filteredResults = [];
-        for (const item of results) {
-            let isSub = false;
-            for (const kept of filteredResults) {
-                if (kept.phrase.includes(item.phrase)) {
-                    const remainingCount = item.count - kept.count;
-                    const remainingSaving = (item.phraseTokens * remainingCount) - (1 * remainingCount + countTokensForPhrase(`v0=${item.phrase}\n`));
-                    if (remainingSaving <= 2) { isSub = true; break; }
-                }
-            }
-            if (!isSub) filteredResults.push(item);
-        }
-        filteredResults.sort((a, b) => b.saving - a.saving);
-        const targets = filteredResults.slice(0, maxItems);
-
-        if (targets.length === 0) break;
+        if (candidates.length === 0) break;
 
         let passReplaced = false;
-        const abbrAssignment = new Map();
-        for (const target of targets) {
-            const { abbr, nextIndex } = generateSafeAbbr(nextAbbrIndex, newText, replacedMap);
-            abbrAssignment.set(target.phrase, abbr);
-            nextAbbrIndex = nextIndex;
-        }
 
-        const sortedForReplace = [...targets].sort((a, b) => b.phrase.length - a.phrase.length);
-        for (const target of sortedForReplace) {
-            const original = target.phrase;
+        // 略称割当て: トークナイザーで1トークンになるASCII略称を最適に生成
+        const abbrAssignment = new Map();
+        for (const cand of candidates) {
+            // 既に別のパスで同じフレーズが登録済みかチェック
             let alreadyExists = false;
             for (const [, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === original) { alreadyExists = true; break; }
+                if (existingOriginal === cand.phrase) { alreadyExists = true; break; }
             }
             if (alreadyExists) continue;
-            const abbr = abbrAssignment.get(original);
-            const regex = new RegExp(esc(original), 'g');
+
+            const abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);
+            abbrAssignment.set(cand.phrase, abbr);
+            abbrIndex++;
+        }
+
+        // 長いフレーズから先に置換（部分文字列の衝突回避）
+        const sortedForReplace = [...abbrAssignment.entries()].sort((a, b) => b[0].length - a[0].length);
+        for (const [original, abbr] of sortedForReplace) {
+            const regex = new RegExp(escRegex(original), 'g');
             if (regex.test(newText)) {
                 newText = newText.replace(regex, abbr);
                 replacedMap.set(abbr, original);
-                isReplaced = true;
                 passReplaced = true;
                 totalCompressedCount++;
             }
@@ -1757,26 +1939,27 @@ document.getElementById('autoCompressBtn').addEventListener('click', () => {
         replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
     };
 
-    if (isReplaced || replacedMap.size > 0) {
-        outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
-        updateCounts(); saveWorkspaceDebounced();
-        const parts = [];
-        if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
-        if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
-        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
-        const extra = parts.length > 0 ? `（${parts.join('・')}）` : '';
-        showToast(`🚀 自動圧縮完了！${extra}`);
-    } else if (dialogueMergeCount > 0 || bracketReplacedCount > 0 || builtinCount > 0) {
-        outputEl.value = buildCompressedHeader(replacedMap, formatOptions) + newText;
-        updateCounts(); saveWorkspaceDebounced();
-        const parts = [];
-        if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
-        if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
-        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所置換`);
-        showToast(`${parts.join('・')}しました`);
+    const finalOutput = buildCompressedHeader(replacedMap, formatOptions) + newText;
+    outputEl.value = finalOutput;
+    updateCounts(); saveWorkspaceDebounced();
+
+    // 効果測定
+    const outputTokensAfter = getExactTokenCount(finalOutput);
+    const saved = inputTokensBefore - outputTokensAfter;
+    const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+
+    const parts = [];
+    if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
+    if (totalCompressedCount > 0) parts.push(`自動${totalCompressedCount}語`);
+    if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+    if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
+    const detail = parts.length > 0 ? `（${parts.join('・')}）` : '';
+    const engineLabel = hasEncoder ? '🎯' : '≈';
+
+    if (saved > 0) {
+        showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);
     } else {
-        outputEl.value = text; updateCounts(); saveWorkspaceDebounced();
-        showToast('自動圧縮できるワードがありませんでした');
+        showToast(`🚀 圧縮完了！${detail}`);
     }
 });
 
@@ -1790,52 +1973,31 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
 
-    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-    const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
-    const ngrams = new Map();
-    for (let n = 1; n <= 6; n++) {
-        for (let i = 0; i <= segments.length - n; i++) {
-            let phrase = '';
-            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-            phrase = phrase.trim();
-            if (shouldSkipCompressionPhrase(phrase, minLen, excludeAlnum)) continue;
-            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-        }
-    }
-    const results = [];
-    for (let [phrase, count] of ngrams.entries()) {
-        if (count >= minCount) {
-            const pt = countTokensForPhrase(phrase);
-            const dc = countTokensForPhrase(`v0=${phrase}, `);
-            const saving = (pt * count) - (1 * count + dc);
-            if (saving > 2) results.push({ phrase, count, saving });
-        }
-    }
-    results.sort((a, b) => b.phrase.length - a.phrase.length);
-    const filtered = [];
-    for (const item of results) {
-        let isSub = false;
-        for (const kept of filtered) { if (kept.phrase.includes(item.phrase) && item.count <= kept.count + 2) { isSub = true; break; } }
-        if (!isSub) filtered.push(item);
-    }
-    filtered.sort((a, b) => b.saving - a.saving);
+    // ★ トークナイザー認識型の候補発見を使用
+    const filtered = findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum);
+
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    const engineLabel = hasEncoder ? '🎯 正確' : '≈ 近似';
 
     const listContainer = document.getElementById('keywordList');
     listContainer.innerHTML = '';
     if (filtered.length === 0) {
         listContainer.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">抽出できるキーワードがありませんでした。</p>';
     } else {
-        filtered.slice(0, maxItems).forEach((item, index) => {
+        filtered.forEach((item, index) => {
             const div = document.createElement('div'); div.className = 'keyword-item';
-            let autoAbbr = generateAbbr(index + 1);
             const infoDiv = document.createElement('div');
-             infoDiv.className = 'keyword-info';
+            infoDiv.className = 'keyword-info';
             const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
-            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats'; statsDiv.textContent = `出現:${item.count}回 / 節約:約${item.saving}ﾄｰｸﾝ`;
+            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats';
+            statsDiv.textContent = `出現:${item.count}回 / ${item.phraseTokCost}tok×${item.count}→1tok×${item.count} / ${engineLabel}節約:${item.saving}ﾄｰｸﾝ`;
             infoDiv.appendChild(wordDiv); infoDiv.appendChild(statsDiv);
             const addBtn = document.createElement('button'); addBtn.className = 'add-keyword-btn'; addBtn.textContent = '+ 辞書へ';
             addBtn.addEventListener('click', () => {
-                const cd = dictArea.value; const ne = `${item.phrase}=${autoAbbr}`;
+                const cd = dictArea.value;
+                const autoAbbr = generateOptimalAbbr(index + 1, text, new Map());
+                const ne = `${item.phrase}=${autoAbbr}`;
                 if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }
                 dictArea.value = cd.trim() === '' ? ne : cd + '\n' + ne;
                 if (autoSaveToggle.checked) saveSettings(false);
@@ -1852,9 +2014,8 @@ document.getElementById('closeKeywordDialog').addEventListener('click', () => { 
 
 function getHighlightedHTML(text, searchStr = '') {
     if (!text) return '';
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     if (searchStr) {
-        const re = new RegExp(`(${esc(searchStr)})`, 'g'); const parts = text.split(re); let html = '';
+        const re = new RegExp(`(${escRegex(searchStr)})`, 'g'); const parts = text.split(re); let html = '';
         for (let i = 0; i < parts.length; i++) {
             if (i % 2 === 1) html += `<mark style="background-color:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">${escapeHtml(parts[i])}</mark>`;
             else html += escapeHtml(parts[i]);
