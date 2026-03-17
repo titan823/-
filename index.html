@@ -948,42 +948,56 @@ function updateResponseModeStatus(){
 // ==========================================
 // 最小ヘッダー設計
 // ==========================================
-function buildCompressedHeader(replacedMap, formatOptions) {
+function buildCompressedHeader(replacedMap, formatOptions = {}) {
     const hasMap = replacedMap && replacedMap.size > 0;
-    const hasFmt = formatOptions && (formatOptions.mergedDialogues || formatOptions.replacedBrackets);
+    const hasFmt = !!(formatOptions.mergedDialogues || formatOptions.replacedBrackets);
     if (!hasMap && !hasFmt) return '';
 
-            let header = '';
+    const lines = [];
+    lines.push('【圧縮ルール】');
+    lines.push('- このヘッダーは本文ではありません。');
 
     if (hasMap) {
-                header += '--- Abbreviation Map (not part of the text) ---\n';
-        replacedMap.forEach((original, abbr) => {
-            header += `${abbr}=${original}\n`;
-        });
-        header += '--- End of Map ---\n';
+        lines.push('- 本文中の v1、v2 などの略号は、下の対応表の正式名称として読んでください。');
 
-    }
-
-    if (hasMap) {
         if (abbrResponseToggle.checked) {
-            header += 'Above: abbreviation=original. Use the same abbreviations in your reply.\n';
+            lines.push('- 返答では、対応表にある略号だけを使ってください。新しい略号は作らないでください。');
         } else {
-            header += 'Above: abbreviation=original. Use original names in your reply, never abbreviations.\n';
+            lines.push('- 返答では略号を使わず、正式名称で書いてください。');
         }
     }
 
-    if (hasFmt) {
-        let fmtParts = [];
-        if (formatOptions.replacedBrackets) fmtParts.push('"Name>text" is dialogue. "text" is quote. \'text\' is title. (text) is note');
-        if (formatOptions.mergedDialogues) fmtParts.push('Same-speaker lines are merged');
-        header += 'Format: ' + fmtParts.join('. ') + '.\n';
+    if (formatOptions.replacedBrackets) {
+        lines.push('- 「名前>セリフ」は、その名前の発言です。');
+        lines.push('- "..." は引用、\'...\' は題名、(...) は注釈です。');
+
+        if (hasMap) {
+            const firstEntry = replacedMap.entries().next();
+            if (!firstEntry.done) {
+                const [abbr, original] = firstEntry.value;
+                lines.push(`- 例: ${abbr}>おはよう = ${original}が「おはよう」と話した。`);
+            } else {
+                lines.push('- 例: 名前>おはよう = その名前が「おはよう」と話した。');
+            }
+        } else {
+            lines.push('- 例: トレーナー>おはよう = トレーナーが「おはよう」と話した。');
+        }
     }
 
-    header += '\n';
-    return header;
+    if (formatOptions.mergedDialogues) {
+        lines.push('- 同じ話者の連続発言は、1行に結合されていることがあります。');
+    }
+
+    if (hasMap) {
+        lines.push('【対応表】');
+        replacedMap.forEach((original, abbr) => {
+            lines.push(`${abbr}=${original}`);
+        });
+    }
+
+    lines.push('【本文】');
+    return lines.join('\n') + '\n';
 }
-
-
 
 // ==========================================
 // 内蔵辞書
@@ -1371,60 +1385,94 @@ function trimWhitespaceForCompression(t){let r=t;r=r.replace(/^\s*[\r\n]/gm,'');
 
 function replaceBracketsLightweight(text){let r=text;let c=0;r=r.replace(/^([^「」\n]+?)[:：]\s*「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{c++;return`${n.trim()}>${ct}`;});r=r.replace(/^([^\s「」\n][^「」\n]*)「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{if(n.includes('>'))return m;c++;return`${n.trim()}>${ct}`;});r=r.replace(/「([^」]*?)」/g,(m,ct)=>{c++;return`"${ct}"`;});r=r.replace(/『([^』]*?)』/g,(m,ct)=>{c++;return`'${ct}'`;});r=r.replace(/（([^）]*?)）/g,(m,ct)=>{c++;return`(${ct})`;});return{text:r,replacedCount:c};}
 
-// ==========================================
-// extractExistingMappings (新旧全フォーマット対応)
-// ==========================================
+function parseMapLines(block, replacedMap) {
+    if (!block) return;
+    block.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        const eq = trimmed.indexOf('=');
+        if (eq === -1) return;
+
+        const abbr = trimmed.substring(0, eq).trim();
+        const original = trimmed.substring(eq + 1).trim();
+        if (abbr && original && !replacedMap.has(abbr)) {
+            replacedMap.set(abbr, original);
+        }
+    });
+}
+
+function stripLegacyFormatHeader(text) {
+    return text.replace(/^Format:\s.*\n\n/, '');
+}
+
 function extractExistingMappings(text) {
     const replacedMap = new Map();
     let bodyText = text;
 
-    // 新フォーマット: [ABBR_MAP]...[/ABBR_MAP]
-            const newRe = /^---\s*Abbreviation Map\b[^\n]*---\n([\s\S]*?)\n---\s*End of Map\s*---\n(?:[^\n]*\n)*?\n/;
-
-
-    let m = text.match(newRe);
+    const jpRe = /^【圧縮ルール】\n[\s\S]*?(?:\n【対応表】\n([\s\S]*?)\n【本文】\n?|\n【本文】\n?)/;
+    let m = bodyText.match(jpRe);
     if (m) {
-        m[1].split('\n').forEach(line => {
-            const eq = line.indexOf('=');
-            if (eq !== -1) { const a = line.substring(0, eq).trim(), o = line.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); }
-        });
-        bodyText = text.replace(newRe, '');
+        parseMapLines(m[1], replacedMap);
+        bodyText = bodyText.replace(jpRe, '');
         return { replacedMap, bodyText };
     }
 
-    // 旧フォーマット: ---ABBREVIATION-MAP-START---...---ABBREVIATION-MAP-END---
+    const newRe = /^---\s*Abbreviation Map\b[^\n]*---\n([\s\S]*?)\n---\s*End of Map\s*---\n(?:[^\n]*\n)*?\n/;
+    m = bodyText.match(newRe);
+    if (m) {
+        parseMapLines(m[1], replacedMap);
+        bodyText = bodyText.replace(newRe, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
+        return { replacedMap, bodyText };
+    }
+
     const midRe = /^---ABBREVIATION-MAP-START---\n([\s\S]*?)\n---ABBREVIATION-MAP-END---\n+/;
-    m = text.match(midRe);
+    m = bodyText.match(midRe);
     if (m) {
         const mi = m[1].indexOf('[Mapping]');
         if (mi !== -1) {
-            m[1].substring(mi + 9).trim().split('\n').forEach(line => {
-                const eq = line.indexOf('=');
-                if (eq !== -1) { const a = line.substring(0, eq).trim(), o = line.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); }
-            });
+            parseMapLines(m[1].substring(mi + 9).trim(), replacedMap);
         }
-        bodyText = text.replace(midRe, '');
+        bodyText = bodyText.replace(midRe, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
         return { replacedMap, bodyText };
     }
 
-    // 旧フォーマット: <system>...[Mapping]...csv...</system>
     const oldRe1 = /^<system>\n[\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
-    m = text.match(oldRe1);
+    m = bodyText.match(oldRe1);
     if (m) {
-        m[1].split(',').forEach(pair => { const eq = pair.indexOf('='); if (eq !== -1) { const a = pair.substring(0, eq).trim(), o = pair.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); } });
-        bodyText = text.replace(oldRe1, '');
+        m[1].split(',').forEach(pair => {
+            const eq = pair.indexOf('=');
+            if (eq === -1) return;
+            const abbr = pair.substring(0, eq).trim();
+            const original = pair.substring(eq + 1).trim();
+            if (abbr && original && !replacedMap.has(abbr)) {
+                replacedMap.set(abbr, original);
+            }
+        });
+        bodyText = bodyText.replace(oldRe1, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
         return { replacedMap, bodyText };
     }
 
-    // 旧フォーマット: [System Note:...]...---
     const oldRe2 = /^\[System Note:[^\]]*\]\n([\s\S]*?)\n---\n+/;
-    m = text.match(oldRe2);
+    m = bodyText.match(oldRe2);
     if (m) {
-        m[1].split(',').forEach(pair => { const eq = pair.indexOf('='); if (eq !== -1) { const a = pair.substring(0, eq).trim(), o = pair.substring(eq + 1).trim(); if (a && o) replacedMap.set(a, o); } });
-        bodyText = text.replace(oldRe2, '');
+        m[1].split(',').forEach(pair => {
+            const eq = pair.indexOf('=');
+            if (eq === -1) return;
+            const abbr = pair.substring(0, eq).trim();
+            const original = pair.substring(eq + 1).trim();
+            if (abbr && original && !replacedMap.has(abbr)) {
+                replacedMap.set(abbr, original);
+            }
+        });
+        bodyText = bodyText.replace(oldRe2, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
         return { replacedMap, bodyText };
     }
 
+    bodyText = stripLegacyFormatHeader(bodyText);
     return { replacedMap, bodyText };
 }
 
