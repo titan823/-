@@ -521,7 +521,7 @@
         <main class="main-content">
 
             <div class="section-header">
-                <label>入力テキスト（前半＋後半を結合して処理）</label>
+                <label>入力テキスト（3分割を結合して処理）</label>
                 <div class="tiny-action-row">
                     <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
                     <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
@@ -529,7 +529,7 @@
             </div>
 
             <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
-                処理時は「前半」→「後半」の順に連結されます。
+                処理時は「前半」→「中盤」→「後半」の順に連結されます。
             </p>
 
             <div class="split-inputs">
@@ -546,13 +546,24 @@
 
                 <div class="split-input-block">
                     <div class="section-header">
-                        <label for="inputTextPart2">後半</label>
+                        <label for="inputTextPart2">中盤</label>
                         <div class="tiny-action-row">
-                            <button id="clearPart2Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
+                            <button id="clearPart2Btn" class="paste-btn" type="button">🗑 中盤のみ削除</button>
                             <span class="char-count" id="inputCountPart2">0文字</span>
                         </div>
                     </div>
-                    <textarea id="inputTextPart2" placeholder="後半のテキストを入力..."></textarea>
+                    <textarea id="inputTextPart2" placeholder="中盤のテキストを入力..."></textarea>
+                </div>
+
+                <div class="split-input-block">
+                    <div class="section-header">
+                        <label for="inputTextPart3">後半</label>
+                        <div class="tiny-action-row">
+                            <button id="clearPart3Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
+                            <span class="char-count" id="inputCountPart3">0文字</span>
+                        </div>
+                    </div>
+                    <textarea id="inputTextPart3" placeholder="後半のテキストを入力..."></textarea>
                 </div>
             </div>
 
@@ -916,14 +927,17 @@ const autoCompressMaxPassesInput=document.getElementById('autoCompressMaxPasses'
 const inputEl=document.getElementById('inputText');
 const inputPart1El=document.getElementById('inputTextPart1');
 const inputPart2El=document.getElementById('inputTextPart2');
+const inputPart3El=document.getElementById('inputTextPart3');
 const clearPart1Btn=document.getElementById('clearPart1Btn');
 const clearPart2Btn=document.getElementById('clearPart2Btn');
+const clearPart3Btn=document.getElementById('clearPart3Btn');
 const outputEl=document.getElementById('outputText');
 const replaceSourceEl=document.getElementById('replaceSource');
 const replaceTargetEl=document.getElementById('replaceTarget');
 const inputCount=document.getElementById('inputCount');
 const inputCountPart1=document.getElementById('inputCountPart1');
 const inputCountPart2=document.getElementById('inputCountPart2');
+const inputCountPart3=document.getElementById('inputCountPart3');
 const outputCount=document.getElementById('outputCount');
 const actionPicker=document.getElementById('actionPicker');
 const replaceFields=document.getElementById('replaceFields');
@@ -936,9 +950,9 @@ const tokenizerStatusNotice=document.getElementById('tokenizerStatusNotice');
 
 const INPUT_JOINER='';
 let lastFocusedInputPart=inputPart1El;
-function buildCombinedInputText(){const p1=inputPart1El.value||'',p2=inputPart2El.value||'';if(!p1)return p2;if(!p2)return p1;return p1+INPUT_JOINER+p2;}
+function buildCombinedInputText(){const p1=inputPart1El.value||'',p2=inputPart2El.value||'',p3=inputPart3El.value||'';return p1+INPUT_JOINER+p2+INPUT_JOINER+p3;}
 function syncCombinedInput(){inputEl.value=buildCombinedInputText();}
-function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';syncCombinedInput();}
+function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';inputPart3El.value='';syncCombinedInput();}
 
 function updateResponseModeStatus(){
     if(abbrResponseToggle.checked){responseModeStatus.innerHTML='<strong>返答モード:</strong> AIにも略号で返答させます（復元前提）。';}
@@ -1242,7 +1256,7 @@ let appSettings = {
     useApiTokenCount:false, tokenCalcProvider:'openai',
     geminiApiKey:'', anthropicApiKey:'', openaiApiKey:'', grokApiKey:'', deepseekApiKey:'',
     deepseekPreciseTokenizer:false,
-    inputText:'', inputTextPart1:'', inputTextPart2:'', outputText:'',
+    inputText:'', inputTextPart1:'', inputTextPart2:'', inputTextPart3:'', outputText:'',
     replaceSource:'', replaceTarget:'', selectedAction:''
 };
 
@@ -1282,6 +1296,7 @@ function loadSettings() {
     if(appSettings.persistWorkspace){
         inputPart1El.value=appSettings.inputTextPart1||appSettings.inputText||'';
         inputPart2El.value=appSettings.inputTextPart2||'';
+        inputPart3El.value=appSettings.inputTextPart3||'';
         outputEl.value=appSettings.outputText||'';
         replaceSourceEl.value=appSettings.replaceSource||'';
         replaceTargetEl.value=appSettings.replaceTarget||'';
@@ -1310,10 +1325,10 @@ function collectCurrentState() {
     appSettings.deepseekApiKey=deepseekApiKeyInput.value;appSettings.deepseekPreciseTokenizer=deepseekPreciseToggle.checked;
     if(appSettings.persistWorkspace){
         syncCombinedInput();appSettings.inputText=inputEl.value;
-        appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;
+        appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;appSettings.inputTextPart3=inputPart3El.value;
         appSettings.outputText=outputEl.value;appSettings.replaceSource=replaceSourceEl.value;
         appSettings.replaceTarget=replaceTargetEl.value;appSettings.selectedAction=actionPicker.value;
-    }else{appSettings.inputText='';appSettings.inputTextPart1='';appSettings.inputTextPart2='';appSettings.outputText='';appSettings.replaceSource='';appSettings.replaceTarget='';appSettings.selectedAction='';}
+    }else{appSettings.inputText='';appSettings.inputTextPart1='';appSettings.inputTextPart2='';appSettings.inputTextPart3='';appSettings.outputText='';appSettings.replaceSource='';appSettings.replaceTarget='';appSettings.selectedAction='';}
 }
 
 function saveSettings(showMsg=true){collectCurrentState();localStorage.setItem('toolbox_settings',JSON.stringify(appSettings));localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');applyTheme(appSettings.theme);updateResponseModeStatus();if(showMsg)showToast('設定を保存しました');}
@@ -1364,11 +1379,11 @@ async function fetchExactTokenCount(text,provider,apiKey){if(!text||!apiKey)retu
 let tokenFetchTimer=null;
 function getTokenCount(t,p){const l=countTokensLocal(t,p);if(l!==null)return{count:l,method:'local'};return{count:estimateTokensApprox(t,p),method:'approx'};}
 
-function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';}}
+function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,in3=inputPart3El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;inputCountPart3.textContent=`${in3.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';}}
 
 function updateActionPickerUi(){const a=actionPicker.value;replaceFields.classList.toggle('hidden',a!=='replaceText');dictFields.classList.toggle('hidden',a!=='manualCompress');const lm={replaceText:'文字列を置換',extractKeywords:'頻出ワードを抽出',manualCompress:'辞書を使って圧縮',toUmaAbbr:'ウマ娘略称化を実行',mergeDialogues:'同一キャラのセリフを結合',decompressText:'圧縮テキストを復元'};runSelectedActionBtn.textContent=lm[a]||'選択した処理を実行';runSelectedActionBtn.disabled=!a;}
 
-[inputPart1El,inputPart2El].forEach(el=>{el.addEventListener('focus',()=>{lastFocusedInputPart=el;});el.addEventListener('input',()=>{syncCombinedInput();updateCounts();saveWorkspaceDebounced();});});
+[inputPart1El,inputPart2El,inputPart3El].forEach(el=>{el.addEventListener('focus',()=>{lastFocusedInputPart=el;});el.addEventListener('input',()=>{syncCombinedInput();updateCounts();saveWorkspaceDebounced();});});
 outputEl.addEventListener('input',()=>{updateCounts();saveWorkspaceDebounced();});
 replaceSourceEl.addEventListener('input',saveWorkspaceDebounced);
 replaceTargetEl.addEventListener('input',saveWorkspaceDebounced);
@@ -1509,7 +1524,7 @@ function formatText(action) {
     resetHighlightMode();
 
     switch (action) {
-        case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
+        case 'trimSpace': text =text.replace(/[ 　\t]+/g, ''); break;
         case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
         case 'removeBreaks': text = text.replace(/[\r\n]+/g, ''); break;
         case 'breaksToSpace': text = text.replace(/[\r\n]+/g, ' ').trim(); break;
@@ -1559,7 +1574,7 @@ document.getElementById('pasteBtn').addEventListener('click', async () => {
     try {
         const text = await navigator.clipboard.readText();
         if (!text) { showToast('クリップボードが空です'); return; }
-        const targetEl = document.activeElement === inputPart1El ? inputPart1El : document.activeElement === inputPart2El ? inputPart2El : (lastFocusedInputPart || inputPart1El);
+        const targetEl = document.activeElement === inputPart1El ? inputPart1El : document.activeElement === inputPart2El ? inputPart2El : document.activeElement === inputPart3El ? inputPart3El : (lastFocusedInputPart || inputPart1El);
         const ss = targetEl.selectionStart ?? targetEl.value.length, se = targetEl.selectionEnd ?? targetEl.value.length;
         const ct = targetEl.value;
         targetEl.value = ct.substring(0, ss) + text + ct.substring(se);
@@ -1569,7 +1584,8 @@ document.getElementById('pasteBtn').addEventListener('click', async () => {
 });
 
 clearPart1Btn.addEventListener('click', () => { inputPart1El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('前半を削除しました'); });
-clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
+clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('中盤を削除しました'); });
+clearPart3Btn.addEventListener('click', () => { inputPart3El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
 
 document.getElementById('replaceBtn').addEventListener('click', () => {
     syncCombinedInput(); const src = replaceSourceEl.value, tgt = replaceTargetEl.value; let text = inputEl.value;
@@ -1872,7 +1888,7 @@ toggleHighlightBtn.addEventListener('click', () => {
     } else { resetHighlightMode(); }
 });
 
-document.getElementById('clearBtn').addEventListener('click', () => { inputPart1El.value = ''; inputPart2El.value = ''; syncCombinedInput(); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); });
+document.getElementById('clearBtn').addEventListener('click', () => { inputPart1El.value = ''; inputPart2El.value = ''; inputPart3El.value = ''; syncCombinedInput(); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); });
 document.getElementById('applyToInputBtn').addEventListener('click', () => { if (outputEl.value) { setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました'); } });
 document.getElementById('copyBtn').addEventListener('click', async () => { if (!outputEl.value) return; try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); } catch (err) { showToast('コピーに失敗しました'); } });
 
