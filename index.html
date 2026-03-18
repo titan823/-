@@ -263,7 +263,7 @@
             background-color: var(--bg-input);
             color: var(--text-primary);
             resize: none;
-            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s, opacity 0.3s;
         }
         textarea:focus { outline: 2px solid var(--bg-button); border-color: transparent; }
 
@@ -600,13 +600,15 @@
                 </div>
 
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
-                    処理時は「前半」→「中盤」→「後半」の順に連結されます。
+                    処理時は「前半」→「中盤」→「後半」の順に連結されます。チェックを外すと除外できます。
                 </p>
 
                 <div class="split-inputs">
                     <div class="split-input-block">
                         <div class="section-header">
-                            <label for="inputTextPart1">前半</label>
+                            <label class="checkbox-label" style="margin-bottom: 0; font-weight: bold; font-size: 14px; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" id="enablePart1" checked> 前半
+                            </label>
                             <div class="tiny-action-row">
                                 <button id="clearPart1Btn" class="paste-btn" type="button">🗑 前半のみ削除</button>
                                 <span class="char-count" id="inputCountPart1">0文字</span>
@@ -616,7 +618,9 @@
                     </div>
                     <div class="split-input-block">
                         <div class="section-header">
-                            <label for="inputTextPart2">中盤</label>
+                            <label class="checkbox-label" style="margin-bottom: 0; font-weight: bold; font-size: 14px; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" id="enablePart2" checked> 中盤
+                            </label>
                             <div class="tiny-action-row">
                                 <button id="clearPart2Btn" class="paste-btn" type="button">🗑 中盤のみ削除</button>
                                 <span class="char-count" id="inputCountPart2">0文字</span>
@@ -626,7 +630,9 @@
                     </div>
                     <div class="split-input-block">
                         <div class="section-header">
-                            <label for="inputTextPart3">後半</label>
+                            <label class="checkbox-label" style="margin-bottom: 0; font-weight: bold; font-size: 14px; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" id="enablePart3" checked> 後半
+                            </label>
                             <div class="tiny-action-row">
                                 <button id="clearPart3Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
                                 <span class="char-count" id="inputCountPart3">0文字</span>
@@ -647,6 +653,44 @@
                     </div>
 
                     <div id="responseModeStatus" class="mode-notice" style="margin-bottom: 8px;"></div>
+
+                    <button id="fullPipelineBtn" class="primary-btn" style="width: 100%; margin-bottom: 6px; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ff6b6b, #ffa500, #48c774, #3273dc, #b86bff); color: #fff; font-weight: bold;">
+                        ⚡ フルパイプライン圧縮（全部盛り・最強）
+                    </button>
+
+                    <details style="margin-bottom: 8px;">
+                        <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚡ フルパイプライン設定</summary>
+                        <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>半角/全角の正規化:</span>
+                                <input type="checkbox" id="pipelineNormalize" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>分析プロファイルを自動生成して活用:</span>
+                                <input type="checkbox" id="pipelineAutoAnalyze" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>GA/全探索を自動選択:</span>
+                                <input type="checkbox" id="pipelineSmartAlgo" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>greedy仕上げパス:</span>
+                                <input type="checkbox" id="pipelineGreedyFinish" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>詳細な指示(&lt;system&gt;)付きヘッダーを使う:</span>
+                                <input type="checkbox" id="pipelineForceStrictHeader" checked>
+                            </label>
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                greedy仕上げ最大回数:
+                                <input type="number" id="pipelineGreedyPasses" min="1" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                GA/全探索の自動切替閾値:
+                                <input type="number" id="pipelineBfThreshold" min="5" max="20" value="15" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+                        </div>
+                    </details>
 
                     <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
 
@@ -688,6 +732,10 @@
                             <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
                                 <span>鉤括弧を軽量な記号に置換:</span>
                                 <input type="checkbox" id="autoCompressReplaceBrackets" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>詳細な指示(&lt;system&gt;)付きヘッダーを使う:</span>
+                                <input type="checkbox" id="autoCompressForceStrictHeader" checked>
                             </label>
                             <label style="display: flex; justify-content: space-between; align-items: center;">
                                 反復圧縮の最大回数:
@@ -1077,7 +1125,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 9.0+legacy (GA/BruteForce/StaticProfile/LegacyBatch)
+                    バージョン: 9.0+legacy (GA/BruteForce/StaticProfile/LegacyBatch/FullPipeline)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
@@ -1196,6 +1244,11 @@ const inputEl=document.getElementById('inputText');
 const inputPart1El=document.getElementById('inputTextPart1');
 const inputPart2El=document.getElementById('inputTextPart2');
 const inputPart3El=document.getElementById('inputTextPart3');
+const enablePart1Toggle=document.getElementById('enablePart1');
+const enablePart2Toggle=document.getElementById('enablePart2');
+const enablePart3Toggle=document.getElementById('enablePart3');
+const autoCompressForceStrictHeaderInput=document.getElementById('autoCompressForceStrictHeader');
+const pipelineForceStrictHeaderToggle=document.getElementById('pipelineForceStrictHeader');
 const clearPart1Btn=document.getElementById('clearPart1Btn');
 const clearPart2Btn=document.getElementById('clearPart2Btn');
 const clearPart3Btn=document.getElementById('clearPart3Btn');
@@ -1254,7 +1307,31 @@ const staticProfileNotice=document.getElementById('staticProfileNotice');
 
 const INPUT_JOINER='';
 let lastFocusedInputPart=inputPart1El;
-function buildCombinedInputText(){return (inputPart1El.value||'')+(inputPart2El.value||'')+(inputPart3El.value||'');}
+
+function syncInputState() {
+    inputPart1El.disabled = !enablePart1Toggle.checked;
+    inputPart1El.style.opacity = enablePart1Toggle.checked ? '1' : '0.5';
+    inputPart2El.disabled = !enablePart2Toggle.checked;
+    inputPart2El.style.opacity = enablePart2Toggle.checked ? '1' : '0.5';
+    inputPart3El.disabled = !enablePart3Toggle.checked;
+    inputPart3El.style.opacity = enablePart3Toggle.checked ? '1' : '0.5';
+}
+
+[enablePart1Toggle, enablePart2Toggle, enablePart3Toggle].forEach(el => {
+    el.addEventListener('change', () => {
+        syncInputState();
+        syncCombinedInput();
+        updateCounts();
+        saveWorkspaceDebounced();
+    });
+});
+
+function buildCombinedInputText(){
+    return (enablePart1Toggle.checked ? (inputPart1El.value || '') : '') +
+           (enablePart2Toggle.checked ? (inputPart2El.value || '') : '') +
+           (enablePart3Toggle.checked ? (inputPart3El.value || '') : '');
+}
+
 function syncCombinedInput(){inputEl.value=buildCombinedInputText();}
 function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';inputPart3El.value='';syncCombinedInput();}
 
@@ -1267,16 +1344,14 @@ function buildCompressedHeader(replacedMap, formatOptions = {}) {
     const hasMap = replacedMap && replacedMap.size > 0;
     const hasFmt = !!(formatOptions.mergedDialogues || formatOptions.replacedBrackets);
     if (!hasMap && !hasFmt) return '';
+
     const lines = [];
-    lines.push('[COMPRESSED TEXT - RULES]');
-    lines.push('- This header is NOT part of the main text. It is metadata for decompression.');
-    lines.push('- The main text below uses short aliases instead of full terms.');
-    lines.push('- Read each alias as its full original form from the mapping table below.');
+    lines.push('<system>');
     if (hasMap) {
         if (abbrResponseToggle.checked) {
-            lines.push('- In your response, you MAY use ONLY the aliases listed in the mapping table. Do NOT invent new aliases.');
+            lines.push('[IMPORTANT] The following text uses abbreviations to save tokens. You MAY use these abbreviations in your responses.');
         } else {
-            lines.push('- IMPORTANT: In your response, you MUST use the full original terms, NOT the aliases. Never output raw aliases to the user.');
+            lines.push('[IMPORTANT] The following text uses abbreviations to save tokens. You MUST NEVER use these abbreviations in your responses. Always output the FULL original names.');
         }
     }
     if (formatOptions.replacedBrackets) {
@@ -1287,12 +1362,14 @@ function buildCompressedHeader(replacedMap, formatOptions = {}) {
         lines.push('- Consecutive lines from the same speaker may have been merged into one line.');
     }
     if (hasMap) {
-        lines.push('[MAPPING]');
+        lines.push('');
+        lines.push('[Mapping]');
         replacedMap.forEach((original, abbr) => {
             lines.push(`${abbr}=${original}`);
         });
     }
-    lines.push('[TEXT]');
+    lines.push('</system>');
+    lines.push('');
     return lines.join('\n') + '\n';
 }
 
@@ -1528,6 +1605,8 @@ let appSettings = {
     autoCompressApplyUma:false, autoCompressApplyPronoun:false,
     autoCompressMaxPasses:3,
     autoCompressAlgorithm:'greedy',
+    autoCompressForceStrictHeader:true,
+    pipelineForceStrictHeader:true,
     bruteforceMaxCandidates:15,
     gaPopulationSize:50, gaGenerations:80, gaMutationRate:8,
     gaEliteCount:3, gaTournamentSize:4, gaTwoStageEval:true,
@@ -1535,6 +1614,7 @@ let appSettings = {
     geminiApiKey:'', anthropicApiKey:'', openaiApiKey:'', grokApiKey:'', deepseekApiKey:'',
     deepseekPreciseTokenizer:false,
     inputText:'', inputTextPart1:'', inputTextPart2:'', inputTextPart3:'', outputText:'',
+    enablePart1:true, enablePart2:true, enablePart3:true,
     replaceSource:'', replaceTarget:'', selectedAction:'',
     currentTool:'formatter',
     analysisCorpusText:'',
@@ -1646,7 +1726,15 @@ function loadSettings() {
     grokApiKeyInput.value=appSettings.grokApiKey||'';
     deepseekApiKeyInput.value=appSettings.deepseekApiKey||'';
     deepseekPreciseToggle.checked=!!appSettings.deepseekPreciseTokenizer;
+    
+    enablePart1Toggle.checked = appSettings.enablePart1 !== false;
+    enablePart2Toggle.checked = appSettings.enablePart2 !== false;
+    enablePart3Toggle.checked = appSettings.enablePart3 !== false;
+    if (autoCompressForceStrictHeaderInput) autoCompressForceStrictHeaderInput.checked = appSettings.autoCompressForceStrictHeader !== false;
+    if (pipelineForceStrictHeaderToggle) pipelineForceStrictHeaderToggle.checked = appSettings.pipelineForceStrictHeader !== false;
+
     updateApiKeyVisibility();
+    syncInputState();
 
     if(appSettings.persistWorkspace){
         inputPart1El.value=appSettings.inputTextPart1||appSettings.inputText||'';
@@ -1714,6 +1802,13 @@ function collectCurrentState() {
     appSettings.geminiApiKey=geminiApiKeyInput.value;appSettings.anthropicApiKey=anthropicApiKeyInput.value;
     appSettings.openaiApiKey=openaiApiKeyInput.value;appSettings.grokApiKey=grokApiKeyInput.value;
     appSettings.deepseekApiKey=deepseekApiKeyInput.value;appSettings.deepseekPreciseTokenizer=deepseekPreciseToggle.checked;
+    
+    appSettings.enablePart1=enablePart1Toggle.checked;
+    appSettings.enablePart2=enablePart2Toggle.checked;
+    appSettings.enablePart3=enablePart3Toggle.checked;
+    if(autoCompressForceStrictHeaderInput) appSettings.autoCompressForceStrictHeader=autoCompressForceStrictHeaderInput.checked;
+    if(pipelineForceStrictHeaderToggle) appSettings.pipelineForceStrictHeader=pipelineForceStrictHeaderToggle.checked;
+
     if(appSettings.persistWorkspace){
         syncCombinedInput();appSettings.inputText=inputEl.value;
         appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;appSettings.inputTextPart3=inputPart3El.value;
@@ -1746,6 +1841,7 @@ autoSaveToggle.addEventListener('change',()=>{updateSaveUiState();saveSettings(f
 persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
 const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
 [themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput,gaTwoStageEvalToggle].forEach(el=>el.addEventListener('change',handleSettingChange));
+[autoCompressForceStrictHeaderInput,pipelineForceStrictHeaderToggle].forEach(el=>{if(el)el.addEventListener('change',handleSettingChange);});
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
 [autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();refreshAnalysisCorpusCount();});
@@ -2101,8 +2197,17 @@ function extractExistingMappings(text) {
     const replacedMap = new Map();
     let bodyText = text;
 
+    const sysRe = /^<system>\n[\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/i;
+    let m = bodyText.match(sysRe);
+    if (m) {
+        parseMapLines(m[1], replacedMap);
+        bodyText = bodyText.replace(sysRe, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
+        return { replacedMap, bodyText };
+    }
+
     const enRe = /^\[COMPRESSED TEXT - RULES\]\n[\s\S]*?(?:\n\[MAPPING\]\n([\s\S]*?)\n\[TEXT\]\n?|\n\[TEXT\]\n?)/;
-    let m = bodyText.match(enRe);
+    m = bodyText.match(enRe);
     if (m) {
         parseMapLines(m[1], replacedMap);
         bodyText = bodyText.replace(enRe, '');
@@ -2185,7 +2290,8 @@ function processAbbreviation(text, regex, dictCallback, successMessage) {
     let isReplaced = false;
     const newText = bodyText.replace(regex, matchStr => { isReplaced = true; return dictCallback(matchStr, replacedMap); });
     if (isReplaced || replacedMap.size > 0) {
-        outputEl.value = buildCompressedHeader(replacedMap) + newText;
+        const forceStrict = autoCompressForceStrictHeaderInput ? autoCompressForceStrictHeaderInput.checked : false;
+        outputEl.value = chooseBestCompressedHeader(replacedMap, newText, { forceStrictHeader: forceStrict }, null) + newText;
         updateCounts(); saveWorkspaceDebounced(); showToast(successMessage);
     } else {
         outputEl.value = text; updateCounts(); saveWorkspaceDebounced(); showToast('略称化できる単語が見つかりませんでした');
@@ -2263,6 +2369,7 @@ document.getElementById('pasteBtn').addEventListener('click', async () => {
         const text = await navigator.clipboard.readText();
         if (!text) { showToast('クリップボードが空です'); return; }
         const targetEl = document.activeElement === inputPart1El ? inputPart1El : document.activeElement === inputPart2El ? inputPart2El : document.activeElement === inputPart3El ? inputPart3El : (lastFocusedInputPart || inputPart1El);
+        if(targetEl.disabled) { showToast('この入力欄は無効化されています'); return; }
         const ss = targetEl.selectionStart ?? targetEl.value.length, se = targetEl.selectionEnd ?? targetEl.value.length;
         const ct = targetEl.value;
         targetEl.value = ct.substring(0, ss) + text + ct.substring(se);
@@ -3035,6 +3142,9 @@ function buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOption
     return candidates;
 }
 function chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile){
+    if (formatOptions && formatOptions.forceStrictHeader) {
+        return buildCompressedHeader(replacedMap, formatOptions);
+    }
     const candidates = buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile);
     return candidates[0]?.header || '';
 }
@@ -3366,7 +3476,8 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
 
     const formatOptions = {
         mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
-        replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
+        replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0,
+        forceStrictHeader: autoCompressForceStrictHeaderInput ? autoCompressForceStrictHeaderInput.checked : false
     };
 
     let analyzedAppliedCount = 0;
@@ -4052,6 +4163,300 @@ runSelectedActionBtn.addEventListener('click', () => {
     if (!legacyBtn) { formatText(action); return; }
     legacyBtn.click();
 });
+
+// ============================================================
+// Full Pipeline Compression - ワンボタン最強圧縮
+// ============================================================
+const fullPipelineBtn = document.getElementById('fullPipelineBtn');
+const pipelineNormalizeToggle = document.getElementById('pipelineNormalize');
+const pipelineAutoAnalyzeToggle = document.getElementById('pipelineAutoAnalyze');
+const pipelineSmartAlgoToggle = document.getElementById('pipelineSmartAlgo');
+const pipelineGreedyFinishToggle = document.getElementById('pipelineGreedyFinish');
+const pipelineGreedyPassesInput = document.getElementById('pipelineGreedyPasses');
+const pipelineBfThresholdInput = document.getElementById('pipelineBfThreshold');
+
+async function runFullPipeline() {
+    syncCombinedInput();
+    let text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは非対応です'); return; }
+    resetHighlightMode();
+
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    fullPipelineBtn.disabled = true;
+    const startTime = Date.now();
+
+    try {
+        // --- Phase 0: トークナイザー準備 ---
+        showCompressProgress(2, 'Phase 0: トークナイザー準備中...');
+        await initLocalTokenizer();
+        const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;
+
+        const inputTokensBefore = getExactTokenCount(text);
+
+        // --- Phase 1: テキスト正規化 ---
+        showCompressProgress(5, 'Phase 1: テキスト正規化...');
+        await new Promise(r => setTimeout(r, 0));
+
+        if (pipelineNormalizeToggle.checked) {
+            text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            text = text.replace(kanaRegex, m => kanaMap[m]);
+        }
+
+        // --- Phase 2: 既存マッピングの抽出 ---
+        showCompressProgress(8, 'Phase 2: 既存マッピング解析...');
+        const { replacedMap, bodyText } = extractExistingMappings(text);
+        let processedBody = bodyText;
+
+        _usedAbbrs.clear();
+        for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
+
+        // --- Phase 3: 構造的前処理 ---
+        showCompressProgress(12, 'Phase 3: 空白・空行削除...');
+        await new Promise(r => setTimeout(r, 0));
+
+        if (autoCompressTrimWhitespaceInput.checked) {
+            processedBody = trimWhitespaceForCompression(processedBody);
+        }
+
+        let dialogueMergeCount = 0;
+        if (autoCompressMergeDialoguesInput.checked) {
+            showCompressProgress(15, 'Phase 3: セリフ結合...');
+            const r = mergeConsecutiveDialogues(processedBody);
+            processedBody = r.text;
+            dialogueMergeCount = r.mergedCount;
+        }
+
+        let bracketReplacedCount = 0;
+        if (autoCompressReplaceBracketsInput.checked) {
+            showCompressProgress(18, 'Phase 3: 鉤括弧→軽量記号...');
+            const r = replaceBracketsLightweight(processedBody);
+            processedBody = r.text;
+            bracketReplacedCount = r.replacedCount;
+        }
+
+        const formatOptions = {
+            mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
+            replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0,
+            forceStrictHeader: pipelineForceStrictHeaderToggle ? pipelineForceStrictHeaderToggle.checked : false
+        };
+
+        // --- Phase 4: 内蔵辞書適用 ---
+        let builtinCount = 0;
+        if (autoCompressApplyUmaInput.checked) {
+            showCompressProgress(22, 'Phase 4: ウマ娘辞書適用...');
+            const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
+            processedBody = r.text; builtinCount += r.count;
+            for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
+        }
+        if (autoCompressApplyPronounInput.checked) {
+            showCompressProgress(25, 'Phase 4: 人称代名詞辞書適用...');
+            const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
+            processedBody = r.text; builtinCount += r.count;
+            for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
+        }
+
+        // --- Phase 5: 分析プロファイル自動生成 ---
+        let usableProfile = null;
+        if (pipelineAutoAnalyzeToggle.checked) {
+            showCompressProgress(28, 'Phase 5: 分析プロファイル生成中...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const existingProfile = getParsedAnalysisProfile();
+            if (isAnalysisProfileCompatible(existingProfile)) {
+                usableProfile = existingProfile;
+                showCompressProgress(35, 'Phase 5: 既存プロファイルを活用');
+            } else if (hasEncoder) {
+                try {
+                    const prefixes = ['@', '#', '~', 'Q', 'Z'];
+                    const separators = ['=', ':', '|', '>', '~', ';'];
+                    const aliasPool = analyzeAliasPoolWeb(processedBody, prefixes, 64, 1000);
+                    const separatorRows = analyzeSeparatorsWeb(separators);
+                    const sampleValues = pickSampleValuesWeb(processedBody, 4);
+                    const headerRows = analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
+                    const bestHeader = headerRows[0] || { name: 'fallback', token_cost: 0, template: ANALYSIS_HEADER_LIBRARY[0] };
+
+                    showCompressProgress(38, 'Phase 5: N-gram候補検出中...');
+                    await new Promise(r => setTimeout(r, 0));
+
+                    const phraseRows = analyzePhraseSuggestionsWeb(processedBody, aliasPool, bestHeader, { ngramMin: 2, ngramMax: 8, minCount: 2, phraseLimit: 30 });
+                    const charRows = analyzeCharBurdenWeb(processedBody, 40);
+                    const distilledRules = buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
+
+                    usableProfile = {
+                        schema: 'toolbox-tokenizer-analysis.v1',
+                        target: { backend: provider, target: provider, display_name: provider, tokenizer_status: 'ready' },
+                        corpus: { chars: processedBody.length, tokens: getExactTokenCount(processedBody) },
+                        summary: { best_header_name: headerRows[0]?.name || null, best_header_token_cost: headerRows[0]?.token_cost || null, top_phrase_gain: phraseRows[0]?.gain || 0 },
+                        alias_pool: aliasPool,
+                        header_templates: headerRows,
+                        phrase_suggestions: phraseRows,
+                        distilled_rules: distilledRules
+                    };
+
+                    showCompressProgress(42, `Phase 5: プロファイル生成完了 (候補${phraseRows.length}件)`);
+                } catch (e) {
+                    console.warn('Pipeline: profile generation failed:', e);
+                    showCompressProgress(42, 'Phase 5: プロファイル生成スキップ');
+                }
+            }
+        } else {
+            const existing = getParsedAnalysisProfile();
+            if (isAnalysisProfileCompatible(existing)) usableProfile = existing;
+        }
+
+        // --- Phase 6: 分析プロファイル候補の先行適用 ---
+        let analyzedAppliedCount = 0;
+        if (usableProfile) {
+            showCompressProgress(45, 'Phase 6: 分析候補を先行適用中...');
+            await new Promise(r => setTimeout(r, 0));
+            const guided = applyAnalyzedSuggestionsFirst(processedBody, replacedMap, formatOptions, usableProfile);
+            processedBody = guided.text;
+            analyzedAppliedCount = guided.appliedCount;
+        }
+
+        // --- Phase 7: メイン圧縮（GA/全探索/greedy 自動選択）---
+        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+        const bfThreshold = parseInt(pipelineBfThresholdInput.value, 10) || 15;
+
+        let totalCompressedCount = 0;
+        let mainAlgoUsed = 'none';
+
+        showCompressProgress(50, 'Phase 7: 圧縮候補検出中...');
+        await new Promise(r => setTimeout(r, 0));
+
+        const rawCandidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
+
+        if (rawCandidates.length > 0 && pipelineSmartAlgoToggle.checked) {
+            const assigned = assignAliasesToCandidates(rawCandidates, processedBody, replacedMap, usableProfile);
+
+            if (assigned.length > 0) {
+                if (assigned.length <= bfThreshold) {
+                    mainAlgoUsed = `全探索(${assigned.length}候補)`;
+                    showCompressProgress(55, `Phase 7: 全探索 (${1 << assigned.length}通り)...`);
+                    const result = await bruteForceCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
+                    const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
+                    processedBody = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                } else {
+                    mainAlgoUsed = `GA(${assigned.length}候補)`;
+                    showCompressProgress(55, `Phase 7: GA (${assigned.length}候補)...`);
+                    const gaParams = {
+                        populationSize: Math.min(100, Math.max(50, assigned.length * 3)),
+                        generations: Math.min(150, Math.max(80, assigned.length * 4)),
+                        mutationRate: 10,
+                        eliteCount: Math.max(3, Math.floor(assigned.length * 0.1)),
+                        tournamentSize: 4,
+                        twoStageEval: true
+                    };
+                    const result = await gaCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
+                    const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
+                    processedBody = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                }
+            }
+        } else if (rawCandidates.length > 0) {
+            mainAlgoUsed = 'greedy';
+            const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
+            if (rescored.length > 0 && rescored[0].gain > 0) {
+                const best = rescored[0];
+                let alias = best.alias;
+                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
+                    alias = chooseAliasWithAnalysis(replacedMap.size + 1, processedBody, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(alias); }
+                if (alias) {
+                    const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
+                    if (exact.gain > 0) {
+                        processedBody = exact.replacedBody;
+                        replacedMap.set(alias, best.phrase);
+                        totalCompressedCount++;
+                    }
+                }
+            }
+        }
+
+        // --- Phase 8: greedy仕上げパス ---
+        let greedyFinishCount = 0;
+        if (pipelineGreedyFinishToggle.checked) {
+            const greedyPasses = parseInt(pipelineGreedyPassesInput.value, 10) || 3;
+
+            for (let pass = 0; pass < greedyPasses; pass++) {
+                showCompressProgress(78 + Math.round((pass / greedyPasses) * 15), `Phase 8: greedy仕上げ (${pass + 1}/${greedyPasses})...`);
+                await new Promise(r => setTimeout(r, 0));
+
+                const candidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, maxItems, excludeAlnum);
+                if (!candidates.length) break;
+
+                const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, candidates, 8);
+                if (!rescored.length || rescored[0].gain <= 0) break;
+
+                const best = rescored[0];
+                let alias = best.alias;
+                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
+                    alias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + greedyFinishCount + 1, processedBody, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(alias); }
+                if (!alias) break;
+
+                const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
+                if (exact.gain <= 0) { _usedAbbrs.delete(alias); break; }
+
+                processedBody = exact.replacedBody;
+                replacedMap.set(alias, best.phrase);
+                greedyFinishCount++;
+            }
+        }
+
+        // --- Phase 9: 最適ヘッダー選択＆出力 ---
+        showCompressProgress(95, 'Phase 9: 最適ヘッダー構築...');
+        await new Promise(r => setTimeout(r, 0));
+
+        const finalHeader = chooseBestCompressedHeader(replacedMap, processedBody, formatOptions, usableProfile);
+        const finalOutput = finalHeader + processedBody;
+
+        outputEl.value = finalOutput;
+        updateCounts();
+        saveWorkspaceDebounced();
+
+        // --- 結果表示 ---
+        const outputTokensAfter = getExactTokenCount(finalOutput);
+        const saved = inputTokensBefore - outputTokensAfter;
+        const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        const parts = [];
+        if (pipelineNormalizeToggle.checked) parts.push('正規化');
+        if (builtinCount > 0) parts.push(`辞書${builtinCount}件`);
+        if (analyzedAppliedCount > 0) parts.push(`分析${analyzedAppliedCount}語`);
+        if (totalCompressedCount > 0) parts.push(`${mainAlgoUsed}${totalCompressedCount}語`);
+        if (greedyFinishCount > 0) parts.push(`greedy仕上${greedyFinishCount}語`);
+        if (dialogueMergeCount > 0) parts.push(`結合${dialogueMergeCount}行`);
+        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
+
+        showCompressProgress(100, `完了！ ${elapsed}秒`);
+        setTimeout(hideCompressProgress, 2000);
+
+        const engineLabel = hasEncoder ? '🎯' : '≈';
+        if (saved > 0) {
+            showToast(`⚡ ${engineLabel}${saved}トークン節約 (${pct}%↓) [${parts.join('→')}] ${elapsed}秒`);
+        } else {
+            showToast(`⚡ パイプライン完了 [${parts.join('→')}] ${elapsed}秒`);
+        }
+
+    } catch (err) {
+        console.error('Pipeline error:', err);
+        hideCompressProgress();
+        showToast('パイプライン中にエラー: ' + (err.message || err));
+    } finally {
+        fullPipelineBtn.disabled = false;
+    }
+}
+
+fullPipelineBtn.addEventListener('click', runFullPipeline);
 
 loadSettings();
 syncCombinedInput();
