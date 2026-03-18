@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -313,6 +314,7 @@
             cursor: pointer;
         }
         .primary-btn:active { filter: brightness(0.8); }
+        .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .secondary-btn {
             background-color: var(--bg-button-save);
             color: var(--text-light);
@@ -481,6 +483,67 @@
         .keyword-stats { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
         .add-keyword-btn { background: var(--bg-button); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         .add-keyword-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+
+        .tool-panel[hidden] {
+            display: none !important;
+        }
+        .analysis-tab-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .analysis-tab-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .analysis-tab-btn.active {
+            background-color: var(--bg-button);
+            color: var(--text-light);
+            border-color: var(--bg-button);
+        }
+        .analysis-result-text {
+            min-height: 280px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .progress-container {
+            display: none;
+            margin-top: 6px;
+        }
+        .progress-container .progress-track {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-container .progress-bar-bg {
+            flex-grow: 1;
+            height: 6px;
+            background: var(--border-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-container .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--bg-button);
+            transition: width 0.2s;
+            border-radius: 3px;
+        }
+        .progress-container .progress-pct {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .progress-container .progress-detail {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -494,13 +557,20 @@
         </header>
         <main class="main-content">
             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">利用するツールを選択してください</p>
-            <ul class="menu-list">
-                <li class="menu-item active">
+            <ul class="menu-list" id="toolMenuList">
+                <li class="menu-item" data-tool="formatter">
                     <div>
                         テキスト整形ツール
-                        <span class="menu-desc">空白や改行の削除、半角/全角変換など</span>
+                        <span class="menu-desc">空白や改行の削除、半角/全角変換、圧縮など</span>
                     </div>
-                    <span>✔️</span>
+                    <span class="menu-check"></span>
+                </li>
+                <li class="menu-item" data-tool="analyzer">
+                    <div>
+                        トークナイザー分析
+                        <span class="menu-desc">略号候補・重い文字列・AI向けhandoffを生成</span>
+                    </div>
+                    <span class="menu-check"></span>
                 </li>
                 <li class="menu-item disabled">
                     <div>
@@ -520,209 +590,392 @@
         </header>
         <main class="main-content">
 
-            <div class="section-header">
-                <label>入力テキスト（3分割を結合して処理）</label>
-                <div class="tiny-action-row">
-                    <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
-                    <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
-                </div>
-            </div>
-
-            <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
-                処理時は「前半」→「中盤」→「後半」の順に連結されます。
-            </p>
-
-            <div class="split-inputs">
-                <div class="split-input-block">
-                    <div class="section-header">
-                        <label for="inputTextPart1">前半</label>
-                        <div class="tiny-action-row">
-                            <button id="clearPart1Btn" class="paste-btn" type="button">🗑 前半のみ削除</button>
-                            <span class="char-count" id="inputCountPart1">0文字</span>
-                        </div>
-                    </div>
-                    <textarea id="inputTextPart1" placeholder="前半のテキストを入力..."></textarea>
-                </div>
-
-                <div class="split-input-block">
-                    <div class="section-header">
-                        <label for="inputTextPart2">中盤</label>
-                        <div class="tiny-action-row">
-                            <button id="clearPart2Btn" class="paste-btn" type="button">🗑 中盤のみ削除</button>
-                            <span class="char-count" id="inputCountPart2">0文字</span>
-                        </div>
-                    </div>
-                    <textarea id="inputTextPart2" placeholder="中盤のテキストを入力..."></textarea>
-                </div>
-
-                <div class="split-input-block">
-                    <div class="section-header">
-                        <label for="inputTextPart3">後半</label>
-                        <div class="tiny-action-row">
-                            <button id="clearPart3Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
-                            <span class="char-count" id="inputCountPart3">0文字</span>
-                        </div>
-                    </div>
-                    <textarea id="inputTextPart3" placeholder="後半のテキストを入力..."></textarea>
-                </div>
-            </div>
-
-            <textarea id="inputText" hidden aria-hidden="true" tabindex="-1"></textarea>
-
-            <div style="margin-top: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
-                </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
-                    トークナイザーを実際に使い、トークンコストが最も高い部分文字列を検出してASCII略称に最適置換します。
-                </div>
-
-                <div id="responseModeStatus" class="mode-notice" style="margin-bottom: 8px;"></div>
-                
-                <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
-
-                <details style="margin-bottom: 8px;">
-                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
-                    <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低文字数:
-                            <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            対象とする最低出現回数:
-                            <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            置換する最大単語数:
-                            <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>英数字を含む候補を除外:</span>
-                            <input type="checkbox" id="autoCompressExcludeAlnum">
-                        </label>
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>圧縮前に空行・余分な空白を削除:</span>
-                            <input type="checkbox" id="autoCompressTrimWhitespace" checked>
-                        </label>
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>圧縮前にセリフを自動結合:</span>
-                            <input type="checkbox" id="autoCompressMergeDialogues" checked>
-                        </label>
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>鉤括弧を軽量な記号に置換:</span>
-                            <input type="checkbox" id="autoCompressReplaceBrackets" checked>
-                        </label>
-                        <label style="display: flex; justify-content: space-between; align-items: center;">
-                            反復圧縮の最大回数:
-                            <input type="number" id="autoCompressMaxPasses" min="1" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
-                        </label>
-                        <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
-                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">内蔵辞書による一括置換（自動圧縮の最初に適用）:</div>
-                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                                <span>ウマ娘の名前を略称化:</span>
-                                <input type="checkbox" id="autoCompressApplyUma">
-                            </label>
-                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                                <span>人称代名詞を略称化:</span>
-                                <input type="checkbox" id="autoCompressApplyPronoun">
-                            </label>
-                        </div>
-                    </div>
-                </details>
-            </div>
-
-            <div class="operation-card">
+            <section id="formatter-panel" class="tool-panel">
                 <div class="section-header">
-                    <label for="actionPicker">その他の処理</label>
-                    <span class="char-count">iPhoneではドラム式で選択</span>
-                </div>
-
-                <select id="actionPicker" class="drum-select" aria-label="処理選択">
-                    <option value="">処理を選択してください</option>
-
-                    <optgroup label="基本整形">
-                        <option value="trimSpace">空白を削除</option>
-                        <option value="removeEmptyLines">空行を削除</option>
-                        <option value="removeBreaks">改行を削除</option>
-                        <option value="breaksToSpace">改行を空白に</option>
-                    </optgroup>
-
-                    <optgroup label="文字変換">
-                        <option value="toHalfWidth">英数→半角</option>
-                        <option value="toFullWidthKana">カナ→全角</option>
-                        <option value="toUpperCase">大文字化</option>
-                        <option value="toLowerCase">小文字化</option>
-                    </optgroup>
-
-                    <optgroup label="抽出・特殊処理">
-                        <option value="extractBrackets">カッコ抽出</option>
-                        <option value="reverseDialogues">セリフ順反転</option>
-                        <option value="mergeDialogues">同一キャラのセリフ結合</option>
-                        <option value="toUmaAbbr">ウマ娘略称化</option>
-                        <option value="replaceText">文字列置換</option>
-                        <option value="extractKeywords">頻出ワード抽出</option>
-                        <option value="manualCompress">辞書を使って圧縮</option>
-                        <option value="decompressText">圧縮テキストを復元</option>
-                    </optgroup>
-                </select>
-
-                <div id="replaceFields" class="operation-fields hidden">
-                    <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
-                    <input type="text" id="replaceTarget" placeholder="置換後">
-                </div>
-
-                <div id="dictFields" class="operation-fields hidden">
-                    <div style="font-size: 11px; color: var(--text-secondary);">
-                        「元の言葉=略称」で入力
-                    </div>
-                    <textarea id="compressDict" rows="3" style="min-height: 70px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
-                    <div style="font-size: 11px; color: var(--text-secondary);">
-                        頻出候補を見たい場合は、処理を「頻出ワード抽出」にして実行してください。
+                    <label>入力テキスト（3分割を結合して処理）</label>
+                    <div class="tiny-action-row">
+                        <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
+                        <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
                     </div>
                 </div>
 
-                <button id="runSelectedActionBtn" class="primary-btn" disabled>選択した処理を実行</button>
-            </div>
+                <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
+                    処理時は「前半」→「中盤」→「後半」の順に連結されます。
+                </p>
 
-            <div id="legacyActionButtons" hidden aria-hidden="true">
-                <div class="tools-grid">
-                    <button class="tool-btn" data-action="trimSpace" type="button"></button>
-                    <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
-                    <button class="tool-btn" data-action="removeBreaks" type="button"></button>
-                    <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
-                    <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
-                    <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
-                    <button class="tool-btn" data-action="toUpperCase" type="button"></button>
-                    <button class="tool-btn" data-action="toLowerCase" type="button"></button>
-                    <button class="tool-btn" data-action="extractBrackets" type="button"></button>
-                    <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
-                    <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
-                    <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
+                <div class="split-inputs">
+                    <div class="split-input-block">
+                        <div class="section-header">
+                            <label for="inputTextPart1">前半</label>
+                            <div class="tiny-action-row">
+                                <button id="clearPart1Btn" class="paste-btn" type="button">🗑 前半のみ削除</button>
+                                <span class="char-count" id="inputCountPart1">0文字</span>
+                            </div>
+                        </div>
+                        <textarea id="inputTextPart1" placeholder="前半のテキストを入力..."></textarea>
+                    </div>
+                    <div class="split-input-block">
+                        <div class="section-header">
+                            <label for="inputTextPart2">中盤</label>
+                            <div class="tiny-action-row">
+                                <button id="clearPart2Btn" class="paste-btn" type="button">🗑 中盤のみ削除</button>
+                                <span class="char-count" id="inputCountPart2">0文字</span>
+                            </div>
+                        </div>
+                        <textarea id="inputTextPart2" placeholder="中盤のテキストを入力..."></textarea>
+                    </div>
+                    <div class="split-input-block">
+                        <div class="section-header">
+                            <label for="inputTextPart3">後半</label>
+                            <div class="tiny-action-row">
+                                <button id="clearPart3Btn" class="paste-btn" type="button">🗑 後半のみ削除</button>
+                                <span class="char-count" id="inputCountPart3">0文字</span>
+                            </div>
+                        </div>
+                        <textarea id="inputTextPart3" placeholder="後半のテキストを入力..."></textarea>
+                    </div>
                 </div>
-                <button id="replaceBtn" type="button"></button>
-                <button id="extractKeywordsBtn" type="button"></button>
-                <button id="compressBtn" type="button"></button>
-                <button id="decompressBtn" type="button"></button>
-            </div>
 
-            <div class="section-header" style="margin-top: 5px;">
-                <label for="outputText">整形結果</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
-                    <span class="char-count" id="outputCount">0文字 (≈0ﾄｰｸﾝ)</span>
+                <textarea id="inputText" hidden aria-hidden="true" tabindex="-1"></textarea>
+
+                <div style="margin-top: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                        トークナイザーを実際に使い、トークンコストが最も高い部分文字列を検出してASCII略称に最適置換します。
+                    </div>
+
+                    <div id="responseModeStatus" class="mode-notice" style="margin-bottom: 8px;"></div>
+
+                    <button id="autoCompressBtn" class="primary-btn" style="width: 100%; margin-bottom: 10px; padding: 12px; font-size: 14px;">🚀 完全自動で圧縮する (おすすめ)</button>
+
+                    <div id="compressProgress" class="progress-container">
+                        <div class="progress-track">
+                            <div class="progress-bar-bg"><div id="compressProgressBar" class="progress-bar-fill"></div></div>
+                            <span id="compressProgressText" class="progress-pct">0%</span>
+                        </div>
+                        <div id="compressProgressDetail" class="progress-detail"></div>
+                    </div>
+
+                    <details style="margin-bottom: 8px;">
+                        <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ 自動圧縮の詳細設定</summary>
+                        <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                対象とする最低文字数:
+                                <input type="number" id="autoCompressMinLen" min="2" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                対象とする最低出現回数:
+                                <input type="number" id="autoCompressMinCount" min="2" max="20" value="2" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                置換する最大単語数:
+                                <input type="number" id="autoCompressMaxItems" min="1" max="100" value="20" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>英数字を含む候補を除外:</span>
+                                <input type="checkbox" id="autoCompressExcludeAlnum">
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>圧縮前に空行・余分な空白を削除:</span>
+                                <input type="checkbox" id="autoCompressTrimWhitespace" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>圧縮前にセリフを自動結合:</span>
+                                <input type="checkbox" id="autoCompressMergeDialogues" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>鉤括弧を軽量な記号に置換:</span>
+                                <input type="checkbox" id="autoCompressReplaceBrackets" checked>
+                            </label>
+                            <label style="display: flex; justify-content: space-between; align-items: center;">
+                                反復圧縮の最大回数:
+                                <input type="number" id="autoCompressMaxPasses" min="1" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                            </label>
+
+                            <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">探索アルゴリズム:</div>
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    方式:
+                                    <select id="autoCompressAlgorithm" style="width: 160px; padding: 4px; margin: 0; font-size: 12px;">
+                                        <option value="greedy">貪欲法（1語ずつ・高精度）</option>
+                                        <option value="legacy_batch">一括置換（従来方式・高速）</option>
+                                        <option value="bruteforce">全探索</option>
+                                        <option value="ga">遺伝的アルゴリズム</option>
+                                    </select>
+                                </label>
+
+                                <div id="bruteforceSettings" style="display:none; margin-top: 6px; padding-left: 10px;">
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        全探索の最大候補数:
+                                        <input type="number" id="bruteforceMaxCandidates" min="2" max="20" value="15" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">
+                                        ※ 2^N通りを試行。15で約3万通り、20で約100万通り。
+                                    </div>
+                                </div>
+
+                                <div id="gaSettings" style="display:none; margin-top: 6px; padding-left: 10px;">
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        個体数:
+                                        <input type="number" id="gaPopulationSize" min="10" max="200" value="50" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        世代数:
+                                        <input type="number" id="gaGenerations" min="5" max="500" value="80" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        突然変異率 (%):
+                                        <input type="number" id="gaMutationRate" min="1" max="50" value="8" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        エリート保存数:
+                                        <input type="number" id="gaEliteCount" min="1" max="20" value="3" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        トーナメントサイズ:
+                                        <input type="number" id="gaTournamentSize" min="2" max="10" value="4" style="width: 60px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                        <span>二段階評価 (高速近似→正確):</span>
+                                        <input type="checkbox" id="gaTwoStageEval" checked>
+                                    </label>
+                                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">
+                                        ※ 個体数×世代数 回の評価を実行。
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">内蔵辞書による一括置換（自動圧縮の最初に適用）:</div>
+                                <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                    <span>ウマ娘の名前を略称化:</span>
+                                    <input type="checkbox" id="autoCompressApplyUma">
+                                </label>
+                                <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                    <span>人称代名詞を略称化:</span>
+                                    <input type="checkbox" id="autoCompressApplyPronoun">
+                                </label>
+                            </div>
+                        </div>
+                    </details>
                 </div>
-            </div>
-            
-            <div class="output-wrapper">
-                <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
-                <div id="outputPreview"></div>
-            </div>
 
-            <div class="action-row">
-                <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
-                <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 結果を前半へ</button>
-                <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
-            </div>
+                <div class="operation-card">
+                    <div class="section-header">
+                        <label for="actionPicker">その他の処理</label>
+                        <span class="char-count">iPhoneではドラム式で選択</span>
+                    </div>
+
+                    <select id="actionPicker" class="drum-select" aria-label="処理選択">
+                        <option value="">処理を選択してください</option>
+                        <optgroup label="基本整形">
+                            <option value="trimSpace">空白を削除</option>
+                            <option value="removeEmptyLines">空行を削除</option>
+                            <option value="removeBreaks">改行を削除</option>
+                            <option value="breaksToSpace">改行を空白に</option>
+                        </optgroup>
+                        <optgroup label="文字変換">
+                            <option value="toHalfWidth">英数→半角</option>
+                            <option value="toFullWidthKana">カナ→全角</option>
+                            <option value="toUpperCase">大文字化</option>
+                            <option value="toLowerCase">小文字化</option>
+                        </optgroup>
+                        <optgroup label="抽出・特殊処理">
+                            <option value="extractBrackets">カッコ抽出</option>
+                            <option value="reverseDialogues">セリフ順反転</option>
+                            <option value="mergeDialogues">同一キャラのセリフ結合</option>
+                            <option value="toUmaAbbr">ウマ娘略称化</option>
+                            <option value="replaceText">文字列置換</option>
+                            <option value="extractKeywords">頻出ワード抽出</option>
+                            <option value="manualCompress">辞書を使って圧縮</option>
+                            <option value="decompressText">圧縮テキストを復元</option>
+                        </optgroup>
+                    </select>
+
+                    <div id="replaceFields" class="operation-fields hidden">
+                        <input type="text" id="replaceSource" placeholder="検索文字列 (ハイライトにも使用)">
+                        <input type="text" id="replaceTarget" placeholder="置換後">
+                    </div>
+
+                    <div id="dictFields" class="operation-fields hidden">
+                        <div style="font-size: 11px; color: var(--text-secondary);">
+                            「元の言葉=略称」で入力
+                        </div>
+                        <textarea id="compressDict" rows="3" style="min-height: 70px; font-size: 12px; padding: 8px;" placeholder="例:&#10;主人公=MC&#10;魔法少女=MG"></textarea>
+                        <div style="font-size: 11px; color: var(--text-secondary);">
+                            頻出候補を見たい場合は、処理を「頻出ワード抽出」にして実行してください。
+                        </div>
+                    </div>
+
+                    <button id="runSelectedActionBtn" class="primary-btn" disabled>選択した処理を実行</button>
+                </div>
+
+                <div id="legacyActionButtons" hidden aria-hidden="true">
+                    <div class="tools-grid">
+                        <button class="tool-btn" data-action="trimSpace" type="button"></button>
+                        <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
+                        <button class="tool-btn" data-action="removeBreaks" type="button"></button>
+                        <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
+                        <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
+                        <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
+                        <button class="tool-btn" data-action="toUpperCase" type="button"></button>
+                        <button class="tool-btn" data-action="toLowerCase" type="button"></button>
+                        <button class="tool-btn" data-action="extractBrackets" type="button"></button>
+                        <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
+                        <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
+                        <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
+                    </div>
+                    <button id="replaceBtn" type="button"></button>
+                    <button id="extractKeywordsBtn" type="button"></button>
+                    <button id="compressBtn" type="button"></button>
+                    <button id="decompressBtn" type="button"></button>
+                </div>
+
+                <div class="section-header" style="margin-top: 5px;">
+                    <label for="outputText">整形結果</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button id="toggleHighlightBtn" class="highlight-btn" title="検索文字、または8文字以上の重複箇所を色付けします">🔍 色付け確認</button>
+                        <span class="char-count" id="outputCount">0文字 (≈0ﾄｰｸﾝ)</span>
+                    </div>
+                </div>
+
+                <div class="output-wrapper">
+                    <textarea id="outputText" placeholder="ボタンを押すと結果が表示されます。直接編集も可能です..."></textarea>
+                    <div id="outputPreview"></div>
+                </div>
+
+                <div class="action-row">
+                    <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
+                    <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 結果を前半へ</button>
+                    <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
+                </div>
+            </section>
+
+            <section id="analyzer-panel" class="tool-panel" hidden>
+                <div class="operation-card">
+                    <div class="section-header">
+                        <label>静的トークナイザープロファイル</label>
+                        <span class="char-count">コーパス不要・開発者向け</span>
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                        選択中のトークナイザーの構造的特性を網羅的にプローブし、圧縮戦略の土台となるプロファイルを生成します。
+                        テキスト入力は不要です。結果を他のAIに渡して戦略立案に使えます。
+                    </p>
+                    <details open style="margin-bottom: 8px;">
+                        <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">⚙️ プローブ設定</summary>
+                        <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
+                            <label style="display:flex; justify-content:space-between; align-items:center;">
+                                略号プール探索数:
+                                <input type="number" id="staticProbeAliasCount" min="100" max="50000" value="5000" style="width: 80px; padding: 4px; margin: 0;">
+                            </label>
+                            <label style="display:flex; justify-content:space-between; align-items:center;">
+                                保持する1トークン略号数:
+                                <input type="number" id="staticProbeAliasKeep" min="50" max="5000" value="500" style="width: 80px; padding: 4px; margin: 0;">
+                            </label>
+                            <label style="display:flex; justify-content:space-between; align-items:center;">
+                                日本語文字カテゴリ別サンプル数:
+                                <input type="number" id="staticProbeJaSamples" min="10" max="500" value="100" style="width: 80px; padding: 4px; margin: 0;">
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>全探索で最適ヘッダーを決定:</span>
+                                <input type="checkbox" id="staticProbeExhaustiveHeader" checked>
+                            </label>
+                            <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                <span>コンテキスト依存コスト計測 (精密・低速):</span>
+                                <input type="checkbox" id="staticProbeContextCost">
+                            </label>
+                        </div>
+                    </details>
+                    <button id="runStaticProfileBtn" class="primary-btn" style="margin-top: 4px;">🔬 静的プロファイルを生成</button>
+                    <div id="staticProfileProgress" class="progress-container">
+                        <div class="progress-track">
+                            <div class="progress-bar-bg"><div id="staticProfileProgressBar" class="progress-bar-fill"></div></div>
+                            <span id="staticProfileProgressText" class="progress-pct">0%</span>
+                        </div>
+                        <div id="staticProfileProgressDetail" class="progress-detail"></div>
+                    </div>
+                    <div id="staticProfileNotice" class="mode-notice" style="margin-top: 8px;">未実行</div>
+                </div>
+
+                <div class="operation-card">
+                    <div class="section-header">
+                        <label for="analysisCorpusText">分析対象テキスト</label>
+                        <span class="char-count" id="analysisCorpusCount">0文字 (≈0ﾄｰｸﾝ)</span>
+                    </div>
+                    <div class="tiny-action-row" style="margin-bottom: 6px; justify-content: flex-start;">
+                        <button id="analysisUseInputBtn" class="paste-btn" type="button">📥 入力欄から読込</button>
+                        <button id="analysisUseOutputBtn" class="paste-btn" type="button">📤 出力欄から読込</button>
+                        <button id="analysisClearCorpusBtn" class="paste-btn" type="button">🗑 クリア</button>
+                    </div>
+                    <textarea id="analysisCorpusText" placeholder="ここに分析したいテキストを入れてください..."></textarea>
+                    <div class="mode-notice" id="analysisTokenizerNotice" style="margin-top: 8px;">
+                        現在の設定画面で選択中のトークナイザーを使って分析します。
+                    </div>
+                </div>
+
+                <div class="operation-card">
+                    <div class="section-header">
+                        <label>分析設定</label>
+                        <span class="char-count">圧縮候補の蒸留</span>
+                    </div>
+                    <div class="operation-fields" style="display:grid; gap:8px;">
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            略号候補の探索数:
+                            <input type="number" id="analysisAliasProbeLimit" min="50" max="10000" value="2500" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            保持する略号候補数:
+                            <input type="number" id="analysisAliasKeepLimit" min="8" max="1000" value="128" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            N-gram最小:
+                            <input type="number" id="analysisNgramMin" min="1" max="16" value="2" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            N-gram最大:
+                            <input type="number" id="analysisNgramMax" min="1" max="16" value="8" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            最低出現回数:
+                            <input type="number" id="analysisMinCount" min="2" max="50" value="2" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            置換候補の上限:
+                            <input type="number" id="analysisPhraseLimit" min="1" max="200" value="40" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            重い文字の上限:
+                            <input type="number" id="analysisCharLimit" min="10" max="200" value="80" style="width: 80px; padding: 4px; margin: 0;">
+                        </label>
+                    </div>
+                    <button id="runTokenizerAnalysisBtn" class="primary-btn" style="margin-top: 8px;">🧪 トークナイザー分析を実行</button>
+                    <div id="analysisRunNotice" class="mode-notice" style="margin-top: 8px;">未実行</div>
+                </div>
+
+                <div class="operation-card">
+                    <div class="section-header">
+                        <label>分析結果</label>
+                        <span class="char-count" id="analysisResultMeta">Summary</span>
+                    </div>
+                    <div class="analysis-tab-row" id="analysisTabRow">
+                        <button class="analysis-tab-btn" data-tab="static" type="button">Static Profile</button>
+                        <button class="analysis-tab-btn active" data-tab="summary" type="button">Summary</button>
+                        <button class="analysis-tab-btn" data-tab="profile" type="button">JSON</button>
+                        <button class="analysis-tab-btn" data-tab="packet" type="button">AI Packet</button>
+                        <button class="analysis-tab-btn" data-tab="handoff" type="button">Handoff</button>
+                        <button class="analysis-tab-btn" data-tab="compressor" type="button">Compress Prompt</button>
+                        <button class="analysis-tab-btn" data-tab="decompressor" type="button">Decompress Prompt</button>
+                    </div>
+                    <textarea id="analysisResultText" class="analysis-result-text" placeholder="ここに分析結果が表示されます..."></textarea>
+                    <div class="action-row">
+                        <button id="analysisCopyBtn" class="secondary-btn" type="button">📋 コピー</button>
+                        <button id="analysisDownloadBtn" class="secondary-btn" type="button">💾 保存</button>
+                        <button id="analysisSendToOutputBtn" class="primary-btn" type="button">📤 Handoffを出力欄へ</button>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -824,7 +1077,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 8.0 (トークナイザー認識型圧縮エンジン)
+                    バージョン: 9.0+legacy (GA/BruteForce/StaticProfile/LegacyBatch)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
@@ -877,13 +1130,16 @@
             }
         });
     `;
-    if('serviceWorker' in navigator){navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}))).catch(()=>{});}
+    if('serviceWorker' in navigator){
+        navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}))).catch(()=>{});
+    }
 })();
 
 const BASE62='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function toBase62(n){if(n===0)return BASE62[0];let r='';while(n>0){r=BASE62[n%62]+r;n=Math.floor(n/62);}return r;}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function escRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function normalizeTextLite(s){return String(s||'').replace(/\r\n?/g,'\n');}
 
 let toastTimeout;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),2000);}
@@ -922,6 +1178,20 @@ const autoCompressReplaceBracketsInput=document.getElementById('autoCompressRepl
 const autoCompressApplyUmaInput=document.getElementById('autoCompressApplyUma');
 const autoCompressApplyPronounInput=document.getElementById('autoCompressApplyPronoun');
 const autoCompressMaxPassesInput=document.getElementById('autoCompressMaxPasses');
+const autoCompressAlgorithmSelect=document.getElementById('autoCompressAlgorithm');
+const bruteforceSettingsDiv=document.getElementById('bruteforceSettings');
+const gaSettingsDiv=document.getElementById('gaSettings');
+const bruteforceMaxCandidatesInput=document.getElementById('bruteforceMaxCandidates');
+const gaPopulationSizeInput=document.getElementById('gaPopulationSize');
+const gaGenerationsInput=document.getElementById('gaGenerations');
+const gaMutationRateInput=document.getElementById('gaMutationRate');
+const gaEliteCountInput=document.getElementById('gaEliteCount');
+const gaTournamentSizeInput=document.getElementById('gaTournamentSize');
+const gaTwoStageEvalToggle=document.getElementById('gaTwoStageEval');
+const compressProgressDiv=document.getElementById('compressProgress');
+const compressProgressBar=document.getElementById('compressProgressBar');
+const compressProgressText=document.getElementById('compressProgressText');
+const compressProgressDetail=document.getElementById('compressProgressDetail');
 const inputEl=document.getElementById('inputText');
 const inputPart1El=document.getElementById('inputTextPart1');
 const inputPart2El=document.getElementById('inputTextPart2');
@@ -945,6 +1215,42 @@ const responseModeStatus=document.getElementById('responseModeStatus');
 const toggleHighlightBtn=document.getElementById('toggleHighlightBtn');
 const outputPreview=document.getElementById('outputPreview');
 const tokenizerStatusNotice=document.getElementById('tokenizerStatusNotice');
+const mainTitle=document.getElementById('main-title');
+const formatterPanel=document.getElementById('formatter-panel');
+const analyzerPanel=document.getElementById('analyzer-panel');
+const toolMenuList=document.getElementById('toolMenuList');
+const analysisCorpusText=document.getElementById('analysisCorpusText');
+const analysisCorpusCount=document.getElementById('analysisCorpusCount');
+const analysisTokenizerNotice=document.getElementById('analysisTokenizerNotice');
+const analysisAliasProbeLimitInput=document.getElementById('analysisAliasProbeLimit');
+const analysisAliasKeepLimitInput=document.getElementById('analysisAliasKeepLimit');
+const analysisNgramMinInput=document.getElementById('analysisNgramMin');
+const analysisNgramMaxInput=document.getElementById('analysisNgramMax');
+const analysisMinCountInput=document.getElementById('analysisMinCount');
+const analysisPhraseLimitInput=document.getElementById('analysisPhraseLimit');
+const analysisCharLimitInput=document.getElementById('analysisCharLimit');
+const runTokenizerAnalysisBtn=document.getElementById('runTokenizerAnalysisBtn');
+const analysisRunNotice=document.getElementById('analysisRunNotice');
+const analysisResultText=document.getElementById('analysisResultText');
+const analysisResultMeta=document.getElementById('analysisResultMeta');
+const analysisUseInputBtn=document.getElementById('analysisUseInputBtn');
+const analysisUseOutputBtn=document.getElementById('analysisUseOutputBtn');
+const analysisClearCorpusBtn=document.getElementById('analysisClearCorpusBtn');
+const analysisCopyBtn=document.getElementById('analysisCopyBtn');
+const analysisDownloadBtn=document.getElementById('analysisDownloadBtn');
+const analysisSendToOutputBtn=document.getElementById('analysisSendToOutputBtn');
+const analysisTabButtons=[...document.querySelectorAll('.analysis-tab-btn')];
+const staticProbeAliasCountInput=document.getElementById('staticProbeAliasCount');
+const staticProbeAliasKeepInput=document.getElementById('staticProbeAliasKeep');
+const staticProbeJaSamplesInput=document.getElementById('staticProbeJaSamples');
+const staticProbeExhaustiveHeaderToggle=document.getElementById('staticProbeExhaustiveHeader');
+const staticProbeContextCostToggle=document.getElementById('staticProbeContextCost');
+const runStaticProfileBtn=document.getElementById('runStaticProfileBtn');
+const staticProfileProgressDiv=document.getElementById('staticProfileProgress');
+const staticProfileProgressBar=document.getElementById('staticProfileProgressBar');
+const staticProfileProgressText=document.getElementById('staticProfileProgressText');
+const staticProfileProgressDetail=document.getElementById('staticProfileProgressDetail');
+const staticProfileNotice=document.getElementById('staticProfileNotice');
 
 const INPUT_JOINER='';
 let lastFocusedInputPart=inputPart1El;
@@ -957,51 +1263,39 @@ function updateResponseModeStatus(){
     else{responseModeStatus.innerHTML='<strong>返答モード:</strong> AIには正式名称で返答させます。';}
 }
 
-// ==========================================
-// 最小ヘッダー設計
-// ==========================================
 function buildCompressedHeader(replacedMap, formatOptions = {}) {
     const hasMap = replacedMap && replacedMap.size > 0;
     const hasFmt = !!(formatOptions.mergedDialogues || formatOptions.replacedBrackets);
     if (!hasMap && !hasFmt) return '';
     const lines = [];
-    lines.push('【圧縮ルール】');
-    lines.push('- このヘッダーは本文ではありません。');
+    lines.push('[COMPRESSED TEXT - RULES]');
+    lines.push('- This header is NOT part of the main text. It is metadata for decompression.');
+    lines.push('- The main text below uses short aliases instead of full terms.');
+    lines.push('- Read each alias as its full original form from the mapping table below.');
     if (hasMap) {
-        lines.push('- 本文中の略号は、下の対応表の正式名称として読んでください。');
         if (abbrResponseToggle.checked) {
-            lines.push('- 返答では、対応表にある略号だけを使ってください。新しい略号は作らないでください。');
+            lines.push('- In your response, you MAY use ONLY the aliases listed in the mapping table. Do NOT invent new aliases.');
         } else {
-            lines.push('- 返答では略号を使わず、正式名称で書いてください。');
+            lines.push('- IMPORTANT: In your response, you MUST use the full original terms, NOT the aliases. Never output raw aliases to the user.');
         }
     }
     if (formatOptions.replacedBrackets) {
-        lines.push('- 「名前>セリフ」は、その名前の発言です。');
-        lines.push('- "..." は引用、\'...\' は題名、(...) は注釈です。');
-        if (hasMap) {
-            const firstEntry = replacedMap.entries().next();
-            if (!firstEntry.done) {
-                const [abbr, original] = firstEntry.value;
-                lines.push(`- 例: ${abbr}>おはよう = ${original}が「おはよう」と話した。`);
-            }
-        }
+        lines.push('- Format: "NAME>dialogue" means NAME said the dialogue.');
+        lines.push('- "..." = quotation, \'...\' = title, (...) = annotation.');
     }
     if (formatOptions.mergedDialogues) {
-        lines.push('- 同じ話者の連続発言は、1行に結合されていることがあります。');
+        lines.push('- Consecutive lines from the same speaker may have been merged into one line.');
     }
     if (hasMap) {
-        lines.push('【対応表】');
+        lines.push('[MAPPING]');
         replacedMap.forEach((original, abbr) => {
             lines.push(`${abbr}=${original}`);
         });
     }
-    lines.push('【本文】');
+    lines.push('[TEXT]');
     return lines.join('\n') + '\n';
 }
 
-// ==========================================
-// 内蔵辞書
-// ==========================================
 const pronounMap = {
     '私': 'WAT', 'わたし': 'WTH', 'ワタシ': 'WTK',
     'あたし': 'ATH', 'アタシ': 'ATK',
@@ -1203,7 +1497,7 @@ const umaNameOnlyMap = {};
 })();
 
 const umaMap = Object.assign({}, umaNameOnlyMap, pronounMap);
-const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).join('|') + ')', 'g');
+const umaRegex = new RegExp('(' + Object.keys(umaMap).sort((a,b)=>b.length-a.length).map(escRegex).join('|') + ')', 'g');
 
 function buildDictRegex(dict) {
     const keys = Object.keys(dict).sort((a,b) => b.length - a.length);
@@ -1233,12 +1527,82 @@ let appSettings = {
     autoCompressTrimWhitespace:true, autoCompressReplaceBrackets:true,
     autoCompressApplyUma:false, autoCompressApplyPronoun:false,
     autoCompressMaxPasses:3,
+    autoCompressAlgorithm:'greedy',
+    bruteforceMaxCandidates:15,
+    gaPopulationSize:50, gaGenerations:80, gaMutationRate:8,
+    gaEliteCount:3, gaTournamentSize:4, gaTwoStageEval:true,
     useApiTokenCount:false, tokenCalcProvider:'openai',
     geminiApiKey:'', anthropicApiKey:'', openaiApiKey:'', grokApiKey:'', deepseekApiKey:'',
     deepseekPreciseTokenizer:false,
     inputText:'', inputTextPart1:'', inputTextPart2:'', inputTextPart3:'', outputText:'',
-    replaceSource:'', replaceTarget:'', selectedAction:''
+    replaceSource:'', replaceTarget:'', selectedAction:'',
+    currentTool:'formatter',
+    analysisCorpusText:'',
+    analysisAliasProbeLimit:2500,
+    analysisAliasKeepLimit:128,
+    analysisNgramMin:2,
+    analysisNgramMax:8,
+    analysisMinCount:2,
+    analysisPhraseLimit:40,
+    analysisCharLimit:80,
+    analysisActiveTab:'summary',
+    analysisOutputs:{
+        static:'',
+        summary:'',
+        profile:'',
+        packet:'',
+        handoff:'',
+        compressor:'',
+        decompressor:''
+    }
 };
+
+let currentTool='formatter';
+let analysisActiveTab='summary';
+let analysisOutputs={
+    static:'',
+    summary:'',
+    profile:'',
+    packet:'',
+    handoff:'',
+    compressor:'',
+    decompressor:''
+};
+
+function updateToolMenuUi(){
+    document.querySelectorAll('#toolMenuList .menu-item[data-tool]').forEach(item=>{
+        const isActive=item.dataset.tool===currentTool;
+        item.classList.toggle('active', isActive);
+        const check=item.querySelector('.menu-check');
+        if(check) check.textContent=isActive?'✔️':'';
+    });
+}
+function updateToolUi(){
+    formatterPanel.hidden=currentTool!=='formatter';
+    analyzerPanel.hidden=currentTool!=='analyzer';
+    mainTitle.textContent=currentTool==='analyzer' ? 'トークナイザー分析' : 'テキスト整形';
+    updateToolMenuUi();
+}
+function switchTool(tool){
+    if(tool!=='formatter' && tool!=='analyzer') return;
+    currentTool=tool;
+    updateToolUi();
+    saveWorkspaceDebounced();
+    showScreen('main');
+}
+document.querySelectorAll('#toolMenuList .menu-item[data-tool]').forEach(item=>{
+    item.addEventListener('click',()=>{
+        if(item.classList.contains('disabled')) return;
+        switchTool(item.dataset.tool);
+    });
+});
+
+autoCompressAlgorithmSelect.addEventListener('change', () => {
+    const algo = autoCompressAlgorithmSelect.value;
+    bruteforceSettingsDiv.style.display = algo === 'bruteforce' ? 'block' : 'none';
+    gaSettingsDiv.style.display = algo === 'ga' ? 'block' : 'none';
+    handleSettingChange();
+});
 
 function loadSettings() {
     const saved=localStorage.getItem('toolbox_settings');
@@ -1263,6 +1627,17 @@ function loadSettings() {
     autoCompressApplyUmaInput.checked=!!appSettings.autoCompressApplyUma;
     autoCompressApplyPronounInput.checked=!!appSettings.autoCompressApplyPronoun;
     autoCompressMaxPassesInput.value=appSettings.autoCompressMaxPasses||3;
+    autoCompressAlgorithmSelect.value=appSettings.autoCompressAlgorithm||'greedy';
+    bruteforceMaxCandidatesInput.value=appSettings.bruteforceMaxCandidates||15;
+    gaPopulationSizeInput.value=appSettings.gaPopulationSize||50;
+    gaGenerationsInput.value=appSettings.gaGenerations||80;
+    gaMutationRateInput.value=appSettings.gaMutationRate||8;
+    gaEliteCountInput.value=appSettings.gaEliteCount||3;
+    gaTournamentSizeInput.value=appSettings.gaTournamentSize||4;
+    gaTwoStageEvalToggle.checked=appSettings.gaTwoStageEval!==false;
+    const algoVal=autoCompressAlgorithmSelect.value;
+    bruteforceSettingsDiv.style.display=algoVal==='bruteforce'?'block':'none';
+    gaSettingsDiv.style.display=algoVal==='ga'?'block':'none';
     useApiTokenToggle.checked=!!appSettings.useApiTokenCount;
     tokenProviderSelect.value=appSettings.tokenCalcProvider||'openai';
     geminiApiKeyInput.value=appSettings.geminiApiKey||'';
@@ -1282,7 +1657,35 @@ function loadSettings() {
         replaceTargetEl.value=appSettings.replaceTarget||'';
         actionPicker.value=appSettings.selectedAction||'';
     }
-    applyTheme(appSettings.theme);updateSaveUiState();updateResponseModeStatus();syncCombinedInput();updateActionPickerUi();
+
+    currentTool=appSettings.currentTool||'formatter';
+    analysisCorpusText.value=appSettings.analysisCorpusText||'';
+    analysisAliasProbeLimitInput.value=appSettings.analysisAliasProbeLimit||2500;
+    analysisAliasKeepLimitInput.value=appSettings.analysisAliasKeepLimit||128;
+    analysisNgramMinInput.value=appSettings.analysisNgramMin||2;
+    analysisNgramMaxInput.value=appSettings.analysisNgramMax||8;
+    analysisMinCountInput.value=appSettings.analysisMinCount||2;
+    analysisPhraseLimitInput.value=appSettings.analysisPhraseLimit||40;
+    analysisCharLimitInput.value=appSettings.analysisCharLimit||80;
+    analysisActiveTab=appSettings.analysisActiveTab||'summary';
+    analysisOutputs=Object.assign({
+        static:'',
+        summary:'',
+        profile:'',
+        packet:'',
+        handoff:'',
+        compressor:'',
+        decompressor:''
+    }, appSettings.analysisOutputs||{});
+
+    applyTheme(appSettings.theme);
+    updateSaveUiState();
+    updateResponseModeStatus();
+    syncCombinedInput();
+    updateActionPickerUi();
+    updateToolUi();
+    refreshAnalysisCorpusCount();
+    renderAnalysisTab();
 }
 
 function collectCurrentState() {
@@ -1299,6 +1702,14 @@ function collectCurrentState() {
     appSettings.autoCompressApplyUma=autoCompressApplyUmaInput.checked;
     appSettings.autoCompressApplyPronoun=autoCompressApplyPronounInput.checked;
     appSettings.autoCompressMaxPasses=parseInt(autoCompressMaxPassesInput.value,10)||3;
+    appSettings.autoCompressAlgorithm=autoCompressAlgorithmSelect.value;
+    appSettings.bruteforceMaxCandidates=parseInt(bruteforceMaxCandidatesInput.value,10)||15;
+    appSettings.gaPopulationSize=parseInt(gaPopulationSizeInput.value,10)||50;
+    appSettings.gaGenerations=parseInt(gaGenerationsInput.value,10)||80;
+    appSettings.gaMutationRate=parseInt(gaMutationRateInput.value,10)||8;
+    appSettings.gaEliteCount=parseInt(gaEliteCountInput.value,10)||3;
+    appSettings.gaTournamentSize=parseInt(gaTournamentSizeInput.value,10)||4;
+    appSettings.gaTwoStageEval=gaTwoStageEvalToggle.checked;
     appSettings.useApiTokenCount=useApiTokenToggle.checked;appSettings.tokenCalcProvider=tokenProviderSelect.value;
     appSettings.geminiApiKey=geminiApiKeyInput.value;appSettings.anthropicApiKey=anthropicApiKeyInput.value;
     appSettings.openaiApiKey=openaiApiKeyInput.value;appSettings.grokApiKey=grokApiKeyInput.value;
@@ -1308,7 +1719,20 @@ function collectCurrentState() {
         appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;appSettings.inputTextPart3=inputPart3El.value;
         appSettings.outputText=outputEl.value;appSettings.replaceSource=replaceSourceEl.value;
         appSettings.replaceTarget=replaceTargetEl.value;appSettings.selectedAction=actionPicker.value;
-    }else{appSettings.inputText='';appSettings.inputTextPart1='';appSettings.inputTextPart2='';appSettings.inputTextPart3='';appSettings.outputText='';appSettings.replaceSource='';appSettings.replaceTarget='';appSettings.selectedAction='';}
+    }else{
+        appSettings.inputText='';appSettings.inputTextPart1='';appSettings.inputTextPart2='';appSettings.inputTextPart3='';appSettings.outputText='';appSettings.replaceSource='';appSettings.replaceTarget='';appSettings.selectedAction='';
+    }
+    appSettings.currentTool=currentTool;
+    appSettings.analysisCorpusText=analysisCorpusText.value;
+    appSettings.analysisAliasProbeLimit=parseInt(analysisAliasProbeLimitInput.value,10)||2500;
+    appSettings.analysisAliasKeepLimit=parseInt(analysisAliasKeepLimitInput.value,10)||128;
+    appSettings.analysisNgramMin=parseInt(analysisNgramMinInput.value,10)||2;
+    appSettings.analysisNgramMax=parseInt(analysisNgramMaxInput.value,10)||8;
+    appSettings.analysisMinCount=parseInt(analysisMinCountInput.value,10)||2;
+    appSettings.analysisPhraseLimit=parseInt(analysisPhraseLimitInput.value,10)||40;
+    appSettings.analysisCharLimit=parseInt(analysisCharLimitInput.value,10)||80;
+    appSettings.analysisActiveTab=analysisActiveTab;
+    appSettings.analysisOutputs=analysisOutputs;
 }
 
 function saveSettings(showMsg=true){collectCurrentState();localStorage.setItem('toolbox_settings',JSON.stringify(appSettings));localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');applyTheme(appSettings.theme);updateResponseModeStatus();if(showMsg)showToast('設定を保存しました');}
@@ -1321,12 +1745,12 @@ saveBtn.addEventListener('click',()=>saveSettings(true));
 autoSaveToggle.addEventListener('change',()=>{updateSaveUiState();saveSettings(false);});
 persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
 const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
-[themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+[themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput,gaTwoStageEvalToggle].forEach(el=>el.addEventListener('change',handleSettingChange));
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
-[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput].forEach(el=>el.addEventListener('change',handleSettingChange));
-tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();});
-useApiTokenToggle.addEventListener('change',()=>{handleSettingChange();updateCounts();});
-deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(tokenProviderSelect.value==='deepseek'){localTokenizers.deepseek.encoder=null;localTokenizers.deepseek.status='idle';localTokenizers.deepseek._precise=false;initLocalTokenizer();}updateCounts();});
+[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();refreshAnalysisCorpusCount();});
+useApiTokenToggle.addEventListener('change',()=>{handleSettingChange();updateCounts();refreshAnalysisCorpusCount();});
+deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(tokenProviderSelect.value==='deepseek'){localTokenizers.deepseek.encoder=null;localTokenizers.deepseek.status='idle';localTokenizers.deepseek._precise=false;initLocalTokenizer();}updateCounts();refreshAnalysisCorpusCount();});
 
 function applyTheme(t){document.body.className='';if(t!=='light')document.body.classList.add(t+'-mode');const c={'light':'#4a90e2','dark':'#007aff','pastel-pink':'#ff8fab','pastel-blue':'#87cefa','pastel-yellow':'#ffd700','pastel-purple':'#ab47bc','pastel-rainbow':'#ffadad','turf':'#4CAF50'};document.getElementById('theme-color-meta').content=c[t]||'#4a90e2';}
 
@@ -1336,9 +1760,6 @@ document.getElementById('clear-data-btn').addEventListener('click',async()=>{if(
 let isHighlightMode=false;
 function containsAlnum(s){return/[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]/.test(s);}
 
-// ==========================================
-// トークナイザー基盤
-// ==========================================
 const localTokenizers={openai:{encoder:null,status:'idle',_type:'ai-tokenizer'},anthropic:{encoder:null,status:'idle',_type:'ai-tokenizer'},gemini:{encoder:null,status:'idle',_type:'hf-transformers'},grok:{encoder:null,status:'idle',_type:'ai-tokenizer'},deepseek:{encoder:null,status:'idle',_type:'ai-tokenizer',_precise:false}};
 let _AiTokenizerClass=null;const _aiTokenizerEncodings={};
 async function getAiTokenizerClass(){if(_AiTokenizerClass)return _AiTokenizerClass;const m=await import('https://esm.sh/ai-tokenizer@latest');_AiTokenizerClass=m.Tokenizer||m.default;return _AiTokenizerClass;}
@@ -1347,14 +1768,55 @@ async function loadAiTokenizer(en){const[T,E]=await Promise.all([getAiTokenizerC
 async function loadGemmaEncoder(){const e=localTokenizers.gemini;if(e.encoder)return e.encoder;const{AutoTokenizer}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');const t=await AutoTokenizer.from_pretrained('onnx-community/gemma-3-1b-it-ONNX');e.encoder=t;return t;}
 async function loadDeepseekPreciseEncoder(){const{AutoTokenizer}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');return await AutoTokenizer.from_pretrained('deepseek-ai/DeepSeek-V3');}
 
-async function initLocalTokenizer(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e)return;if(p==='deepseek'){const w=deepseekPreciseToggle.checked;if(e.status==='ready'&&e.encoder){if(w===e._precise){updateTokenizerStatusUI();return;}e.encoder=null;e.status='idle';}}else{if(e.status==='ready'&&e.encoder){updateTokenizerStatusUI();return;}}if(e.status==='loading')return;e.status='loading';updateTokenizerStatusUI();try{if(p==='openai'){e.encoder=await loadAiTokenizer('o200k_base');e.status='ready';}else if(p==='anthropic'){e.encoder=await loadAiTokenizer('claude');e.status='ready';}else if(p==='gemini'){e.encoder=await loadGemmaEncoder();e.status='ready';}else if(p==='grok'){e.encoder=await loadAiTokenizer('o200k_base');e.status='ready';}else if(p==='deepseek'){if(deepseekPreciseToggle.checked){e.encoder=await loadDeepseekPreciseEncoder();e._precise=true;e._type='hf-transformers';}else{e.encoder=await loadAiTokenizer('o200k_base');e._precise=false;e._type='ai-tokenizer';}e.status='ready';}}catch(err){console.warn(`[TokenEngine] ${p} load failed:`,err);e.status='failed';}updateTokenizerStatusUI();updateCounts();}
+async function initLocalTokenizer(){
+    const p=tokenProviderSelect.value;
+    const e=localTokenizers[p];
+    if(!e)return;
+    if(p==='deepseek'){
+        const w=deepseekPreciseToggle.checked;
+        if(e.status==='ready'&&e.encoder){
+            if(w===e._precise){updateTokenizerStatusUI();return;}
+            e.encoder=null;e.status='idle';
+        }
+    }else{
+        if(e.status==='ready'&&e.encoder){updateTokenizerStatusUI();return;}
+    }
+    if(e.status==='loading')return;
+    e.status='loading';
+    updateTokenizerStatusUI();
+    try{
+        if(p==='openai'){e.encoder=await loadAiTokenizer('o200k_base');e._type='ai-tokenizer';e.status='ready';}
+        else if(p==='anthropic'){e.encoder=await loadAiTokenizer('claude');e._type='ai-tokenizer';e.status='ready';}
+        else if(p==='gemini'){e.encoder=await loadGemmaEncoder();e._type='hf-transformers';e.status='ready';}
+        else if(p==='grok'){e.encoder=await loadAiTokenizer('o200k_base');e._type='ai-tokenizer';e.status='ready';}
+        else if(p==='deepseek'){
+            if(deepseekPreciseToggle.checked){e.encoder=await loadDeepseekPreciseEncoder();e._precise=true;e._type='hf-transformers';}
+            else{e.encoder=await loadAiTokenizer('o200k_base');e._precise=false;e._type='ai-tokenizer';}
+            e.status='ready';
+        }
+    }catch(err){
+        console.warn(`[TokenEngine] ${p} load failed:`,err);
+        e.status='failed';
+    }
+    updateTokenizerStatusUI();
+    updateCounts();
+    refreshAnalysisCorpusCount();
+}
 
-function countTokensLocal(t,p){if(!t)return null;const e=localTokenizers[p];if(!e||e.status!=='ready'||!e.encoder)return null;try{if(e._type==='hf-transformers'){return e.encoder.encode(t,null,{add_special_tokens:false}).length;}else{return e.encoder.count(t);}}catch(err){return null;}}
+function countTokensLocal(t,p){
+    if(!t)return 0;
+    const e=localTokenizers[p];
+    if(!e||e.status!=='ready'||!e.encoder)return null;
+    try{
+        if(e._type==='hf-transformers'){return e.encoder.encode(t,null,{add_special_tokens:false}).length;}
+        else{
+            if(typeof e.encoder.count==='function') return e.encoder.count(t);
+            if(typeof e.encoder.encode==='function') return Array.from(e.encoder.encode(t)).length;
+            return null;
+        }
+    }catch(err){return null;}
+}
 
-// ==========================================
-// ★ 新機能: トークナイザーによるエンコード配列取得
-// 圧縮アルゴリズムの中核
-// ==========================================
 function encodeToTokenIds(text, provider) {
     if (!text) return null;
     const e = localTokenizers[provider];
@@ -1364,7 +1826,6 @@ function encodeToTokenIds(text, provider) {
             const ids = e.encoder.encode(text, null, { add_special_tokens: false });
             return Array.from(ids);
         } else {
-            // ai-tokenizer: .tokenize() returns array of token strings, .encode() returns ids
             if (typeof e.encoder.encode === 'function') {
                 return Array.from(e.encoder.encode(text));
             }
@@ -1389,7 +1850,38 @@ function decodeTokenIds(ids, provider) {
     } catch (err) { return null; }
 }
 
-// 文字列のトークン数を正確に取得（ローカル）、取れなければ近似
+function estimateTokensApprox(text,provider){
+    if(!text)return 0;
+    const co={openai:{h:1.8,k:1.8,j:1.1,a:4.5},anthropic:{h:1.7,k:1.7,j:1.05,a:4.3},gemini:{h:1.5,k:1.5,j:1.0,a:4.0},grok:{h:1.8,k:1.8,j:1.1,a:4.5},deepseek:{h:1.6,k:1.6,j:1.0,a:4.2}};
+    const c=co[provider]||co.openai;
+    let t=0;
+    const aw=text.match(/[a-zA-Z]+/g)||[];
+    for(const w of aw){const l=w.length;if(l<=4)t+=1;else if(l<=8)t+=2;else if(l<=13)t+=3;else t+=Math.ceil(l/c.a);}
+    const nm=text.match(/[0-9０-９]+/g)||[];
+    for(const n of nm)t+=Math.ceil(n.length/3);
+    const js=text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g,'\x00').split('\x00').filter(s=>s.length>0);
+    for(const seg of js){
+        const bl=seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g)||[];
+        for(const b of bl){
+            const l=b.length;if(!l)continue;
+            if(/^[ぁ-ん]+$/.test(b))t+=Math.ceil(l/c.h);
+            else if(/^[ァ-ヶー]+$/.test(b))t+=Math.ceil(l/c.k);
+            else if(/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(b))t+=Math.ceil(l/c.j);
+            else{
+                for(let i=0;i<b.length;i++){
+                    const cp=b.codePointAt(i);
+                    if(cp>0xFFFF){t+=2.5;i++;}
+                    else if(cp>0x7FF)t+=1;
+                    else t+=1;
+                }
+            }
+        }
+    }
+    const ws=text.match(/[\s\r\n]+/g)||[];
+    for(const w of ws){const nl=(w.match(/\n/g)||[]).length;t+=nl;const sp=w.length-nl;if(sp>0)t+=Math.ceil(sp/4);}
+    return Math.max(1,Math.ceil(t));
+}
+
 function getExactTokenCount(text) {
     if (!text) return 0;
     const p = appSettings.tokenCalcProvider || 'openai';
@@ -1398,196 +1890,102 @@ function getExactTokenCount(text) {
     return estimateTokensApprox(text, p);
 }
 
-// ==========================================
-// ★ トークナイザー認識型 略称生成
-// ASCII文字列の中で、1トークンとして認識される最短の略称を生成
-// ==========================================
-
-// 使用済みの略称を追跡
-const _usedAbbrs = new Set();
-
-function generateOptimalAbbr(index, textContext, replacedMap) {
-    const p = appSettings.tokenCalcProvider || 'openai';
-    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
-    
-    // 戦略: 短いASCII文字列を生成して、トークナイザーで1トークンになるかチェック
-    // ASCII文字列は ~4文字で1トークンなので、2-3文字のASCIIは確実に1トークン
-    
-    // 候補プール: 大文字2文字 → 大文字+数字2文字 → 大文字3文字 → ...
-    // 大文字2文字: 26*26 = 676通り (十分大きい)
-    // ただし本文中に既に存在しないことを確認
-    
-    const candidates = [];
-    
-    // Phase 1: 大文字2文字 (AA-ZZ) — 全て1トークン確定
-    const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    for (let a = 0; a < 26; a++) {
-        for (let b = 0; b < 26; b++) {
-            candidates.push(alpha[a] + alpha[b]);
+async function fetchExactTokenCount(text,provider,apiKey){
+    if(!text||!apiKey)return null;
+    try{
+        if(provider==='gemini'){
+            const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text}]}]})});
+            if(!r.ok)throw 0;
+            return(await r.json()).totalTokens;
+        }else if(provider==='anthropic'){
+            const r=await fetch('https://api.anthropic.com/v1/messages/count_tokens',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',messages:[{role:'user',content:text}],max_tokens:1})});
+            if(!r.ok)throw 0;
+            return(await r.json()).input_tokens;
+        }else if(provider==='openai'){
+            const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:text}],max_tokens:1})});
+            if(!r.ok)throw 0;
+            return(await r.json()).usage?.prompt_tokens||null;
+        }else if(provider==='grok'){
+            const r=await fetch('https://api.x.ai/v1/tokenize-text',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'grok-3-mini',text})});
+            if(!r.ok)throw 0;
+            const d=await r.json();
+            return d.token_ids?d.token_ids.length:null;
+        }else if(provider==='deepseek'){
+            const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:text}],max_tokens:1})});
+            if(!r.ok)throw 0;
+            return(await r.json()).usage?.prompt_tokens||null;
         }
-    }
-    
-    // Phase 2: 大文字2文字+数字 (AA0-ZZ9) — ほぼ1トークン
-    for (let a = 0; a < 26; a++) {
-        for (let b = 0; b < 26; b++) {
-            for (let d = 0; d < 10; d++) {
-                candidates.push(alpha[a] + alpha[b] + d);
-            }
-        }
-    }
-    
-    for (const c of candidates) {
-        if (_usedAbbrs.has(c)) continue;
-        if (replacedMap.has(c)) continue;
-        // テキスト中に既に存在しないか確認
-        if (textContext.includes(c)) continue;
-        
-        // トークナイザーで確認: 1トークンであるか
-        if (hasEncoder) {
-            const tokenCount = countTokensLocal(c, p);
-            if (tokenCount !== null && tokenCount > 1) continue;
-        }
-        
-        _usedAbbrs.add(c);
-        return c;
-    }
-    
-    // フォールバック: v + base62
-    let fi = index;
-    for (let tries = 0; tries < 500; tries++) {
-        const fallback = 'v' + toBase62(fi);
-        fi++;
-        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {
-            _usedAbbrs.add(fallback);
-            return fallback;
-        }
-    }
-    return 'v' + toBase62(Date.now() % 10000);
+    }catch(e){return null;}
+    return null;
 }
 
-// ==========================================
-// ★ トークナイザー認識型 候補発見アルゴリズム
-// トークン境界ベースのN-gramスキャン
-// ==========================================
-function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum) {
-    const p = appSettings.tokenCalcProvider || 'openai';
-    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
-    
-    // ---- Step A: Intl.Segmenter による単語境界ベースN-gram (従来手法の改良) ----
-    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-    const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
-    
-    const ngrams = new Map();
-    for (let n = 1; n <= 6; n++) {
-        for (let i = 0; i <= segments.length - n; i++) {
-            let phrase = '';
-            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
-            phrase = phrase.trim();
-            if (!phrase || phrase.length < minLen) continue;
-            if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) continue;
-            if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;
-            if (excludeAlnum && containsAlnum(phrase)) continue;
-            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
-        }
-    }
-    
-    // ---- Step B: トークン境界ベースの部分文字列発見 (新手法) ----
-    // トークナイザーが利用可能な場合、テキストをトークン列にエンコードし、
-    // 連続トークン列（2〜8トークン列）の頻出パターンを発見する
-    if (hasEncoder) {
-        const tokenIds = encodeToTokenIds(text, p);
-        if (tokenIds && tokenIds.length > 0) {
-            // トークン列のN-gramパターン検出 (2〜8トークン)
-            for (let n = 2; n <= 8; n++) {
-                const tokenNgramMap = new Map(); // JSON(ids) -> count
-                for (let i = 0; i <= tokenIds.length - n; i++) {
-                    const slice = tokenIds.slice(i, i + n);
-                    const key = slice.join(',');
-                    if (!tokenNgramMap.has(key)) {
-                        tokenNgramMap.set(key, { ids: slice, count: 0 });
-                    }
-                    tokenNgramMap.get(key).count++;
-                }
-                
-                for (const [, entry] of tokenNgramMap) {
-                    if (entry.count < minCount) continue;
-                    // このトークン列をデコードして文字列に
-                    const decoded = decodeTokenIds(entry.ids, p);
-                    if (!decoded || decoded.length < minLen) continue;
-                    const trimmed = decoded.trim();
-                    if (!trimmed || trimmed.length < minLen) continue;
-                    if (/^[\s\r\n]+$/.test(trimmed)) continue;
-                    if (excludeAlnum && containsAlnum(trimmed)) continue;
-                    
-                    // 実際にテキスト中に何回出現するか正確にカウント
-                    const re = new RegExp(escRegex(trimmed), 'g');
-                    const matches = text.match(re);
-                    const realCount = matches ? matches.length : 0;
-                    if (realCount < minCount) continue;
-                    
-                    // 既存のngramsにない or より高い出現数なら追加
-                    if (!ngrams.has(trimmed) || ngrams.get(trimmed) < realCount) {
-                        ngrams.set(trimmed, realCount);
-                    }
-                }
-            }
-        }
-    }
-    
-    // ---- Step C: 節約効果計算 (トークナイザー使用) ----
-    const results = [];
-    for (const [phrase, count] of ngrams) {
-        if (count < minCount) continue;
-        
-        // 元のフレーズのトークンコスト（正確に計算）
-        const phraseTokCost = getExactTokenCount(phrase);
-        
-        // 略称のトークンコスト: 2文字の大文字ASCII → ほぼ確実に1トークン
-        const abbrTokCost = 1;
-        
-        // ヘッダーのコスト: "XX=<phrase>\n" のトークン数
-        const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);
-        
-        // 純節約量: (元のコスト × 出現数) - (略称コスト × 出現数 + ヘッダーコスト)
-        const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);
-        
-        if (saving > 0) {
-            results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });
-        }
-    }
-    
-    // ---- Step D: 重複除去（包含関係の処理） ----
-    results.sort((a, b) => b.phrase.length - a.phrase.length);
-    const filtered = [];
-    for (const item of results) {
-        let isSub = false;
-        for (const kept of filtered) {
-            if (kept.phrase.includes(item.phrase)) {
-                // 親フレーズが既にある場合、残りの出現数で節約効果を再計算
-                const remainingCount = Math.max(0, item.count - kept.count);
-                const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);
-                if (remainingSaving <= 0) { isSub = true; break; }
-            }
-        }
-        if (!isSub) filtered.push(item);
-    }
-    
-    // 節約効果でソートして上位を返す
-    filtered.sort((a, b) => b.saving - a.saving);
-    return filtered.slice(0, maxItems);
+function updateTokenizerStatusUI(){
+    const p=tokenProviderSelect.value;
+    const e=localTokenizers[p];
+    if(!e){tokenizerStatusNotice.innerHTML='';return;}
+    const im={
+        openai:{name:'o200k_base',size:'約2-3MB',ready:'GPT-4o/4.1/5: 100%正確',badge:'🎯'},
+        anthropic:{name:'claude',size:'約2-3MB',ready:'Claude 3/3.5/4/4.5: ≈98-99%',badge:'≈99%'},
+        gemini:{name:'Gemma 3 SentencePiece',size:'約20MB',ready:'Gemini近似: 参考値',badge:'≈'},
+        grok:{name:'o200k_base',size:'約2-3MB',ready:'Grok-3: ≈99%。Grok-4系は非対応',badge:'≈99%'},
+        deepseek:deepseekPreciseToggle.checked?{name:'DeepSeek-V3公式',size:'約17MB',ready:'DeepSeek V3/R1: 100%正確',badge:'🎯'}:{name:'o200k_base近似',size:'約2-3MB',ready:'DeepSeek: ≈95-98%',badge:'≈95%'}
+    };
+    const i=im[p];
+    if(!i){tokenizerStatusNotice.innerHTML='';return;}
+    if(e.status==='loading')tokenizerStatusNotice.innerHTML=`⏳ ${i.name}（${i.size}）取得中…`;
+    else if(e.status==='ready')tokenizerStatusNotice.innerHTML=`${i.badge} ${i.name}: ${i.ready}。<strong>圧縮・分析にも使用中 ✨</strong>`;
+    else if(e.status==='failed')tokenizerStatusNotice.innerHTML=`⚠️ ${i.name} 取得失敗。近似計算使用中。`;
+    else tokenizerStatusNotice.innerHTML=`ℹ️ ${i.name}（${i.size}）を自動取得します。`;
 }
-
-
-function updateTokenizerStatusUI(){const p=tokenProviderSelect.value;const e=localTokenizers[p];if(!e){tokenizerStatusNotice.innerHTML='';return;}const im={openai:{name:'o200k_base',size:'約2-3MB',ready:'GPT-4o/4.1/5: 100%正確',badge:'🎯'},anthropic:{name:'claude',size:'約2-3MB',ready:'Claude 3/3.5/4/4.5: ≈98-99%',badge:'≈99%'},gemini:{name:'Gemma 3 SentencePiece',size:'約20MB',ready:'Gemini 2.0/2.5/3: 100%正確',badge:'🎯'},grok:{name:'o200k_base',size:'約2-3MB',ready:'Grok-3: ≈99%。Grok-4系は非対応',badge:'≈99%'},deepseek:deepseekPreciseToggle.checked?{name:'DeepSeek-V3公式',size:'約17MB',ready:'DeepSeek V3/R1: 100%正確',badge:'🎯'}:{name:'o200k_base近似',size:'約2-3MB',ready:'DeepSeek: ≈95-98%',badge:'≈95%'}};const i=im[p];if(!i){tokenizerStatusNotice.innerHTML='';return;}if(e.status==='loading')tokenizerStatusNotice.innerHTML=`⏳ ${i.name}（${i.size}）取得中…`;else if(e.status==='ready')tokenizerStatusNotice.innerHTML=`${i.badge} ${i.name}: ${i.ready}。<strong>圧縮にも使用中 ✨</strong>`;else if(e.status==='failed')tokenizerStatusNotice.innerHTML=`⚠️ ${i.name} 取得失敗。近似計算使用中。`;else tokenizerStatusNotice.innerHTML=`ℹ️ ${i.name}（${i.size}）を自動取得します。`;}
-
-function estimateTokensApprox(text,provider){if(!text)return 0;const co={openai:{h:1.8,k:1.8,j:1.1,a:4.5},anthropic:{h:1.7,k:1.7,j:1.05,a:4.3},gemini:{h:1.5,k:1.5,j:1.0,a:4.0},grok:{h:1.8,k:1.8,j:1.1,a:4.5},deepseek:{h:1.6,k:1.6,j:1.0,a:4.2}};const c=co[provider]||co.openai;let t=0;const aw=text.match(/[a-zA-Z]+/g)||[];for(const w of aw){const l=w.length;if(l<=4)t+=1;else if(l<=8)t+=2;else if(l<=13)t+=3;else t+=Math.ceil(l/c.a);}const nm=text.match(/[0-9０-９]+/g)||[];for(const n of nm)t+=Math.ceil(n.length/3);const js=text.replace(/[a-zA-Z0-9０-９\s\r\n]+/g,'\x00').split('\x00').filter(s=>s.length>0);for(const seg of js){const bl=seg.match(/[ぁ-ん]+|[ァ-ヶー]+|[\u4E00-\u9FAF\u3400-\u4DBF]+|[^ぁ-んァ-ヶー\u4E00-\u9FAF\u3400-\u4DBF]+/g)||[];for(const b of bl){const l=b.length;if(!l)continue;if(/^[ぁ-ん]+$/.test(b))t+=Math.ceil(l/c.h);else if(/^[ァ-ヶー]+$/.test(b))t+=Math.ceil(l/c.k);else if(/^[\u4E00-\u9FAF\u3400-\u4DBF]+$/.test(b))t+=Math.ceil(l/c.j);else{for(let i=0;i<b.length;i++){const cp=b.codePointAt(i);if(cp>0xFFFF){t+=2.5;i++;}else if(cp>0x7FF)t+=1;else t+=1;}}}}const ws=text.match(/[\s\r\n]+/g)||[];for(const w of ws){const nl=(w.match(/\n/g)||[]).length;t+=nl;const sp=w.length-nl;if(sp>0)t+=Math.ceil(sp/4);}return Math.max(1,Math.ceil(t));}
-
-async function fetchExactTokenCount(text,provider,apiKey){if(!text||!apiKey)return null;try{if(provider==='gemini'){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:countTokens?key=${apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text}]}]})});if(!r.ok)throw 0;return(await r.json()).totalTokens;}else if(provider==='anthropic'){const r=await fetch('https://api.anthropic.com/v1/messages/count_tokens',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).input_tokens;}else if(provider==='openai'){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).usage?.prompt_tokens||null;}else if(provider==='grok'){const r=await fetch('https://api.x.ai/v1/tokenize-text',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'grok-3-mini',text})});if(!r.ok)throw 0;const d=await r.json();return d.token_ids?d.token_ids.length:null;}else if(provider==='deepseek'){const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:text}],max_tokens:1})});if(!r.ok)throw 0;return(await r.json()).usage?.prompt_tokens||null;}}catch(e){return null;}return null;}
 
 let tokenFetchTimer=null;
 function getTokenCount(t,p){const l=countTokensLocal(t,p);if(l!==null)return{count:l,method:'local'};return{count:estimateTokensApprox(t,p),method:'approx'};}
 
-function updateCounts(){syncCombinedInput();const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,in3=inputPart3El.value,outTxt=outputEl.value;const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';let ak='';if(p==='gemini')ak=appSettings.geminiApiKey;else if(p==='anthropic')ak=appSettings.anthropicApiKey;else if(p==='openai')ak=appSettings.openaiApiKey;else if(p==='grok')ak=appSettings.grokApiKey;else if(p==='deepseek')ak=appSettings.deepseekApiKey;let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;const render=(m)=>{const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;inputCountPart1.textContent=`${in1.length}文字`;inputCountPart2.textContent=`${in2.length}文字`;inputCountPart3.textContent=`${in3.length}文字`;if(outLen>0&&inTok>outTok){const d=inTok-outTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;}else if(outLen>0&&inTok<outTok){const d=outTok-inTok;outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;}else{outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;}};render(cm);if(appSettings.useApiTokenCount&&ak){clearTimeout(tokenFetchTimer);inputCount.style.opacity='0.5';outputCount.style.opacity='0.5';tokenFetchTimer=setTimeout(async()=>{const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);if(ei!==null)inTok=ei;if(eo!==null)outTok=eo;inputCount.style.opacity='1';outputCount.style.opacity='1';render(ei!==null?'api':cm);},800);}else{inputCount.style.opacity='1';outputCount.style.opacity='1';outputCount.style.opacity='1';}}
+function updateCounts(){
+    syncCombinedInput();
+    const inTxt=inputEl.value,in1=inputPart1El.value,in2=inputPart2El.value,in3=inputPart3El.value,outTxt=outputEl.value;
+    const inLen=inTxt.length,outLen=outTxt.length;const p=appSettings.tokenCalcProvider||'openai';
+    let ak='';
+    if(p==='gemini')ak=appSettings.geminiApiKey;
+    else if(p==='anthropic')ak=appSettings.anthropicApiKey;
+    else if(p==='openai')ak=appSettings.openaiApiKey;
+    else if(p==='grok')ak=appSettings.grokApiKey;
+    else if(p==='deepseek')ak=appSettings.deepseekApiKey;
+    let inR=getTokenCount(inTxt,p),outR=getTokenCount(outTxt,p),inTok=inR.count,outTok=outR.count,cm=inR.method;
+    const render=(m)=>{
+        const px={'api':'✨','local':'🎯','approx':'≈'}[m]||'≈';
+        inputCount.textContent=`合計${inLen}文字 (${px}${inTok}ﾄｰｸﾝ)`;
+        inputCountPart1.textContent=`${in1.length}文字`;
+        inputCountPart2.textContent=`${in2.length}文字`;
+        inputCountPart3.textContent=`${in3.length}文字`;
+        if(outLen>0&&inTok>outTok){
+            const d=inTok-outTok;
+            outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-save);font-weight:bold;margin-left:4px">↓${d}節約</span>`;
+        }else if(outLen>0&&inTok<outTok){
+            const d=outTok-inTok;
+            outputCount.innerHTML=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ) <span style="color:var(--bg-button-delete);font-weight:bold;margin-left:4px">↑${d}増加</span>`;
+        }else{
+            outputCount.textContent=`${outLen}文字 (${px}${outTok}ﾄｰｸﾝ)`;
+        }
+    };
+    render(cm);
+    if(appSettings.useApiTokenCount&&ak){
+        clearTimeout(tokenFetchTimer);
+        inputCount.style.opacity='0.5';
+        outputCount.style.opacity='0.5';
+        tokenFetchTimer=setTimeout(async()=>{
+            const[ei,eo]=await Promise.all([fetchExactTokenCount(inTxt,p,ak),outTxt?fetchExactTokenCount(outTxt,p,ak):Promise.resolve(0)]);
+            if(ei!==null)inTok=ei;
+            if(eo!==null)outTok=eo;
+            inputCount.style.opacity='1';
+            outputCount.style.opacity='1';
+            render(ei!==null?'api':cm);
+        },800);
+    }else{
+        inputCount.style.opacity='1';
+        outputCount.style.opacity='1';
+    }
+}
 
 function updateActionPickerUi(){const a=actionPicker.value;replaceFields.classList.toggle('hidden',a!=='replaceText');dictFields.classList.toggle('hidden',a!=='manualCompress');const lm={replaceText:'文字列を置換',extractKeywords:'頻出ワードを抽出',manualCompress:'辞書を使って圧縮',toUmaAbbr:'ウマ娘略称化を実行',mergeDialogues:'同一キャラのセリフを結合',decompressText:'圧縮テキストを復元'};runSelectedActionBtn.textContent=lm[a]||'選択した処理を実行';runSelectedActionBtn.disabled=!a;}
 
@@ -1599,13 +1997,43 @@ actionPicker.addEventListener('change',()=>{updateActionPickerUi();saveWorkspace
 
 function resetHighlightMode(){if(isHighlightMode){isHighlightMode=false;outputEl.style.display='block';outputPreview.style.display='none';toggleHighlightBtn.textContent='🔍 色付け確認';toggleHighlightBtn.classList.remove('active-mode');}}
 
+function refreshAnalysisCorpusCount(){
+    const txt=analysisCorpusText.value||'';
+    const tok=getExactTokenCount(txt);
+    analysisCorpusCount.textContent=`${txt.length}文字 (≈${tok}ﾄｰｸﾝ)`;
+    const p=appSettings.tokenCalcProvider||'openai';
+    const status=localTokenizers[p]?.status||'idle';
+    analysisTokenizerNotice.textContent=`現在の分析対象: ${p} / tokenizer状態: ${status}`;
+}
+function renderAnalysisTab(){
+    analysisTabButtons.forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.tab===analysisActiveTab);
+    });
+    analysisResultText.value=analysisOutputs[analysisActiveTab]||'';
+    const labelMap={static:'Static Profile',summary:'Summary',profile:'JSON',packet:'AI Packet',handoff:'Handoff',compressor:'Compress Prompt',decompressor:'Decompress Prompt'};
+    analysisResultMeta.textContent=labelMap[analysisActiveTab]||analysisActiveTab;
+}
+analysisTabButtons.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        analysisActiveTab=btn.dataset.tab;
+        renderAnalysisTab();
+        saveWorkspaceDebounced();
+    });
+});
+analysisCorpusText.addEventListener('input',()=>{refreshAnalysisCorpusCount();saveWorkspaceDebounced();});
+analysisUseInputBtn.addEventListener('click',()=>{analysisCorpusText.value=buildCombinedInputText();refreshAnalysisCorpusCount();saveWorkspaceDebounced();showToast('入力欄から読み込みました');});
+analysisUseOutputBtn.addEventListener('click',()=>{analysisCorpusText.value=outputEl.value||'';refreshAnalysisCorpusCount();saveWorkspaceDebounced();showToast('出力欄から読み込みました');});
+analysisClearCorpusBtn.addEventListener('click',()=>{analysisCorpusText.value='';refreshAnalysisCorpusCount();saveWorkspaceDebounced();});
+analysisCopyBtn.addEventListener('click',async()=>{const txt=analysisOutputs[analysisActiveTab]||'';if(!txt){showToast('コピーする結果がありません');return;}try{await navigator.clipboard.writeText(txt);showToast('分析結果をコピーしました');}catch(e){showToast('コピーに失敗しました');}});
+function downloadTextFile(filename, content, mime='text/plain;charset=utf-8'){const blob=new Blob([content],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+analysisDownloadBtn.addEventListener('click',()=>{const txt=analysisOutputs[analysisActiveTab]||'';if(!txt){showToast('保存する結果がありません');return;}const meta={static:['tokenizer-static-profile.txt','text/plain;charset=utf-8'],summary:['tokenizer-analysis-summary.txt','text/plain;charset=utf-8'],profile:['tokenizer-analysis-profile.json','application/json;charset=utf-8'],packet:['tokenizer-analysis-ai-packet.json','application/json;charset=utf-8'],handoff:['tokenizer-analysis-handoff.md','text/markdown;charset=utf-8'],compressor:['tokenizer-analysis-compress-prompt.txt','text/plain;charset=utf-8'],decompressor:['tokenizer-analysis-decompress-prompt.txt','text/plain;charset=utf-8']};const [name,mime]=meta[analysisActiveTab]||['analysis.txt','text/plain;charset=utf-8'];downloadTextFile(name, txt, mime);showToast('保存しました');});
+analysisSendToOutputBtn.addEventListener('click',()=>{const txt=analysisOutputs.handoff||analysisOutputs.summary||'';if(!txt){showToast('出力できる分析結果がありません');return;}outputEl.value=txt;updateCounts();saveWorkspaceDebounced();showToast('Handoffを出力欄に反映しました');});
+
 const kanaMap={'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ','ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ','ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ','ｱ':'ア','ｲ':'イ','ｳ':'ウ','ｴ':'エ','ｵ':'オ','ｶ':'カ','ｷ':'キ','ｸ':'ク','ｹ':'ケ','ｺ':'コ','ｻ':'サ','ｼ':'シ','ｽ':'ス','ｾ':'セ','ｿ':'ソ','ﾀ':'タ','ﾁ':'チ','ﾂ':'ツ','ﾃ':'テ','ﾄ':'ト','ﾅ':'ナ','ﾆ':'ニ','ﾇ':'ヌ','ﾈ':'ネ','ﾉ':'ノ','ﾊ':'ハ','ﾋ':'ヒ','ﾌ':'フ','ﾍ':'ヘ','ﾎ':'ホ','ﾏ':'マ','ﾐ':'ミ','ﾑ':'ム','ﾒ':'メ','ﾓ':'モ','ﾔ':'ヤ','ﾕ':'ユ','ﾖ':'ヨ','ﾗ':'ラ','ﾘ':'リ','ﾙ':'ル','ﾚ':'レ','ﾛ':'ロ','ﾜ':'ワ','ｦ':'ヲ','ﾝ':'ン','ｧ':'ァ','ｨ':'ィ','ｩ':'ゥ','ｪ':'ェ','ｫ':'ォ','ｯ':'ッ','ｬ':'ャ','ｭ':'ュ','ｮ':'ョ','｡':'。','｢':'「','｣':'」','､':'、','･':'・','ｰ':'ー','ﾞ':'゛','ﾟ':'゜'};
-const kanaRegex=new RegExp('('+Object.keys(kanaMap).sort((a,b)=>b.length-a.length).join('|')+')','g');
+const kanaRegex=new RegExp('('+Object.keys(kanaMap).sort((a,b)=>b.length-a.length).map(escRegex).join('|')+')','g');
 
 function mergeConsecutiveDialogues(text){const lines=text.split('\n');const parsed=[];const dr=/^([^「」\n]+?)[:：]?\s*「([\s\S]*?)」\s*$/;for(const line of lines){const m=line.match(dr);if(m){parsed.push({type:'dialogue',name:m[1].trim(),content:m[2],original:line});}else{parsed.push({type:'other',original:line});}}const merged=[];let mc=0;for(let i=0;i<parsed.length;i++){const cur=parsed[i];if(cur.type!=='dialogue'){merged.push(cur.original);continue;}let cc=cur.content;let j=i+1;while(j<parsed.length&&parsed[j].type==='dialogue'&&parsed[j].name===cur.name){cc+=parsed[j].content;mc++;j++;}const hc=/[:：]/.test(cur.original.slice(0,cur.original.indexOf('「')));const sep=hc?cur.original.match(/[:：]/)[0]:'';merged.push(`${cur.name}${sep}「${cc}」`);i=j-1;}return{text:merged.join('\n'),mergedCount:mc};}
-
 function trimWhitespaceForCompression(t){let r=t;r=r.replace(/^\s*[\r\n]/gm,'');r=r.replace(/^[ 　\t]+|[ 　\t]+$/gm,'');r=r.replace(/[ 　\t]{2,}/g,' ');return r;}
-
 function replaceBracketsLightweight(text){let r=text;let c=0;r=r.replace(/^([^「」\n]+?)[:：]\s*「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{c++;return`${n.trim()}>${ct}`;});r=r.replace(/^([^\s「」\n][^「」\n]*)「([\s\S]*?)」\s*$/gm,(m,n,ct)=>{if(n.includes('>'))return m;c++;return`${n.trim()}>${ct}`;});r=r.replace(/「([^」]*?)」/g,(m,ct)=>{c++;return`"${ct}"`;});r=r.replace(/『([^』]*?)』/g,(m,ct)=>{c++;return`'${ct}'`;});r=r.replace(/（([^）]*?)）/g,(m,ct)=>{c++;return`(${ct})`;});return{text:r,replacedCount:c};}
 
 function parseMapLines(block, replacedMap) {
@@ -1617,22 +2045,72 @@ function parseMapLines(block, replacedMap) {
         if (eq === -1) return;
         const abbr = trimmed.substring(0, eq).trim();
         const original = trimmed.substring(eq + 1).trim();
-        if (abbr && original && !replacedMap.has(abbr)) {
-            replacedMap.set(abbr, original);
-        }
+        if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
     });
 }
+function stripLegacyFormatHeader(text) { return text.replace(/^Format:\s.*\n\n/, ''); }
 
-function stripLegacyFormatHeader(text) {
-    return text.replace(/^Format:\s.*\n\n/, '');
+function isSafeMapAlias(alias){
+    return /^[A-Za-z0-9@#~$%&*?!^]{1,8}$/.test(alias);
+}
+
+function tryExtractCompactAnalysisHeader(text){
+    const lines = normalizeTextLite(text).split('\n');
+    let i = 0;
+    if(lines[i] === '@' || lines[i] === '#') i++;
+    const mapLines = [];
+    let foundSuffix = false;
+    let suffixIndex = -1;
+
+    while(i < lines.length){
+        const line = lines[i];
+        if(line === '--' || line === '#' || line === '>'){
+            foundSuffix = true;
+            suffixIndex = i;
+            break;
+        }
+        if(line.startsWith('!')){
+            i++;
+            continue;
+        }
+        if(/^@?[A-Za-z0-9@#~$%&*?!^]{1,8}[=:|\/>].+$/.test(line)){
+            mapLines.push(line);
+            i++;
+            continue;
+        }
+        return null;
+    }
+
+    if(!foundSuffix || mapLines.length===0) return null;
+
+    const replacedMap = new Map();
+    for(const line of mapLines){
+        const m = line.match(/^@?([A-Za-z0-9@#~$%&*?!^]{1,8})([=:|\/>])(.*)$/);
+        if(!m) continue;
+        const abbr = m[1].trim();
+        const original = (m[3]||'').trim();
+        if(abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
+    }
+    if(replacedMap.size===0) return null;
+
+    const bodyText = lines.slice(suffixIndex + 1).join('\n');
+    return { replacedMap, bodyText };
 }
 
 function extractExistingMappings(text) {
     const replacedMap = new Map();
     let bodyText = text;
 
+    const enRe = /^\[COMPRESSED TEXT - RULES\]\n[\s\S]*?(?:\n\[MAPPING\]\n([\s\S]*?)\n\[TEXT\]\n?|\n\[TEXT\]\n?)/;
+    let m = bodyText.match(enRe);
+    if (m) {
+        parseMapLines(m[1], replacedMap);
+        bodyText = bodyText.replace(enRe, '');
+        return { replacedMap, bodyText };
+    }
+
     const jpRe = /^【圧縮ルール】\n[\s\S]*?(?:\n【対応表】\n([\s\S]*?)\n【本文】\n?|\n【本文】\n?)/;
-    let m = bodyText.match(jpRe);
+    m = bodyText.match(jpRe);
     if (m) {
         parseMapLines(m[1], replacedMap);
         bodyText = bodyText.replace(jpRe, '');
@@ -1652,9 +2130,7 @@ function extractExistingMappings(text) {
     m = bodyText.match(midRe);
     if (m) {
         const mi = m[1].indexOf('[Mapping]');
-        if (mi !== -1) {
-            parseMapLines(m[1].substring(mi + 9).trim(), replacedMap);
-        }
+        if (mi !== -1) parseMapLines(m[1].substring(mi + 9).trim(), replacedMap);
         bodyText = bodyText.replace(midRe, '');
         bodyText = stripLegacyFormatHeader(bodyText);
         return { replacedMap, bodyText };
@@ -1668,9 +2144,7 @@ function extractExistingMappings(text) {
             if (eq === -1) return;
             const abbr = pair.substring(0, eq).trim();
             const original = pair.substring(eq + 1).trim();
-            if (abbr && original && !replacedMap.has(abbr)) {
-                replacedMap.set(abbr, original);
-            }
+            if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
         });
         bodyText = bodyText.replace(oldRe1, '');
         bodyText = stripLegacyFormatHeader(bodyText);
@@ -1685,11 +2159,19 @@ function extractExistingMappings(text) {
             if (eq === -1) return;
             const abbr = pair.substring(0, eq).trim();
             const original = pair.substring(eq + 1).trim();
-            if (abbr && original && !replacedMap.has(abbr)) {
-                replacedMap.set(abbr, original);
-            }
+            if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
         });
         bodyText = bodyText.replace(oldRe2, '');
+        bodyText = stripLegacyFormatHeader(bodyText);
+        return { replacedMap, bodyText };
+    }
+
+    const compact = tryExtractCompactAnalysisHeader(bodyText);
+    if (compact) {
+        compact.replacedMap.forEach((original, abbr) => {
+            if (!replacedMap.has(abbr)) replacedMap.set(abbr, original);
+        });
+        bodyText = compact.bodyText;
         bodyText = stripLegacyFormatHeader(bodyText);
         return { replacedMap, bodyText };
     }
@@ -1807,7 +2289,14 @@ document.getElementById('compressBtn').addEventListener('click', () => {
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!dt.trim()) { showToast('圧縮用辞書が空です'); return; }
     resetHighlightMode();
-    const dict = {}; dt.split('\n').forEach(line => { const p = line.split('='); if (p.length === 2) { const k = p[0].trim(), v = p[1].trim(); if (k && v) dict[k] = v; } });
+    const dict = {};
+    dt.split('\n').forEach(line => {
+        const p = line.split('=');
+        if (p.length === 2) {
+            const k = p[0].trim(), v = p[1].trim();
+            if (k && v) dict[k] = v;
+        }
+    });
     const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
     if (keys.length === 0) { showToast('有効な辞書指定がありません'); return; }
     const regex = new RegExp('(' + keys.map(escRegex).join('|') + ')', 'g');
@@ -1823,145 +2312,954 @@ document.getElementById('decompressBtn').addEventListener('click', () => {
     else { outputEl.value = text; updateCounts(); saveWorkspaceDebounced(); showToast('復元できるマッピングが見つかりませんでした'); }
 });
 
-// ==========================================
-// ★ トークナイザー認識型 自動圧縮エンジン (v8.0)
-// ==========================================
-document.getElementById('autoCompressBtn').addEventListener('click', () => {
-    syncCombinedInput();
-    const text = inputEl.value;
-    if (!text) { showToast('入力テキストがありません'); return; }
-    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは自動抽出に非対応です'); return; }
-    resetHighlightMode();
+function mean(arr){return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;}
+function uniqArray(arr){return [...new Set(arr)];}
+function escapeVisibleChar(ch){if(ch==='\n')return'\\n';if(ch==='\r')return'\\r';if(ch==='\t')return'\\t';if(ch===' ')return'[space]';return ch;}
+function compactPreview(s, limit=140){const t=String(s||'').replace(/\n/g,'\\n');return t.length<=limit?t:t.slice(0,limit)+'...';}
+function countOccurrences(text, needle){if(!needle)return 0;let count=0,pos=0;while(true){const idx=text.indexOf(needle,pos);if(idx===-1)break;count++;pos=idx+needle.length;}return count;}
+function tokenizeTextLikeWords(text){return text.match(/[A-Za-z0-9_]+|[ぁ-んァ-ヶー一-龠々〆ヵヶ]+|[^\s]/g)||[];}
+function printableAlias(s){return !!s && !/\s/.test(s) && /^[\x21-\x7E]+$/.test(s);}
 
+const ANALYSIS_CONTEXTS=[
+    ['',''],
+    [' ',''],
+    ['\n',''],
+    ['A','B'],
+    ['あ','い'],
+    ['「','」'],
+    [':',''],
+    ['','。'],
+    ['<','>']
+];
+
+const ANALYSIS_HEADER_LIBRARY=[
+    {name:'eq_min',prefix:'',entry:'{alias}={value}\n',suffix:'--\n'},
+    {name:'at_eq',prefix:'@\n',entry:'{alias}={value}\n',suffix:'#\n'},
+    {name:'colon_min',prefix:'',entry:'{alias}:{value}\n',suffix:'--\n'},
+    {name:'pipe_min',prefix:'',entry:'{alias}|{value}\n',suffix:'--\n'},
+    {name:'hash_eq',prefix:'#\n',entry:'@{alias}={value}\n',suffix:'>\n'},
+    {name:'arrow_gt',prefix:'',entry:'{alias}>{value}\n',suffix:'--\n'},
+    {name:'slash',prefix:'',entry:'{alias}/{value}\n',suffix:'--\n'}
+];
+
+function renderAnalysisHeader(template, pairs){
+    const entries=pairs.map(([a,v])=>template.entry.replace('{alias}',a).replace('{value}',v)).join('');
+    return `${template.prefix}${entries}${template.suffix}`;
+}
+function averageMarginalCost(piece){
+    const deltas=ANALYSIS_CONTEXTS.map(([l,r])=>{
+        const before=getExactTokenCount(l+r);
+        const after=getExactTokenCount(l+piece+r);
+        return after-before;
+    });
+    return Number(mean(deltas).toFixed(4));
+}
+function isSafeAnalysisPiece(text){
+    if(!text) return false;
+    if(text.trim().length<2) return false;
+    if(text.trim()!==text) return false;
+    if(/^[\W_]+$/u.test(text)) return false;
+    return true;
+}
+
+function generateAliasCandidates(prefixes, probeLimit=2500){
+    const upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower='abcdefghijklmnopqrstuvwxyz';
+    const digits='0123456789';
+    const safeSymbols='@#~$%&*?!^';
+    const emitted=new Set();
+    const out=[];
+
+    function push(s){
+        if(out.length>=probeLimit) return;
+        if(emitted.has(s)) return;
+        if(!printableAlias(s)) return;
+        if(!isSafeMapAlias(s)) return;
+        emitted.add(s);
+        out.push(s);
+    }
+
+    [...upper,...lower,...digits,...safeSymbols].forEach(ch=>push(ch));
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        [...upper,...lower,...digits].forEach(ch=>push(pref+ch));
+    });
+
+    for(const a of upper){
+        for(const b of upper){
+            push(a+b);
+            if(out.length>=probeLimit) return out;
+        }
+    }
+
+    for(const a of upper){
+        for(const b of digits){
+            push(a+b);
+            if(out.length>=probeLimit) return out;
+        }
+    }
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        for(const a of upper){
+            for(const b of digits){
+                push(pref+a+b);
+                if(out.length>=probeLimit) return out;
+            }
+        }
+    });
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        for(const a of upper){
+            for(const b of upper){
+                push(pref+a+b);
+                if(out.length>=probeLimit) return out;
+            }
+        }
+    });
+
+    return out.slice(0, probeLimit);
+}
+
+function analyzeAliasPoolWeb(corpus, prefixes, keepLimit=128, probeLimit=2500){
+    const results=[];
+    const candidates=generateAliasCandidates(prefixes, probeLimit);
+    for(const cand of candidates){
+        if(corpus.includes(cand)) continue;
+        results.push({
+            alias:cand,
+            isolated_tokens:getExactTokenCount(cand),
+            avg_marginal_tokens:averageMarginalCost(cand),
+            length:cand.length
+        });
+    }
+    results.sort((a,b)=>
+        a.avg_marginal_tokens-b.avg_marginal_tokens ||
+        a.isolated_tokens-b.isolated_tokens ||
+        a.length-b.length ||
+        a.alias.localeCompare(b.alias)
+    );
+    return results.slice(0, keepLimit);
+}
+function analyzeSeparatorsWeb(separators){
+    const probes=[['A','B'],['QZ','主人公'],['AA','トウカイテイオー'],['K1','メジロマックイーン']];
+    const rows=separators.map(sep=>{
+        const samples=probes.map(([l,r])=>getExactTokenCount(`${l}${sep}${r}\n`));
+        return {separator:sep,avg_tokens:Number(mean(samples).toFixed(4)),samples};
+    });
+    rows.sort((a,b)=>a.avg_tokens-b.avg_tokens || a.separator.localeCompare(b.separator));
+    return rows;
+}
+function pickSampleValuesWeb(corpus, maxValues=4){
+    const pieces=[];
+    if(corpus.trim()){
+        const counts=new Map();
+        tokenizeTextLikeWords(corpus).forEach(tok=>counts.set(tok, (counts.get(tok)||0)+1));
+        [...counts.entries()].sort((a,b)=>b[1]-a[1] || b[0].length-a[0].length).forEach(([tok])=>{if(tok.length>=3) pieces.push(tok);});
+        corpus.split('\n').map(v=>v.trim()).filter(v=>v.length>=6).sort((a,b)=>b.length-a.length).slice(0,20).forEach(v=>pieces.push(v));
+    }
+    ['主人公','トウカイテイオー','メジロマックイーン','会長'].forEach(v=>pieces.push(v));
+    return uniqArray(pieces).slice(0,maxValues);
+}
+function analyzeHeaderTemplatesWeb(aliasPool, sampleValues){
+    const fallback=[{alias:'AA'},{alias:'AB'},{alias:'AC'},{alias:'AD'}];
+    const pool=aliasPool.length?aliasPool:fallback;
+    const pairs=sampleValues.slice(0, Math.min(sampleValues.length, pool.length)).map((v,i)=>[pool[i].alias,v]);
+    const rows=ANALYSIS_HEADER_LIBRARY.map(tpl=>{
+        const rendered=renderAnalysisHeader(tpl, pairs);
+        return {name:tpl.name,token_cost:getExactTokenCount(rendered),template:tpl,preview:rendered.slice(0,500)};
+    });
+    rows.sort((a,b)=>a.token_cost-b.token_cost || a.name.localeCompare(b.name));
+    return rows;
+}
+function analyzeCharBurdenWeb(corpus, limit=80){
+    const source=corpus || '「」『』（）()[]{}<>:=|@#~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ぁあア漢字。、「」\n ';
+    const counts=new Map();
+    for(const ch of source){counts.set(ch, (counts.get(ch)||0)+1);}
+    const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([ch,freq])=>{
+        const avg=averageMarginalCost(ch);
+        return {char:ch,char_display:escapeVisibleChar(ch),freq,avg_marginal_tokens:avg,burden_score:Number((avg*freq).toFixed(4)),ord:ch.codePointAt(0)};
+    });
+    rows.sort((a,b)=>b.burden_score-a.burden_score || b.avg_marginal_tokens-a.avg_marginal_tokens);
+    return rows;
+}
+function mineTokenNgramCandidatesWeb(corpus, nMin=2, nMax=8, minCount=2, topLimit=80){
+    const provider=appSettings.tokenCalcProvider||'openai';
+    let ids=encodeToTokenIds(corpus, provider);
+    if(!ids || !ids.length) return [];
+    if(ids.length>50000) ids=ids.slice(0,50000);
+    const candidates=new Map();
+
+    for(let n=nMin; n<=nMax; n++){
+        const local=new Map();
+        for(let i=0;i<=ids.length-n;i++){
+            const slice=ids.slice(i,i+n);
+            const key=slice.join(',');
+            local.set(key, (local.get(key)||0)+1);
+        }
+        for(const [key,count] of local){
+            if(count<minCount) continue;
+            const text=(decodeTokenIds(key.split(',').map(Number), provider)||'').trim();
+            if(!isSafeAnalysisPiece(text)) continue;
+            const realCount=countOccurrences(corpus, text);
+            if(realCount<minCount) continue;
+            const phraseTokens=getExactTokenCount(text);
+            const rawBurden=phraseTokens*realCount;
+            const prev=candidates.get(text);
+            const row={phrase:text,count:realCount,phrase_tokens:phraseTokens,raw_burden:rawBurden};
+            if(!prev || row.raw_burden>prev.raw_burden) candidates.set(text,row);
+        }
+    }
+
+    return [...candidates.values()].sort((a,b)=>b.raw_burden-a.raw_burden || b.phrase.length-a.phrase.length).slice(0,topLimit);
+}
+function chooseAliasForPhraseWeb(aliasPool, corpus, used){
+    for(const row of aliasPool){
+        if(used.has(row.alias)) continue;
+        if(corpus.includes(row.alias)) continue;
+        return row.alias;
+    }
+    return null;
+}
+function exactSinglePhraseGainWeb(corpus, phrase, alias, headerTemplate, beforeTokens){
+    const count=countOccurrences(corpus, phrase);
+    if(count<=0) return {count:0,before_tokens:beforeTokens,after_tokens:beforeTokens,gain:0,header:''};
+    const replaced=corpus.split(phrase).join(alias);
+    const header=renderAnalysisHeader(headerTemplate, [[alias, phrase]]);
+    const afterTokens=getExactTokenCount(header+replaced);
+    return {count,before_tokens:beforeTokens,after_tokens:afterTokens,gain:beforeTokens-afterTokens,header};
+}
+function analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeaderTemplate, opts){
+    if(!corpus.trim()) return [];
+    const rough=mineTokenNgramCandidatesWeb(corpus, opts.ngramMin, opts.ngramMax, opts.minCount, Math.max(opts.phraseLimit*3, 60));
+    const beforeTokens=getExactTokenCount(corpus);
+    const used=new Set();
+    const rows=[];
+    for(const item of rough){
+        const alias=chooseAliasForPhraseWeb(aliasPool, corpus, used);
+        if(!alias) break;
+        const exact=exactSinglePhraseGainWeb(corpus, item.phrase, alias, bestHeaderTemplate.template, beforeTokens);
+        if(exact.gain<=0) continue;
+        rows.push({
+            phrase:item.phrase,
+            phrase_preview:compactPreview(item.phrase,80),
+            count:exact.count,
+            phrase_tokens:item.phrase_tokens,
+            alias,
+            alias_isolated_tokens:(aliasPool.find(v=>v.alias===alias)||{}).isolated_tokens ?? null,
+            gain:exact.gain,
+            before_tokens:exact.before_tokens,
+            after_tokens:exact.after_tokens,
+            header_preview:exact.header.slice(0,120),
+            raw_burden:item.raw_burden
+        });
+        used.add(alias);
+        if(rows.length>=opts.phraseLimit) break;
+    }
+    rows.sort((a,b)=>b.gain-a.gain || b.raw_burden-a.raw_burden || b.phrase.length-a.phrase.length);
+    return rows;
+}
+function buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows){
+    return {
+        recommended_aliases: aliasPool.slice(0,32).map(v=>v.alias),
+        recommended_separators: separatorRows.slice(0,8).map(v=>v.separator),
+        recommended_header_template: headerRows[0]?.template || null,
+        expensive_chars: charRows.slice(0,24).map(v=>({char:v.char,char_display:v.char_display,avg_marginal_tokens:v.avg_marginal_tokens,burden_score:v.burden_score})),
+        recommended_phrase_replacements: phraseRows.slice(0,24).map(v=>({phrase:v.phrase,alias:v.alias,gain:v.gain,count:v.count}))
+    };
+}
+function buildAiCompactPacketWeb(profile){
+    const rules=profile.distilled_rules||{};
+    return {
+        schema:'tokenizer-distiller-ai-packet.v1',
+        goal:'Minimize token count for the target tokenizer while preserving meaning.',
+        target:profile.target,
+        corpus_stats:profile.corpus,
+        recommended_alias_pool:(rules.recommended_aliases||[]).slice(0,32),
+        recommended_separators:(rules.recommended_separators||[]).slice(0,8),
+        recommended_header_template:rules.recommended_header_template||null,
+        expensive_chars:(rules.expensive_chars||[]).slice(0,20),
+        replacement_candidates:(rules.recommended_phrase_replacements||[]).slice(0,30),
+        operating_rules:[
+            'Prefer aliases from the recommended alias pool.',
+            'Prefer the recommended header template.',
+            'Use only replacements with positive net gain when possible.',
+            'Avoid aliases already present in the source text.',
+            'Do not change meaning.',
+            'If uncertain about semantic safety, skip the replacement.'
+        ],
+        required_output:{
+            mapping:[{alias:'AA', original:'...'}],
+            compressed_text:'...',
+            notes:'...',
+            estimated_gain:0
+        }
+    };
+}
+function buildAiHandoffMarkdownWeb(profile){
+    const rules=profile.distilled_rules||{};
+    const exp=(rules.expensive_chars||[]).slice(0,20);
+    const repl=(rules.recommended_phrase_replacements||[]).slice(0,30);
+    const aliases=(rules.recommended_aliases||[]).slice(0,32);
+    const seps=(rules.recommended_separators||[]).slice(0,8);
+
+    const lines=[];
+    lines.push('# AI Compression Handoff','');
+    lines.push('## Goal');
+    lines.push('Minimize prompt token count for the target tokenizer while preserving meaning exactly.','');
+    lines.push('## Target');
+    lines.push(`- backend: ${profile.target.backend}`);
+    lines.push(`- tokenizer: ${profile.target.target}`);
+    lines.push(`- display_name: ${profile.target.display_name}`,'');
+    lines.push('## Corpus stats');
+    lines.push(`- chars: ${profile.corpus.chars}`);
+    lines.push(`- tokens: ${profile.corpus.tokens}`,'');
+    lines.push('## Recommended alias pool');
+    lines.push(aliases.length ? aliases.join(', ') : '(none)','');
+    lines.push('## Recommended separators');
+    lines.push(seps.length ? seps.join(', ') : '(none)','');
+    lines.push('## Recommended header template');
+    lines.push('```json');
+    lines.push(JSON.stringify(rules.recommended_header_template||null, null, 2));
+    lines.push('```','');
+    lines.push('## Expensive characters / symbols');
+    if(exp.length){exp.forEach(v=>lines.push(`- ${v.char_display} (avg_marginal_tokens=${v.avg_marginal_tokens}, burden=${v.burden_score})`));}
+    else lines.push('(none)');
+    lines.push('');
+    lines.push('## Best replacement candidates');
+    if(repl.length){repl.forEach(v=>lines.push(`- ${v.phrase} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
+    else lines.push('(none)');
+    lines.push('');
+    lines.push('## Operating procedure');
+    lines.push('1. Prefer aliases from the recommended alias pool.');
+    lines.push('2. Prefer the recommended header template.');
+    lines.push('3. Apply only replacements with positive net gain.');
+    lines.push('4. Avoid aliases already present in the source text.');
+    lines.push('5. Preserve meaning exactly.');
+    lines.push('6. If a replacement may distort semantics, skip it.');
+    lines.push('');
+    lines.push('## Expected output');
+    lines.push('Return:');
+    lines.push('1. mapping table');
+    lines.push('2. compressed text');
+    lines.push('3. brief notes');
+    lines.push('4. estimated token gain');
+    lines.push('');
+    return lines.join('\n');
+}
+function buildAiCompressorPromptWeb(profile){
+    const packet=buildAiCompactPacketWeb(profile);
+    return `You are an AI assistant performing tokenizer-aware prompt compression.
+
+Use the following tokenizer analysis packet:
+
+\`\`\`json
+${JSON.stringify(packet, null, 2)}
+\`\`\`
+
+Task:
+- Compress the user's text according to the analysis above.
+- Preserve meaning exactly.
+- Prefer aliases from "recommended_alias_pool".
+- Prefer the "recommended_header_template".
+- Prefer replacements listed in "replacement_candidates".
+- Only use replacements that appear semantically safe.
+- Do not invent abbreviations unless the recommended pool is exhausted.
+
+Return JSON in this schema:
+{
+  "mapping": [
+    {"alias": "AA", "original": "主人公"}
+  ],
+  "compressed_text": "",
+  "notes": "",
+  "estimated_gain": 0
+}`;
+}
+function buildAiDecompressorPromptWeb(profile){
+    return `You are an AI assistant restoring compressed text.
+
+Target tokenizer:
+- backend: ${profile.target.backend}
+- tokenizer: ${profile.target.target}
+- display_name: ${profile.target.display_name}
+
+Task:
+- Read the mapping table in the compressed text.
+- Restore abbreviations to original forms.
+- Preserve line breaks and formatting as much as possible.
+- Do not paraphrase unless restoration requires it.
+
+Return JSON in this schema:
+{
+  "restored_text": "",
+  "notes": ""
+}`;
+}
+function buildSummaryTextWeb(profile){
+    const rules=profile.distilled_rules||{};
+    const lines=[];
+    lines.push('Tokenizer Analysis Summary');
+    lines.push('========================================');
+    lines.push(`target         : ${profile.target.display_name}`);
+    lines.push(`backend        : ${profile.target.backend}`);
+    lines.push(`tokenizer      : ${profile.target.target}`);
+    lines.push(`corpus chars   : ${profile.corpus.chars}`);
+    lines.push(`corpus tokens  : ${profile.corpus.tokens}`);
+    lines.push('');
+    lines.push(`best header    : ${profile.summary.best_header_name} (cost=${profile.summary.best_header_token_cost})`);
+    lines.push(`top phrase gain: ${profile.summary.top_phrase_gain}`);
+    lines.push('');
+    lines.push('recommended aliases:');
+    lines.push((rules.recommended_aliases||[]).slice(0,20).join(', ') || '(none)');
+    lines.push('');
+    lines.push('recommended separators:');
+    lines.push((rules.recommended_separators||[]).slice(0,8).join(', ') || '(none)');
+    lines.push('');
+    lines.push('top replacement candidates:');
+    const top=(rules.recommended_phrase_replacements||[]).slice(0,10);
+    if(top.length){top.forEach(v=>lines.push(`- ${compactPreview(v.phrase,60)} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
+    else lines.push('(none)');
+    return lines.join('\n');
+}
+
+runTokenizerAnalysisBtn.addEventListener('click', async()=>{
+    const corpus=normalizeTextLite(analysisCorpusText.value);
+    if(!corpus.trim()){showToast('分析対象テキストがありません');return;}
+
+    const provider=appSettings.tokenCalcProvider||'openai';
+    runTokenizerAnalysisBtn.disabled=true;
+    analysisRunNotice.textContent='トークナイザーを準備しています…';
+
+    try{
+        await initLocalTokenizer();
+        const entry=localTokenizers[provider];
+        if(!entry || entry.status!=='ready') throw new Error('ローカルトークナイザーの準備に失敗しました');
+
+        analysisRunNotice.textContent='略号候補・重い文字列・置換候補を分析中…';
+
+        const prefixes=uniqArray(['@','#','~','Q','Z']);
+        const separators=uniqArray(['=',':','|','@','#','>','~',';']);
+        const aliasPool=analyzeAliasPoolWeb(corpus, prefixes, parseInt(analysisAliasKeepLimitInput.value,10)||128, parseInt(analysisAliasProbeLimitInput.value,10)||2500);
+        const separatorRows=analyzeSeparatorsWeb(separators);
+        const sampleValues=pickSampleValuesWeb(corpus, 4);
+        const headerRows=analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
+        const charRows=analyzeCharBurdenWeb(corpus, parseInt(analysisCharLimitInput.value,10)||80);
+        const bestHeader=headerRows[0] || {name:'fallback',token_cost:0,template:ANALYSIS_HEADER_LIBRARY[0]};
+        const phraseRows=analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeader, {
+            ngramMin:parseInt(analysisNgramMinInput.value,10)||2,
+            ngramMax:parseInt(analysisNgramMaxInput.value,10)||8,
+            minCount:parseInt(analysisMinCountInput.value,10)||2,
+            phraseLimit:parseInt(analysisPhraseLimitInput.value,10)||40
+        });
+        const distilledRules=buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
+
+        const profile={
+            schema:'toolbox-tokenizer-analysis.v1',
+            created_at:new Date().toISOString(),
+            app:{name:'Toolbox PWA',version:'9.0+analyzer'},
+            target:{
+                backend:provider,
+                target:provider,
+                display_name:provider,
+                tokenizer_status:entry.status,
+                precise_mode:provider==='deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
+            },
+            corpus:{chars:corpus.length,tokens:getExactTokenCount(corpus),sample_values:sampleValues},
+            settings:{
+                alias_probe_limit:parseInt(analysisAliasProbeLimitInput.value,10)||2500,
+                alias_keep_limit:parseInt(analysisAliasKeepLimitInput.value,10)||128,
+                ngram_min:parseInt(analysisNgramMinInput.value,10)||2,
+                ngram_max:parseInt(analysisNgramMaxInput.value,10)||8,
+                min_count:parseInt(analysisMinCountInput.value,10)||2,
+                phrase_limit:parseInt(analysisPhraseLimitInput.value,10)||40,
+                char_limit:parseInt(analysisCharLimitInput.value,10)||80
+            },
+            summary:{
+                best_header_name:headerRows[0]?.name||null,
+                best_header_token_cost:headerRows[0]?.token_cost||null,
+                best_separators:separatorRows.slice(0,5).map(v=>v.separator),
+                best_aliases:aliasPool.slice(0,12).map(v=>v.alias),
+                top_phrase_gain:phraseRows[0]?.gain||0
+            },
+            alias_pool:aliasPool,
+            separators:separatorRows,
+            header_templates:headerRows,
+            char_burden:charRows,
+            phrase_suggestions:phraseRows,
+            distilled_rules:distilledRules,
+            notes:[
+                'This JSON contains a static tokenizer tendency analysis and compression gain estimates for the given corpus.',
+                'For auto-compression, use these results as candidate seeds and re-score with the real tokenizer on the full text.'
+            ]
+        };
+
+        const packet=buildAiCompactPacketWeb(profile);
+        const handoff=buildAiHandoffMarkdownWeb(profile);
+        const compressor=buildAiCompressorPromptWeb(profile);
+        const decompressor=buildAiDecompressorPromptWeb(profile);
+        const summary=buildSummaryTextWeb(profile);
+
+        analysisOutputs.summary=summary;
+        analysisOutputs.profile=JSON.stringify(profile, null, 2);
+        analysisOutputs.packet=JSON.stringify(packet, null, 2);
+        analysisOutputs.handoff=handoff;
+        analysisOutputs.compressor=compressor;
+        analysisOutputs.decompressor=decompressor;
+
+        analysisActiveTab='summary';
+        renderAnalysisTab();
+        analysisRunNotice.textContent=`分析完了: alias ${aliasPool.length}件 / phrases ${phraseRows.length}件 / best gain ${profile.summary.top_phrase_gain}`;
+        saveWorkspaceDebounced();
+        showToast('トークナイザー分析が完了しました');
+    }catch(err){
+        console.error(err);
+        analysisRunNotice.textContent=`分析失敗: ${err.message||err}`;
+        showToast('分析に失敗しました');
+    }finally{
+        runTokenizerAnalysisBtn.disabled=false;
+    }
+});
+
+const _usedAbbrs = new Set();
+
+function generateOptimalAbbr(index, textContext, replacedMap) {
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const candidates = [];
+
+    for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) candidates.push(alpha[a] + alpha[b]);
+    for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) for (let d = 0; d < 10; d++) candidates.push(alpha[a] + alpha[b] + d);
+    for (const pref of ['Q','Z','@','#','~']) {
+        for (let a = 0; a < 26; a++) for (let d = 0; d < 10; d++) candidates.push(pref + alpha[a] + d);
+    }
+
+    for (const c of candidates) {
+        if (!isSafeMapAlias(c)) continue;
+        if (_usedAbbrs.has(c)) continue;
+        if (replacedMap.has(c)) continue;
+        if (textContext.includes(c)) continue;
+        if (hasEncoder) {
+            const tokenCount = countTokensLocal(c, p);
+            if (tokenCount !== null && tokenCount > 1) continue;
+        }
+        _usedAbbrs.add(c);
+        return c;
+    }
+
+    let fi = index;
+    for (let tries = 0; tries < 1000; tries++) {
+        const fallback = 'v' + toBase62(fi);
+        fi++;
+        if (!isSafeMapAlias(fallback)) continue;
+        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {
+            _usedAbbrs.add(fallback);
+            return fallback;
+        }
+    }
+    return 'Q' + toBase62(Date.now() % 10000);
+}
+
+function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum) {
     const p = appSettings.tokenCalcProvider || 'openai';
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
 
-    // 入力全体のトークン数を記録（効果測定用）
-    const inputTokensBefore = getExactTokenCount(text);
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+    const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
+    const ngrams = new Map();
 
-    const { replacedMap, bodyText } = extractExistingMappings(text);
-
-    // 使用済み略称をリセットしてから既存マッピングを登録
-    _usedAbbrs.clear();
-    for (const [abbr] of replacedMap) {
-        _usedAbbrs.add(abbr);
-    }
-
-    // Step 0: 内蔵辞書による一括置換
-    let processedBody = bodyText;
-    let builtinCount = 0;
-
-    if (autoCompressApplyUmaInput.checked) {
-        const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
-        processedBody = r.text; builtinCount += r.count;
-        // 内蔵辞書の略称も使用済みに追加
-        for (const [, abbr] of Object.entries(umaNameOnlyMap)) { _usedAbbrs.add(abbr); }
-    }
-    if (autoCompressApplyPronounInput.checked) {
-        const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
-        processedBody = r.text; builtinCount += r.count;
-        for (const [, abbr] of Object.entries(pronounMap)) { _usedAbbrs.add(abbr); }
-    }
-
-    // Step 1: 空白削除
-    if (autoCompressTrimWhitespaceInput.checked) {
-        processedBody = trimWhitespaceForCompression(processedBody);
-    }
-
-    // Step 2: セリフ結合
-    let dialogueMergeCount = 0;
-    if (autoCompressMergeDialoguesInput.checked) {
-        const r = mergeConsecutiveDialogues(processedBody);
-        processedBody = r.text; dialogueMergeCount = r.mergedCount;
-    }
-
-    // Step 3: 括弧置換
-    let bracketReplacedCount = 0;
-    if (autoCompressReplaceBracketsInput.checked) {
-        const r = replaceBracketsLightweight(processedBody);
-        processedBody = r.text; bracketReplacedCount = r.replacedCount;
-    }
-
-    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
-    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
-    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
-    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-    const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
-
-    let newText = processedBody;
-    let totalCompressedCount = 0;
-    let abbrIndex = replacedMap.size + 1;
-
-    for (let pass = 0; pass < maxPasses; pass++) {
-        // ★ トークナイザー認識型候補発見
-        const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
-
-        if (candidates.length === 0) break;
-
-        let passReplaced = false;
-
-        // 略称割当て: トークナイザーで1トークンになるASCII略称を最適に生成
-        const abbrAssignment = new Map();
-        for (const cand of candidates) {
-            // 既に別のパスで同じフレーズが登録済みかチェック
-            let alreadyExists = false;
-            for (const [, existingOriginal] of replacedMap.entries()) {
-                if (existingOriginal === cand.phrase) { alreadyExists = true; break; }
-            }
-            if (alreadyExists) continue;
-
-            const abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);
-            abbrAssignment.set(cand.phrase, abbr);
-            abbrIndex++;
+    for (let n = 1; n <= 6; n++) {
+        for (let i = 0; i <= segments.length - n; i++) {
+            let phrase = '';
+            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+            phrase = phrase.trim();
+            if (!phrase || phrase.length < minLen) continue;
+            if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) continue;
+            if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;
+            if (excludeAlnum && containsAlnum(phrase)) continue;
+            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
         }
+    }
 
-        // 長いフレーズから先に置換（部分文字列の衝突回避）
-        const sortedForReplace = [...abbrAssignment.entries()].sort((a, b) => b[0].length - a[0].length);
-        for (const [original, abbr] of sortedForReplace) {
-            const regex = new RegExp(escRegex(original), 'g');
-            if (regex.test(newText)) {
-                newText = newText.replace(regex, abbr);
-                replacedMap.set(abbr, original);
-                passReplaced = true;
-                totalCompressedCount++;
+    if (hasEncoder) {
+        const tokenIds = encodeToTokenIds(text, p);
+        if (tokenIds && tokenIds.length > 0) {
+            for (let n = 2; n <= 8; n++) {
+                const tokenNgramMap = new Map();
+                for (let i = 0; i <= tokenIds.length - n; i++) {
+                    const slice = tokenIds.slice(i, i + n);
+                    const key = slice.join(',');
+                    if (!tokenNgramMap.has(key)) tokenNgramMap.set(key, { ids: slice, count: 0 });
+                    tokenNgramMap.get(key).count++;
+                }
+
+                for (const [, entry] of tokenNgramMap) {
+                    if (entry.count < minCount) continue;
+                    const decoded = decodeTokenIds(entry.ids, p);
+                    if (!decoded || decoded.length < minLen) continue;
+                    const trimmed = decoded.trim();
+                    if (!trimmed || trimmed.length < minLen) continue;
+                    if (/^[\s\r\n]+$/.test(trimmed)) continue;
+                    if (excludeAlnum && containsAlnum(trimmed)) continue;
+
+                    const re = new RegExp(escRegex(trimmed), 'g');
+                    const matches = text.match(re);
+                    const realCount = matches ? matches.length : 0;
+                    if (realCount < minCount) continue;
+
+                    if (!ngrams.has(trimmed) || ngrams.get(trimmed) < realCount) ngrams.set(trimmed, realCount);
+                }
             }
         }
-
-        if (!passReplaced) break;
     }
 
-    if (totalCompressedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
-        showToast('自動圧縮できるワードがありませんでした'); return;
+    const results = [];
+    for (const [phrase, count] of ngrams) {
+        if (count < minCount) continue;
+        const phraseTokCost = getExactTokenCount(phrase);
+        const abbrTokCost = 1;
+        const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);
+        const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);
+        if (saving > 0) results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });
     }
 
-    const formatOptions = {
-        mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
-        replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
+    results.sort((a, b) => b.phrase.length - a.phrase.length);
+    const filtered = [];
+    for (const item of results) {
+        let isSub = false;
+        for (const kept of filtered) {
+            if (kept.phrase.includes(item.phrase)) {
+                const remainingCount = Math.max(0, item.count - kept.count);
+                const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);
+                if (remainingSaving <= 0) { isSub = true; break; }
+            }
+        }
+        if (!isSub) filtered.push(item);
+    }
+    filtered.sort((a, b) => b.saving - a.saving);
+    return filtered.slice(0, maxItems);
+}
+
+function hasOriginalInMap(replacedMap, original){
+    for(const [,v] of replacedMap.entries()){
+        if(v===original) return true;
+    }
+    return false;
+}
+function getParsedAnalysisProfile(){
+    try{
+        if(analysisOutputs && analysisOutputs.profile) return JSON.parse(analysisOutputs.profile);
+    }catch(e){}
+    return null;
+}
+function isAnalysisProfileCompatible(profile){
+    if(!profile || !profile.target) return false;
+    const provider=appSettings.tokenCalcProvider||'openai';
+    const backend=profile.target.backend||'';
+    const target=profile.target.target||'';
+    const display=profile.target.display_name||'';
+    return backend===provider || target===provider || display===provider;
+}
+function getRecommendedAliasPool(profile){
+    const aliases=profile?.distilled_rules?.recommended_aliases || [];
+    return aliases.filter(a=>isSafeMapAlias(a));
+}
+function chooseAliasWithAnalysis(index, textContext, replacedMap, profile){
+    const recommended=getRecommendedAliasPool(profile);
+    const provider=appSettings.tokenCalcProvider||'openai';
+    const hasEncoder=localTokenizers[provider]?.status==='ready' && localTokenizers[provider]?.encoder;
+
+    for(const alias of recommended){
+        if(!alias) continue;
+        if(!isSafeMapAlias(alias)) continue;
+        if(_usedAbbrs.has(alias)) continue;
+        if(replacedMap.has(alias)) continue;
+        if(textContext.includes(alias)) continue;
+        if(hasEncoder){
+            const tok=countTokensLocal(alias, provider);
+            if(tok!==null && tok>1) continue;
+        }
+        _usedAbbrs.add(alias);
+        return alias;
+    }
+    return generateOptimalAbbr(index, textContext, replacedMap);
+}
+function buildCompactHeaderFromTemplate(replacedMap, formatOptions, template){
+    const hasMap = replacedMap && replacedMap.size > 0;
+    const hasFmt = !!(formatOptions?.mergedDialogues || formatOptions?.replacedBrackets);
+    if(!hasMap && !hasFmt) return '';
+    if(!hasMap) return buildCompressedHeader(replacedMap, formatOptions);
+
+    const tpl = template || {prefix:'', entry:'{alias}={value}\n', suffix:'--\n'};
+    const lines=[];
+    const prefix=(tpl.prefix||'').replace(/\n+$/,'');
+    const suffix=(tpl.suffix||'--\n').replace(/\n+$/,'');
+
+    if(prefix) lines.push(prefix);
+    if(formatOptions?.replacedBrackets) lines.push('! dialogue: NAME>TEXT / "quote" / \'title\' / (note)');
+    if(formatOptions?.mergedDialogues) lines.push('! same-speaker lines may be merged');
+
+    replacedMap.forEach((original, abbr)=>{
+        const line=(tpl.entry||'{alias}={value}\n').replace('{alias}', abbr).replace('{value}', original).replace(/\n+$/,'');
+        lines.push(line);
+    });
+
+    if(suffix) lines.push(suffix);
+    return lines.join('\n') + '\n';
+}
+function buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile){
+    const candidates = [];
+    const seen = new Set();
+    function pushCandidate(header, label){
+        const h=header||'';
+        if(seen.has(h)) return;
+        seen.add(h);
+        candidates.push({label, header:h, tokens:getExactTokenCount(h + (bodyText||''))});
+    }
+
+    pushCandidate(buildCompressedHeader(replacedMap, formatOptions), 'verbose-en');
+
+    const profTpl = profile?.distilled_rules?.recommended_header_template || null;
+    if(profTpl) pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, profTpl), 'profile-template');
+
+    if(Array.isArray(ANALYSIS_HEADER_LIBRARY)){
+        ANALYSIS_HEADER_LIBRARY.forEach((tpl, i)=>{
+            pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, tpl), `lib-${tpl.name||i}`);
+        });
+    }
+
+    candidates.sort((a,b)=>a.tokens-b.tokens || a.header.length-b.header.length);
+    return candidates;
+}
+function chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile){
+    const candidates = buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile);
+    return candidates[0]?.header || '';
+}
+function scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile){
+    const beforeHeader = chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile);
+    const beforeTokens = getExactTokenCount(beforeHeader + bodyText);
+
+    const testMap = new Map(replacedMap);
+    testMap.set(alias, phrase);
+
+    const replacedBody = bodyText.split(phrase).join(alias);
+    const afterHeader = chooseBestCompressedHeader(testMap, replacedBody, formatOptions, profile);
+    const afterTokens = getExactTokenCount(afterHeader + replacedBody);
+
+    return {
+        gain: beforeTokens - afterTokens,
+        before_tokens: beforeTokens,
+        after_tokens: afterTokens,
+        replacedBody,
+        afterHeader
     };
+}
+function applyAnalyzedSuggestionsFirst(bodyText, replacedMap, formatOptions, profile){
+    const suggestions = [...(profile?.distilled_rules?.recommended_phrase_replacements || [])].sort((a,b)=>(b.gain||0)-(a.gain||0));
+    let appliedCount = 0;
+    let appliedGain = 0;
 
-    const finalOutput = buildCompressedHeader(replacedMap, formatOptions) + newText;
-    outputEl.value = finalOutput;
-    updateCounts(); saveWorkspaceDebounced();
+    for(const item of suggestions){
+        const phrase = item?.phrase;
+        if(!phrase) continue;
+        if(!bodyText.includes(phrase)) continue;
+        if(hasOriginalInMap(replacedMap, phrase)) continue;
 
-    // 効果測定
-    const outputTokensAfter = getExactTokenCount(finalOutput);
-    const saved = inputTokensBefore - outputTokensAfter;
-    const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+        let alias = item.alias;
+        if(!alias || !isSafeMapAlias(alias) || _usedAbbrs.has(alias) || replacedMap.has(alias) || bodyText.includes(alias)){
+            alias = chooseAliasWithAnalysis(replacedMap.size + appliedCount + 1, bodyText, replacedMap, profile);
+        }else{
+            _usedAbbrs.add(alias);
+        }
+        if(!alias) continue;
 
-    const parts = [];
-    if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
-    if (totalCompressedCount > 0) parts.push(`自動${totalCompressedCount}語`);
-    if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
-    if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
-    const detail = parts.length > 0 ? `（${parts.join('・')}）` : '';
-    const engineLabel = hasEncoder ? '🎯' : '≈';
+        const exact = scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile);
+        if(exact.gain <= 0){
+            _usedAbbrs.delete(alias);
+            continue;
+        }
 
-    if (saved > 0) {
-        showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);
-    } else {
-        showToast(`🚀 圧縮完了！${detail}`);
+        bodyText = exact.replacedBody;
+        replacedMap.set(alias, phrase);
+        appliedCount++;
+        appliedGain += exact.gain;
     }
-});
+
+    return { text: bodyText, appliedCount, appliedGain };
+}
+function rescoreCompressionCandidatesExactly(bodyText, replacedMap, formatOptions, profile, rawCandidates, maxExact=8){
+    const shortlist = rawCandidates.slice(0, Math.max(maxExact * 3, 12));
+    const rescored = [];
+    let tempIndex = replacedMap.size + 1;
+
+    for(const cand of shortlist){
+        if(!cand?.phrase) continue;
+        if(hasOriginalInMap(replacedMap, cand.phrase)) continue;
+        if(!bodyText.includes(cand.phrase)) continue;
+
+        const alias = chooseAliasWithAnalysis(tempIndex, bodyText, replacedMap, profile);
+        tempIndex++;
+
+        if(!alias) continue;
+
+        const exact = scoreReplacementExact(bodyText, replacedMap, cand.phrase, alias, formatOptions, profile);
+        _usedAbbrs.delete(alias);
+
+        if(exact.gain <= 0) continue;
+
+        rescored.push({
+            ...cand,
+            alias,
+            gain: exact.gain,
+            before_tokens: exact.before_tokens,
+            after_tokens: exact.after_tokens,
+            replacedBody: exact.replacedBody
+        });
+    }
+
+    rescored.sort((a,b)=>(b.gain||0)-(a.gain||0) || (b.saving||0)-(a.saving||0) || b.phrase.length-a.phrase.length);
+    return rescored.slice(0, maxExact);
+}
+
+// ============================================================
+// Shared evaluation for BruteForce / GA
+// ============================================================
+function evaluateSolution(bodyText, candidates, bits, baseReplacedMap, formatOptions, profile, useExact) {
+    const tempMap = new Map(baseReplacedMap);
+    let text = bodyText;
+    for (let i = 0; i < candidates.length; i++) {
+        if (!bits[i]) continue;
+        const cand = candidates[i];
+        if (!text.includes(cand.phrase)) continue;
+        text = text.split(cand.phrase).join(cand._alias);
+        tempMap.set(cand._alias, cand.phrase);
+    }
+    if (useExact) {
+        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
+        return getExactTokenCount(header + text);
+    } else {
+        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
+        const p = appSettings.tokenCalcProvider || 'openai';
+        return estimateTokensApprox(header + text, p);
+    }
+}
+function applySolution(bodyText, candidates, bits, baseReplacedMap) {
+    const resultMap = new Map(baseReplacedMap);
+    let text = bodyText;
+    for (let i = 0; i < candidates.length; i++) {
+        if (!bits[i]) continue;
+        const cand = candidates[i];
+        if (!text.includes(cand.phrase)) continue;
+        text = text.split(cand.phrase).join(cand._alias);
+        resultMap.set(cand._alias, cand.phrase);
+    }
+    return { text, replacedMap: resultMap };
+}
+
+// ============================================================
+// Brute Force
+// ============================================================
+async function bruteForceCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, onProgress) {
+    const n = rawCandidates.length;
+    const total = 1 << n;
+    let bestBits = new Array(n).fill(false);
+    let bestScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
+    for (let mask = 1; mask < total; mask++) {
+        const bits = [];
+        for (let i = 0; i < n; i++) bits.push(!!(mask & (1 << i)));
+        const score = evaluateSolution(bodyText, rawCandidates, bits, baseReplacedMap, formatOptions, profile, true);
+        if (score < bestScore) { bestScore = score; bestBits = [...bits]; }
+        if (mask % 64 === 0 || mask === total - 1) {
+            const pct = Math.round((mask / total) * 100);
+            if (onProgress) onProgress(pct, `全探索: ${mask}/${total}通り (best=${bestScore}tok)`);
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
+    return { bits: bestBits, score: bestScore };
+}
+
+// ============================================================
+// Genetic Algorithm
+// ============================================================
+function gaCreateRandomIndividual(n) { const bits = []; for (let i = 0; i < n; i++) bits.push(Math.random() < 0.4); return bits; }
+function gaTournamentSelect(population, fitnesses, tournamentSize) {
+    let bestIdx = -1, bestFit = Infinity;
+    for (let t = 0; t < tournamentSize; t++) { const idx = Math.floor(Math.random() * population.length); if (fitnesses[idx] < bestFit) { bestFit = fitnesses[idx]; bestIdx = idx; } }
+    return population[bestIdx];
+}
+function gaUniformCrossover(p1, p2) { const child = []; for (let i = 0; i < p1.length; i++) child.push(Math.random() < 0.5 ? p1[i] : p2[i]); return child; }
+function gaTwoPointCrossover(p1, p2) { const n = p1.length; let a = Math.floor(Math.random() * n), b = Math.floor(Math.random() * n); if (a > b) [a, b] = [b, a]; const child = [...p1]; for (let i = a; i <= b; i++) child[i] = p2[i]; return child; }
+function gaMutate(individual, mutationRate) { const r = [...individual]; for (let i = 0; i < r.length; i++) if (Math.random() * 100 < mutationRate) r[i] = !r[i]; return r; }
+
+async function gaCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, params, onProgress) {
+    const n = rawCandidates.length;
+    const { populationSize = 50, generations = 80, mutationRate = 8, eliteCount = 3, tournamentSize = 4, twoStageEval = true } = params;
+    let population = [];
+    const greedySeed = new Array(n).fill(false);
+    for (let i = 0; i < Math.min(n, 5); i++) greedySeed[i] = true;
+    population.push([...greedySeed]);
+    population.push(new Array(n).fill(false));
+    population.push(new Array(n).fill(true));
+    while (population.length < populationSize) population.push(gaCreateRandomIndividual(n));
+    let globalBestBits = new Array(n).fill(false);
+    let globalBestScore = Infinity;
+    const baselineScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
+    globalBestScore = baselineScore;
+    for (let gen = 0; gen < generations; gen++) {
+        const fitnesses = [];
+        for (let i = 0; i < population.length; i++) {
+            const useExact = !twoStageEval || population.length <= 20;
+            fitnesses.push(evaluateSolution(bodyText, rawCandidates, population[i], baseReplacedMap, formatOptions, profile, useExact));
+        }
+        if (twoStageEval && population.length > 20) {
+            const indexed = fitnesses.map((f, i) => ({ f, i })); indexed.sort((a, b) => a.f - b.f);
+            const topCount = Math.max(eliteCount * 2, Math.ceil(population.length * 0.2));
+            for (let k = 0; k < Math.min(topCount, indexed.length); k++) {
+                const idx = indexed[k].i;
+                fitnesses[idx] = evaluateSolution(bodyText, rawCandidates, population[idx], baseReplacedMap, formatOptions, profile, true);
+            }
+        }
+        for (let i = 0; i < population.length; i++) { if (fitnesses[i] < globalBestScore) { globalBestScore = fitnesses[i]; globalBestBits = [...population[i]]; } }
+        const pct = Math.round(((gen + 1) / generations) * 100);
+        const gain = baselineScore - globalBestScore;
+        if (onProgress) onProgress(pct, `GA: 世代 ${gen + 1}/${generations} | best=${globalBestScore}tok (↓${gain})`);
+        if (gen % 5 === 0) await new Promise(r => setTimeout(r, 0));
+        if (gen === generations - 1) break;
+        const eliteIndices = fitnesses.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f).slice(0, eliteCount).map(e => e.i);
+        const newPopulation = [];
+        for (const ei of eliteIndices) newPopulation.push([...population[ei]]);
+        while (newPopulation.length < populationSize) {
+            const parent1 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            const parent2 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            let child = Math.random() < 0.5 ? gaUniformCrossover(parent1, parent2) : gaTwoPointCrossover(parent1, parent2);
+            child = gaMutate(child, mutationRate);
+            newPopulation.push(child);
+        }
+        population = newPopulation;
+    }
+    return { bits: globalBestBits, score: globalBestScore };
+}
+
+// ============================================================
+// Progress helpers
+// ============================================================
+function showCompressProgress(pct, detail) { compressProgressDiv.style.display = 'block'; compressProgressBar.style.width = pct + '%'; compressProgressText.textContent = pct + '%'; compressProgressDetail.textContent = detail || ''; }
+function hideCompressProgress() { compressProgressDiv.style.display = 'none'; compressProgressBar.style.width = '0%'; compressProgressText.textContent = '0%'; compressProgressDetail.textContent = ''; }
+
+function assignAliasesToCandidates(candidates, bodyText, replacedMap, profile) {
+    const assigned = [];
+    for (let i = 0; i < candidates.length; i++) {
+        const cand = { ...candidates[i] };
+        const alias = chooseAliasWithAnalysis(replacedMap.size + i + 1, bodyText, replacedMap, profile);
+        if (!alias) continue;
+        cand._alias = alias;
+        assigned.push(cand);
+    }
+    return assigned;
+}
 
 document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     syncCombinedInput(); const text = inputEl.value;
@@ -1973,7 +3271,6 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
 
-    // ★ トークナイザー認識型の候補発見を使用
     const filtered = findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum);
 
     const p = appSettings.tokenCalcProvider || 'openai';
@@ -1997,6 +3294,7 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
             addBtn.addEventListener('click', () => {
                 const cd = dictArea.value;
                 const autoAbbr = generateOptimalAbbr(index + 1, text, new Map());
+                _usedAbbrs.delete(autoAbbr);
                 const ne = `${item.phrase}=${autoAbbr}`;
                 if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }
                 dictArea.value = cd.trim() === '' ? ne : cd + '\n' + ne;
@@ -2009,9 +3307,685 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     }
     document.getElementById('keywordDialog').showModal();
 });
-
 document.getElementById('closeKeywordDialog').addEventListener('click', () => { document.getElementById('keywordDialog').close(); });
 
+// ============================================================
+// Auto Compress Button (greedy / legacy_batch / bruteforce / GA)
+// ============================================================
+document.getElementById('autoCompressBtn').addEventListener('click', async () => {
+    syncCombinedInput();
+    const text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは自動抽出に非対応です'); return; }
+    resetHighlightMode();
+
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    const algorithm = autoCompressAlgorithmSelect.value || 'greedy';
+
+    try { await initLocalTokenizer(); } catch (e) {}
+
+    const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;
+    const analysisProfile = getParsedAnalysisProfile();
+    const usableProfile = isAnalysisProfileCompatible(analysisProfile) ? analysisProfile : null;
+
+    const inputTokensBefore = getExactTokenCount(text);
+    const { replacedMap, bodyText } = extractExistingMappings(text);
+
+    _usedAbbrs.clear();
+    for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
+
+    let processedBody = bodyText;
+    let builtinCount = 0;
+
+    if (autoCompressApplyUmaInput.checked) {
+        const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+        for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
+    }
+    if (autoCompressApplyPronounInput.checked) {
+        const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+        for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
+    }
+
+    if (autoCompressTrimWhitespaceInput.checked) processedBody = trimWhitespaceForCompression(processedBody);
+
+    let dialogueMergeCount = 0;
+    if (autoCompressMergeDialoguesInput.checked) {
+        const r = mergeConsecutiveDialogues(processedBody);
+        processedBody = r.text;
+        dialogueMergeCount = r.mergedCount;
+    }
+
+    let bracketReplacedCount = 0;
+    if (autoCompressReplaceBracketsInput.checked) {
+        const r = replaceBracketsLightweight(processedBody);
+        processedBody = r.text;
+        bracketReplacedCount = r.replacedCount;
+    }
+
+    const formatOptions = {
+        mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
+        replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0
+    };
+
+    let analyzedAppliedCount = 0;
+    let newText = processedBody;
+
+    if (usableProfile) {
+        const guided = applyAnalyzedSuggestionsFirst(newText, replacedMap, formatOptions, usableProfile);
+        newText = guided.text;
+        analyzedAppliedCount = guided.appliedCount;
+    }
+
+    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+    const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
+
+    let totalCompressedCount = 0;
+    const autoCompressBtn = document.getElementById('autoCompressBtn');
+    autoCompressBtn.disabled = true;
+
+    try {
+        if (algorithm === 'greedy') {
+            for (let pass = 0; pass < maxPasses; pass++) {
+                const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
+                if (!rawCandidates.length) break;
+                const rescored = rescoreCompressionCandidatesExactly(newText, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
+                if (!rescored.length) break;
+                const best = rescored[0];
+                if (!best || best.gain <= 0) break;
+                let finalAlias = best.alias;
+                if (!finalAlias || _usedAbbrs.has(finalAlias) || replacedMap.has(finalAlias) || newText.includes(finalAlias)) {
+                    finalAlias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + 1, newText, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(finalAlias); }
+                if (!finalAlias) break;
+                const exact = scoreReplacementExact(newText, replacedMap, best.phrase, finalAlias, formatOptions, usableProfile);
+                if (exact.gain <= 0) { _usedAbbrs.delete(finalAlias); break; }
+                newText = exact.replacedBody;
+                replacedMap.set(finalAlias, best.phrase);
+                totalCompressedCount++;
+            }
+        } else if (algorithm === 'legacy_batch') {
+            let abbrIndex = replacedMap.size + 1;
+            for (let pass = 0; pass < maxPasses; pass++) {
+                const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
+                if (candidates.length === 0) break;
+
+                let passReplaced = false;
+                const abbrAssignment = new Map();
+
+                for (const cand of candidates) {
+                    let alreadyExists = false;
+                    for (const [, existingOriginal] of replacedMap.entries()) {
+                        if (existingOriginal === cand.phrase) { alreadyExists = true; break; }
+                    }
+                    if (alreadyExists) continue;
+
+                    let abbr = chooseAliasWithAnalysis(abbrIndex, newText, replacedMap, usableProfile);
+                    if (!abbr) abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);
+                    
+                    abbrAssignment.set(cand.phrase, abbr);
+                    abbrIndex++;
+                }
+
+                const sortedForReplace = [...abbrAssignment.entries()].sort((a, b) => b[0].length - a[0].length);
+                for (const [original, abbr] of sortedForReplace) {
+                    const regex = new RegExp(escRegex(original), 'g');
+                    if (regex.test(newText)) {
+                        newText = newText.replace(regex, abbr);
+                        replacedMap.set(abbr, original);
+                        passReplaced = true;
+                        totalCompressedCount++;
+                    }
+                }
+                if (!passReplaced) break;
+            }
+        } else if (algorithm === 'bruteforce') {
+            const bfMax = parseInt(bruteforceMaxCandidatesInput.value, 10) || 15;
+            const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, Math.max(maxItems, bfMax * 2), excludeAlnum);
+            const topCandidates = rawCandidates.slice(0, bfMax);
+            if (topCandidates.length > 0) {
+                const assigned = assignAliasesToCandidates(topCandidates, newText, replacedMap, usableProfile);
+                if (assigned.length > 0) {
+                    showCompressProgress(0, '全探索: 準備中...');
+                    const result = await bruteForceCompress(newText, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(pct, detail));
+                    const applied = applySolution(newText, assigned, result.bits, replacedMap);
+                    newText = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                    hideCompressProgress();
+                }
+            }
+        } else if (algorithm === 'ga') {
+            const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
+            if (rawCandidates.length > 0) {
+                const assigned = assignAliasesToCandidates(rawCandidates, newText, replacedMap, usableProfile);
+                if (assigned.length > 0) {
+                    showCompressProgress(0, 'GA: 初期化中...');
+                    const gaParams = {
+                        populationSize: parseInt(gaPopulationSizeInput.value, 10) || 50,
+                        generations: parseInt(gaGenerationsInput.value, 10) || 80,
+                        mutationRate: parseInt(gaMutationRateInput.value, 10) || 8,
+                        eliteCount: parseInt(gaEliteCountInput.value, 10) || 3,
+                        tournamentSize: parseInt(gaTournamentSizeInput.value, 10) || 4,
+                        twoStageEval: gaTwoStageEvalToggle.checked
+                    };
+                    const result = await gaCompress(newText, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(pct, detail));
+                    const applied = applySolution(newText, assigned, result.bits, replacedMap);
+                    newText = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                    hideCompressProgress();
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Compression error:', err);
+        hideCompressProgress();
+        showToast('圧縮中にエラーが発生しました: ' + (err.message || err));
+        autoCompressBtn.disabled = false;
+        return;
+    }
+
+    autoCompressBtn.disabled = false;
+
+    if (totalCompressedCount === 0 && analyzedAppliedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
+        showToast('自動圧縮できるワードがありませんでした');
+        return;
+    }
+
+    const finalHeader = chooseBestCompressedHeader(replacedMap, newText, formatOptions, usableProfile);
+    const finalOutput = finalHeader + newText;
+
+    outputEl.value = finalOutput;
+    updateCounts();
+    saveWorkspaceDebounced();
+
+    const outputTokensAfter = getExactTokenCount(finalOutput);
+    const saved = inputTokensBefore - outputTokensAfter;
+    const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+
+    const parts = [];
+    if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
+    if (analyzedAppliedCount > 0) parts.push(`分析候補${analyzedAppliedCount}語`);
+    if (totalCompressedCount > 0) {
+        let algoName = '自動';
+        if (algorithm === 'greedy') algoName = '貪欲';
+        else if (algorithm === 'legacy_batch') algoName = '一括';
+        else if (algorithm === 'bruteforce') algoName = '全探索';
+        else if (algorithm === 'ga') algoName = 'GA';
+        parts.push(`${algoName}${totalCompressedCount}語`);
+    }
+    if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+    if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
+    const detail = parts.length ? `（${parts.join('・')}）` : '';
+    const engineLabel = hasEncoder ? '🎯' : '≈';
+
+    if (saved > 0) showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);
+    else showToast(`🚀 圧縮完了 ${detail}`);
+});
+
+// ============================================================
+// Static Tokenizer Profile Generator
+// ============================================================
+function showStaticProgress(pct, detail) { staticProfileProgressDiv.style.display = 'block'; staticProfileProgressBar.style.width = pct + '%'; staticProfileProgressText.textContent = pct + '%'; staticProfileProgressDetail.textContent = detail || ''; }
+function hideStaticProgress() { staticProfileProgressDiv.style.display = 'none'; }
+
+function probeAsciiCharCosts() {
+    const results = [];
+    for (let cp = 0x21; cp <= 0x7E; cp++) {
+        const ch = String.fromCodePoint(cp);
+        results.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch), category: categorizePrintableChar(ch) });
+    }
+    return results;
+}
+function categorizePrintableChar(ch) { if (/[A-Z]/.test(ch)) return 'upper'; if (/[a-z]/.test(ch)) return 'lower'; if (/[0-9]/.test(ch)) return 'digit'; return 'symbol'; }
+
+function probeJapaneseCharCosts(samplesPerCategory) {
+    const categories = {
+        hiragana: { start: 0x3041, end: 0x3096, label: 'ひらがな' },
+        katakana: { start: 0x30A1, end: 0x30FA, label: 'カタカナ' },
+        kanji_common: { start: 0x4E00, end: 0x9FFF, label: '漢字(常用域)' },
+        fullwidth_alpha: { start: 0xFF21, end: 0xFF5A, label: '全角英字' },
+        fullwidth_digit: { start: 0xFF10, end: 0xFF19, label: '全角数字' },
+        jp_punctuation: { start: 0x3000, end: 0x303F, label: '日本語記号' },
+        cjk_symbols: { start: 0xFE30, end: 0xFE4F, label: 'CJK互換記号' }
+    };
+    const results = {};
+    for (const [key, cat] of Object.entries(categories)) {
+        const range = cat.end - cat.start + 1;
+        const step = Math.max(1, Math.floor(range / samplesPerCategory));
+        const samples = [];
+        for (let cp = cat.start; cp <= cat.end && samples.length < samplesPerCategory; cp += step) {
+            const ch = String.fromCodePoint(cp);
+            if (ch.trim().length === 0) continue;
+            samples.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch) });
+        }
+        const costs = samples.map(s => s.isolated_tokens);
+        results[key] = { label: cat.label, range: `U+${cat.start.toString(16).toUpperCase()}-U+${cat.end.toString(16).toUpperCase()}`, sample_count: samples.length, avg_tokens: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(4)) : 0, min_tokens: costs.length ? Math.min(...costs) : 0, max_tokens: costs.length ? Math.max(...costs) : 0, samples: samples.slice(0, 20) };
+    }
+    return results;
+}
+
+function probeAliasCosts(probeCount, keepCount) {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower = 'abcdefghijklmnopqrstuvwxyz', digits = '0123456789', symbols = '@#~$%&*?!^';
+    const allChars = upper + lower + digits + symbols;
+    const candidates = [], seen = new Set();
+    function add(s) { if (seen.has(s) || candidates.length >= probeCount) return; seen.add(s); candidates.push(s); }
+    for (const ch of allChars) add(ch);
+    for (const a of upper) { for (const b of upper) add(a + b); }
+    for (const a of upper) { for (const b of lower) add(a + b); }
+    for (const a of upper) { for (const b of digits) add(a + b); }
+    for (const a of lower) { for (const b of upper) add(a + b); }
+    for (const a of lower) { for (const b of lower) add(a + b); }
+    for (const p of symbols) { for (const b of upper) add(p + b); }
+    for (const p of symbols) { for (const b of lower) add(p + b); }
+    for (const a of upper) { for (const b of upper) { for (const c of digits) { add(a + b + c); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+    for (const p of symbols) { for (const a of upper) { for (const b of digits) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+    for (const p of symbols) { for (const a of upper) { for (const b of upper) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+
+    const measured = candidates.map(alias => ({ alias, length: alias.length, isolated_tokens: getExactTokenCount(alias), pattern: categorizeAliasPattern(alias) }));
+    measured.sort((a, b) => a.isolated_tokens - b.isolated_tokens || a.length - b.length || a.alias.localeCompare(b.alias));
+    const oneTokenAliases = measured.filter(m => m.isolated_tokens <= 1);
+    const multiTokenAliases = measured.filter(m => m.isolated_tokens > 1);
+    const patternStats = {};
+    for (const m of measured) {
+        if (!patternStats[m.pattern]) patternStats[m.pattern] = { total: 0, one_token: 0, examples: [] };
+        patternStats[m.pattern].total++;
+        if (m.isolated_tokens <= 1) patternStats[m.pattern].one_token++;
+        if (patternStats[m.pattern].examples.length < 5) patternStats[m.pattern].examples.push(m.alias);
+    }
+    return { total_probed: measured.length, one_token_count: oneTokenAliases.length, multi_token_count: multiTokenAliases.length, one_token_rate: measured.length ? Number((oneTokenAliases.length / measured.length * 100).toFixed(1)) : 0, pattern_stats: patternStats, best_aliases: oneTokenAliases.slice(0, keepCount).map(m => ({ alias: m.alias, length: m.length, isolated_tokens: m.isolated_tokens, pattern: m.pattern })), worst_examples: multiTokenAliases.slice(0, 30).map(m => ({ alias: m.alias, isolated_tokens: m.isolated_tokens, pattern: m.pattern })) };
+}
+function categorizeAliasPattern(alias) {
+    if (/^[A-Z]$/.test(alias)) return '1-upper'; if (/^[a-z]$/.test(alias)) return '1-lower'; if (/^[0-9]$/.test(alias)) return '1-digit'; if (/^[^A-Za-z0-9]$/.test(alias)) return '1-symbol';
+    if (/^[A-Z]{2}$/.test(alias)) return '2-UU'; if (/^[A-Z][a-z]$/.test(alias)) return '2-Ul'; if (/^[A-Z][0-9]$/.test(alias)) return '2-Ud'; if (/^[a-z]{2}$/.test(alias)) return '2-ll'; if (/^[a-z][A-Z]$/.test(alias)) return '2-lU'; if (/^[^A-Za-z0-9][A-Za-z]$/.test(alias)) return '2-sX';
+    if (/^[A-Z]{2}[0-9]$/.test(alias)) return '3-UUd'; if (/^[^A-Za-z0-9][A-Z][0-9]$/.test(alias)) return '3-sUd'; if (/^[^A-Za-z0-9][A-Z]{2}$/.test(alias)) return '3-sUU';
+    return `${alias.length}-other`;
+}
+
+function probeSeparatorCosts() {
+    const separators = ['=', ':', '|', '>', '/', ';', '-', '~', ',', '\t', ' '];
+    const contexts = [['AA', '主人公'], ['BB', 'トウカイテイオー'], ['CC', 'メジロマックイーン'], ['Q1', 'スペシャルウィーク'], ['ZZ', '会長'], ['@A', '短い'], ['#B', 'やや長めのテスト文字列']];
+    return separators.map(sep => {
+        const costs = contexts.map(([alias, value]) => getExactTokenCount(`${alias}${sep}${value}\n`));
+        return { separator: sep, display: sep === '\t' ? '\\t' : sep === ' ' ? '[space]' : sep, avg_line_tokens: Number(mean(costs).toFixed(4)), min_line_tokens: Math.min(...costs), max_line_tokens: Math.max(...costs), samples: contexts.map(([alias, value], i) => ({ line: `${alias}${sep}${value}`, tokens: costs[i] })) };
+    }).sort((a, b) => a.avg_line_tokens - b.avg_line_tokens);
+}
+
+function probeHeaderTemplateCosts(aliasPool, exhaustive) {
+    const samplePairs = [['主人公', 'MC向けテスト'], ['トウカイテイオー', 'キャラ名'], ['メジロマックイーン', '長めの名前'], ['スペシャルウィーク', '4つ目']];
+    const topAliases = aliasPool.slice(0, 4).map(a => a.alias || a);
+    while (topAliases.length < 4) topAliases.push('Q' + topAliases.length);
+    const pairs = samplePairs.map((sp, i) => [topAliases[i], sp[0]]);
+    const templates = [...ANALYSIS_HEADER_LIBRARY];
+    if (exhaustive) {
+        const extraPrefixes = ['', '@\n', '#\n', '---\n'];
+        const extraSuffixes = ['--\n', '#\n', '>\n', '---\n', '\n'];
+        const extraEntryFormats = ['{alias}={value}\n', '{alias}:{value}\n', '{alias}|{value}\n', '{alias}>{value}\n', '{alias}/{value}\n', '@{alias}={value}\n', '{alias} = {value}\n'];
+        for (const prefix of extraPrefixes) { for (const entry of extraEntryFormats) { for (const suffix of extraSuffixes) {
+                    const name = `custom_${prefix.trim()||'none'}_${entry.charAt(entry.indexOf('{value}') - 1)}_${suffix.trim()||'none'}`;
+                    if (!templates.find(t => t.prefix === prefix && t.entry === entry && t.suffix === suffix)) {
+                        templates.push({ name, prefix, entry, suffix });
+                    }
+                }
+            }
+        }
+    }
+    return templates.map(tpl => {
+        const rendered = renderAnalysisHeader(tpl, pairs);
+        const tokens = getExactTokenCount(rendered);
+        return { name: tpl.name, template: tpl, token_cost: tokens, rendered_preview: rendered.slice(0, 300), rendered_length: rendered.length, tokens_per_entry: pairs.length ? Number((tokens / pairs.length).toFixed(2)) : 0 };
+    }).sort((a, b) => a.token_cost - b.token_cost);
+}
+
+function probeContextDependentCosts(aliasPool) {
+    const topAliases = aliasPool.slice(0, 20).map(a => a.alias || a);
+    const contexts = [
+        { name: 'bare', left: '', right: '' },
+        { name: 'after_space', left: ' ', right: '' },
+        { name: 'after_newline', left: '\n', right: '' },
+        { name: 'in_hiragana', left: 'あいう', right: 'えお' },
+        { name: 'in_katakana', left: 'アイウ', right: 'エオ' },
+        { name: 'in_kanji', left: '東京都', right: '大阪府' },
+        { name: 'after_bracket', left: '「', right: '」' },
+        { name: 'after_colon', left: ':', right: '' },
+        { name: 'in_english', left: 'hello', right: 'world' },
+        { name: 'after_eq_header', left: 'XX=テスト\n', right: '' },
+        { name: 'sentence_start', left: '。\n', right: 'は' },
+        { name: 'dialogue_name', left: '', right: '>おはよう' }
+    ];
+    return topAliases.map(alias => {
+        const contextCosts = contexts.map(ctx => {
+            const without = getExactTokenCount(ctx.left + ctx.right);
+            const withAlias = getExactTokenCount(ctx.left + alias + ctx.right);
+            return { context: ctx.name, marginal_cost: withAlias - without };
+        });
+        const costs = contextCosts.map(c => c.marginal_cost);
+        return { alias, avg_marginal: Number(mean(costs).toFixed(4)), min_marginal: Math.min(...costs), max_marginal: Math.max(...costs), variance: Number((costs.reduce((sum, c) => sum + Math.pow(c - mean(costs), 2), 0) / costs.length).toFixed(4)), by_context: contextCosts };
+    });
+}
+
+function probeJapaneseCompressionPatterns() {
+    const patterns = [
+        { name: 'dialogue_bracket_to_gt', before: '太郎「おはようございます」', after: '太郎>おはようございます', description: 'Replace Japanese brackets with GT for dialogue' },
+        { name: 'double_bracket_to_quote', before: '『タイトル名』', after: "'タイトル名'", description: 'Replace double brackets with single quotes for titles' },
+        { name: 'paren_full_to_half', before: '（補足説明）', after: '(補足説明)', description: 'Replace fullwidth parens with halfwidth' },
+        { name: 'colon_dialogue', before: '太郎：「おはよう」', after: '太郎>おはよう', description: 'Collapse colon+brackets into GT format' },
+        { name: 'merge_same_speaker', before: '太郎「おはよう」\n太郎「元気？」', after: '太郎>おはよう元気？', description: 'Merge consecutive same-speaker lines' },
+        { name: 'remove_empty_lines', before: 'テスト\n\n\nテスト', after: 'テスト\nテスト', description: 'Remove empty lines' },
+        { name: 'fullwidth_to_halfwidth_alpha', before: 'Ａｂｃ１２３', after: 'Abc123', description: 'Convert fullwidth alphanumerics to halfwidth' }
+    ];
+    return patterns.map(p => ({ ...p, before_tokens: getExactTokenCount(p.before), after_tokens: getExactTokenCount(p.after), gain: getExactTokenCount(p.before) - getExactTokenCount(p.after) }));
+}
+
+function probeBoundaryEffects(aliasPool) {
+    const testPhrases = ['おはようございます', 'トウカイテイオー', 'メジロマックイーン', 'スペシャルウィーク', '主人公', '魔法少女', 'レース場', 'トレーニング', '先輩', '大丈夫'];
+    const topAliases = aliasPool.slice(0, 5).map(a => a.alias || a);
+    const results = [];
+    for (const phrase of testPhrases) {
+        for (const alias of topAliases) {
+            const sentence = `彼は${phrase}と言った。${phrase}は大事だ。`;
+            const replaced = sentence.split(phrase).join(alias);
+            const beforeTok = getExactTokenCount(sentence);
+            const afterTok = getExactTokenCount(replaced);
+            const occurrences = 2;
+            const phraseTok = getExactTokenCount(phrase);
+            const aliasTok = getExactTokenCount(alias);
+            const expectedGain = (phraseTok - aliasTok) * occurrences;
+            const actualGain = beforeTok - afterTok;
+            const boundaryEffect = actualGain - expectedGain;
+            results.push({ phrase, alias, phrase_tokens: phraseTok, alias_tokens: aliasTok, expected_gain: expectedGain, actual_gain: actualGain, boundary_effect: boundaryEffect, boundary_effect_description: boundaryEffect > 0 ? 'bonus (boundary merge)' : boundaryEffect < 0 ? 'penalty (boundary split)' : 'neutral' });
+        }
+    }
+    return results;
+}
+
+async function generateStaticProfile(onProgress) {
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    const entry = localTokenizers[provider];
+    if (!entry || entry.status !== 'ready') throw new Error('トークナイザーが準備できていません');
+
+    const aliasCount = parseInt(staticProbeAliasCountInput.value, 10) || 5000;
+    const aliasKeep = parseInt(staticProbeAliasKeepInput.value, 10) || 500;
+    const jaSamples = parseInt(staticProbeJaSamplesInput.value, 10) || 100;
+    const exhaustiveHeader = staticProbeExhaustiveHeaderToggle.checked;
+    const contextCost = staticProbeContextCostToggle.checked;
+
+    onProgress(5, 'Probing ASCII character costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const asciiCosts = probeAsciiCharCosts();
+
+    onProgress(15, 'Probing Japanese character categories...');
+    await new Promise(r => setTimeout(r, 0));
+    const jaCosts = probeJapaneseCharCosts(jaSamples);
+
+    onProgress(30, `Probing ${aliasCount} alias candidates...`);
+    await new Promise(r => setTimeout(r, 0));
+    const aliasCosts = probeAliasCosts(aliasCount, aliasKeep);
+
+    onProgress(55, 'Probing separator costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const separatorCosts = probeSeparatorCosts();
+
+    onProgress(65, 'Probing header template costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const headerCosts = probeHeaderTemplateCosts(aliasCosts.best_aliases, exhaustiveHeader);
+
+    onProgress(75, 'Probing Japanese compression patterns...');
+    await new Promise(r => setTimeout(r, 0));
+    const jpPatterns = probeJapaneseCompressionPatterns();
+
+    onProgress(80, 'Probing token boundary effects...');
+    await new Promise(r => setTimeout(r, 0));
+    const boundaryEffects = probeBoundaryEffects(aliasCosts.best_aliases);
+
+    let contextDependentCosts = null;
+    if (contextCost) {
+        onProgress(88, 'Probing context-dependent costs (slow)...');
+        await new Promise(r => setTimeout(r, 0));
+        contextDependentCosts = probeContextDependentCosts(aliasCosts.best_aliases);
+    }
+
+    onProgress(95, 'Building profile...');
+
+    const profile = {
+        schema: 'toolbox-static-tokenizer-profile.v1',
+        created_at: new Date().toISOString(),
+        purpose: 'This is a static analysis of a tokenizer\'s structural characteristics. It does NOT depend on any specific input text. Use this profile to design compression strategies for the target tokenizer.',
+        instructions_for_ai: [
+            'This profile maps how the target tokenizer assigns token costs to characters, alias candidates, separators, and header formats.',
+            'Use the alias_analysis.best_aliases list as the preferred abbreviation pool: these are all verified to be 1 token.',
+            'Use the header_templates ranking to choose the most token-efficient header format.',
+            'Use the separator_analysis to choose the cheapest separator character.',
+            'The japanese_compression_patterns show which common Japanese formatting transformations save tokens.',
+            'The boundary_effects section shows how replacing a phrase with an alias can cause unexpected token count changes due to tokenizer boundary shifts.',
+            'If context_dependent_costs is present, it shows how the same alias costs different amounts depending on surrounding text.',
+            'Design a compression algorithm that: (1) uses 1-token aliases, (2) uses the cheapest header format, (3) accounts for boundary effects, (4) applies Japanese formatting optimizations where they save tokens.'
+        ],
+        target: {
+            backend: provider,
+            tokenizer_type: entry._type,
+            display_name: provider,
+            precise_mode: provider === 'deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
+        },
+        probe_settings: {
+            alias_probe_count: aliasCount,
+            alias_keep_count: aliasKeep,
+            ja_samples_per_category: jaSamples,
+            exhaustive_header_search: exhaustiveHeader,
+            context_dependent_cost_enabled: contextCost
+        },
+        ascii_char_costs: asciiCosts,
+        japanese_char_costs: jaCosts,
+        alias_analysis: aliasCosts,
+        separator_analysis: separatorCosts,
+        header_templates: headerCosts,
+        japanese_compression_patterns: jpPatterns,
+        boundary_effects: boundaryEffects,
+        context_dependent_costs: contextDependentCosts,
+        summary: {
+            best_1token_alias_patterns: Object.entries(aliasCosts.pattern_stats)
+                .map(([pat, stat]) => ({ pattern: pat, one_token_rate: stat.total ? Number((stat.one_token / stat.total * 100).toFixed(1)) : 0, count: stat.one_token, examples: stat.examples }))
+                .sort((a, b) => b.one_token_rate - a.one_token_rate || b.count - a.count),
+            best_separator: separatorCosts[0]?.separator || '=',
+            best_header_template: headerCosts[0]?.name || 'unknown',
+            best_header_token_cost: headerCosts[0]?.token_cost || 0,
+            jp_patterns_with_gain: jpPatterns.filter(p => p.gain > 0).map(p => p.name),
+            boundary_effect_summary: {
+                avg_effect: Number(mean(boundaryEffects.map(b => b.boundary_effect)).toFixed(4)),
+                positive_count: boundaryEffects.filter(b => b.boundary_effect > 0).length,
+                negative_count: boundaryEffects.filter(b => b.boundary_effect < 0).length,
+                neutral_count: boundaryEffects.filter(b => b.boundary_effect === 0).length
+            }
+        }
+    };
+
+    return profile;
+}
+
+function formatStaticProfileAsText(profile) {
+    const lines = [];
+    const hr = '='.repeat(72);
+    const hr2 = '-'.repeat(72);
+
+    lines.push(hr);
+    lines.push('STATIC TOKENIZER PROFILE');
+    lines.push(hr);
+    lines.push('');
+    lines.push(`Schema       : ${profile.schema}`);
+    lines.push(`Created      : ${profile.created_at}`);
+    lines.push(`Target       : ${profile.target.display_name} (${profile.target.backend})`);
+    lines.push(`Tokenizer    : ${profile.target.tokenizer_type}`);
+    if (profile.target.precise_mode !== null) {
+        lines.push(`Precise mode : ${profile.target.precise_mode}`);
+    }
+    lines.push('');
+    lines.push('PURPOSE:');
+    lines.push(profile.purpose);
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('INSTRUCTIONS FOR AI ANALYSIS');
+    lines.push(hr2);
+    profile.instructions_for_ai.forEach((inst, i) => {
+        lines.push(`${i + 1}. ${inst}`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('SUMMARY');
+    lines.push(hr2);
+    const s = profile.summary;
+    lines.push(`Best separator       : "${s.best_separator}"`);
+    lines.push(`Best header template : ${s.best_header_template} (cost=${s.best_header_token_cost} tokens)`);
+    lines.push(`JP patterns with gain: ${s.jp_patterns_with_gain.join(', ') || 'none'}`);
+    lines.push('');
+    lines.push('Alias pattern effectiveness (1-token rate):');
+    s.best_1token_alias_patterns.forEach(p => {
+        lines.push(`  ${p.pattern.padEnd(12)} : ${p.one_token_rate}% (${p.count} aliases) e.g. ${p.examples.join(', ')}`);
+    });
+    lines.push('');
+    lines.push('Boundary effects:');
+    const be = s.boundary_effect_summary;
+    lines.push(`  avg=${be.avg_effect}  bonus=${be.positive_count}  penalty=${be.negative_count}  neutral=${be.neutral_count}`);
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push(`ALIAS POOL (top ${Math.min(profile.alias_analysis.best_aliases.length, 200)} of ${profile.alias_analysis.total_probed} probed, ${profile.alias_analysis.one_token_count} are 1-token)`);
+    lines.push(hr2);
+    const topAliases = profile.alias_analysis.best_aliases.slice(0, 200);
+    for (let i = 0; i < topAliases.length; i += 20) {
+        lines.push('  ' + topAliases.slice(i, i + 20).map(a => a.alias).join(', '));
+    }
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('SEPARATOR COSTS');
+    lines.push(hr2);
+    profile.separator_analysis.forEach(sep => {
+        lines.push(`  "${sep.display}" : avg=${sep.avg_line_tokens} tokens/line (min=${sep.min_line_tokens}, max=${sep.max_line_tokens})`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('HEADER TEMPLATE RANKING (top 10)');
+    lines.push(hr2);
+    profile.header_templates.slice(0, 10).forEach((h, i) => {
+        lines.push(`  #${i + 1} ${h.name} : ${h.token_cost} tokens (${h.tokens_per_entry} per entry)`);
+        lines.push(`      Preview: ${h.rendered_preview.replace(/\n/g, '\\n').slice(0, 120)}`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('JAPANESE COMPRESSION PATTERNS');
+    lines.push(hr2);
+    profile.japanese_compression_patterns.forEach(p => {
+        const marker = p.gain > 0 ? '✓' : p.gain === 0 ? '=' : '✗';
+        lines.push(`  ${marker} ${p.name}: ${p.description}`);
+        lines.push(`    before=${p.before_tokens}tok  after=${p.after_tokens}tok  gain=${p.gain}`);
+        lines.push(`    "${p.before}" -> "${p.after}"`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('BOUNDARY EFFECT SAMPLES');
+    lines.push(hr2);
+    const grouped = {};
+    profile.boundary_effects.forEach(b => {
+        if (!grouped[b.phrase]) grouped[b.phrase] = [];
+        grouped[b.phrase].push(b);
+    });
+    for (const [phrase, effects] of Object.entries(grouped)) {
+        lines.push(`  Phrase: "${phrase}" (${effects[0].phrase_tokens} tokens)`);
+        effects.forEach(e => {
+            lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`);
+        });
+    }
+    lines.push('');
+
+    if (profile.context_dependent_costs) {
+        lines.push(hr2);
+        lines.push('CONTEXT-DEPENDENT ALIAS COSTS');
+        lines.push(hr2);
+        profile.context_dependent_costs.forEach(c => {
+            lines.push(`  ${c.alias}: avg=${c.avg_marginal} min=${c.min_marginal} max=${c.max_marginal} variance=${c.variance}`);
+            c.by_context.forEach(ctx => {
+                lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`);
+            });
+        });
+        lines.push('');
+    }
+
+    lines.push(hr2);
+    lines.push('ASCII CHARACTER COSTS');
+    lines.push(hr2);
+    const byCat = { upper: [], lower: [], digit: [], symbol: [] };
+    profile.ascii_char_costs.forEach(c => { if (byCat[c.category]) byCat[c.category].push(c); });
+    for (const [cat, chars] of Object.entries(byCat)) {
+        const costs = chars.map(c => c.isolated_tokens);
+        lines.push(`  ${cat}: avg=${mean(costs).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);
+    }
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('JAPANESE CHARACTER CATEGORY COSTS');
+    lines.push(hr2);
+    for (const [key, cat] of Object.entries(profile.japanese_char_costs)) {
+        lines.push(`  ${cat.label} (${cat.range}): avg=${cat.avg_tokens} min=${cat.min_tokens} max=${cat.max_tokens} (${cat.sample_count} samples)`);
+    }
+    lines.push('');
+
+    lines.push(hr);
+    lines.push('END OF STATIC PROFILE');
+    lines.push(hr);
+
+    return lines.join('\n');
+}
+
+runStaticProfileBtn.addEventListener('click', async () => {
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    runStaticProfileBtn.disabled = true;
+    staticProfileNotice.textContent = 'トークナイザーを準備しています…';
+
+    try {
+        await initLocalTokenizer();
+        const entry = localTokenizers[provider];
+        if (!entry || entry.status !== 'ready') throw new Error('トークナイザーの準備に失敗しました');
+
+        const profile = await generateStaticProfile((pct, detail) => {
+            showStaticProgress(pct, detail);
+        });
+
+        const textOutput = formatStaticProfileAsText(profile);
+
+        analysisOutputs.static = textOutput;
+
+        analysisActiveTab = 'static';
+        renderAnalysisTab();
+        saveWorkspaceDebounced();
+
+        showStaticProgress(100, 'Complete');
+        setTimeout(hideStaticProgress, 1500);
+        staticProfileNotice.textContent = `完了: ${provider} / 略号${profile.alias_analysis.one_token_count}件が1トークン / best header="${profile.summary.best_header_template}"`;
+        showToast('静的プロファイル生成完了');
+
+    } catch (err) {
+        console.error(err);
+        staticProfileNotice.textContent = `失敗: ${err.message || err}`;
+        showToast('静的プロファイル生成に失敗しました');
+        hideStaticProgress();
+    } finally {
+        runStaticProfileBtn.disabled = false;
+    }
+});
+
+// ============================================================
+// Highlight mode
+// ============================================================
 function getHighlightedHTML(text, searchStr = '') {
     if (!text) return '';
     if (searchStr) {
@@ -2032,7 +4006,8 @@ function getHighlightedHTML(text, searchStr = '') {
             else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
             html += escapeHtml(text[i]);
         }
-        if (inH) html += `</mark>`; return html;
+        if (inH) html += `</mark>`;
+        return html;
     }
 }
 
@@ -2046,12 +4021,25 @@ toggleHighlightBtn.addEventListener('click', () => {
         outputEl.style.display = 'none'; outputPreview.style.display = 'block';
         toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');
         if (ss) showToast(`「${ss}」をハイライトしました`); else showToast('8文字以上の重複箇所をハイライトしました');
-    } else { resetHighlightMode(); }
+    } else {
+        resetHighlightMode();
+    }
 });
 
-document.getElementById('clearBtn').addEventListener('click', () => { inputPart1El.value = ''; inputPart2El.value = ''; inputPart3El.value = ''; syncCombinedInput(); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); });
-document.getElementById('applyToInputBtn').addEventListener('click', () => { if (outputEl.value) { setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました'); } });
-document.getElementById('copyBtn').addEventListener('click', async () => { if (!outputEl.value) return; try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); } catch (err) { showToast('コピーに失敗しました'); } });
+document.getElementById('clearBtn').addEventListener('click', () => {
+    inputPart1El.value = ''; inputPart2El.value = ''; inputPart3El.value = ''; syncCombinedInput(); outputEl.value = '';
+    updateCounts(); resetHighlightMode(); saveWorkspaceDebounced();
+});
+document.getElementById('applyToInputBtn').addEventListener('click', () => {
+    if (outputEl.value) {
+        setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました');
+    }
+});
+document.getElementById('copyBtn').addEventListener('click', async () => {
+    if (!outputEl.value) return;
+    try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); }
+    catch (err) { showToast('コピーに失敗しました'); }
+});
 
 runSelectedActionBtn.addEventListener('click', () => {
     const action = actionPicker.value;
@@ -2068,10 +4056,22 @@ runSelectedActionBtn.addEventListener('click', () => {
 loadSettings();
 syncCombinedInput();
 updateCounts();
+refreshAnalysisCorpusCount();
+renderAnalysisTab();
 initLocalTokenizer();
 
-window.addEventListener('beforeunload', () => { if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); } });
-window.addEventListener('pagehide', () => { if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); } });
+window.addEventListener('beforeunload', () => {
+    if (persistWorkspaceToggle.checked) {
+        collectCurrentState();
+        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+    }
+});
+window.addEventListener('pagehide', () => {
+    if (persistWorkspaceToggle.checked) {
+        collectCurrentState();
+        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
+    }
+});
 </script>
 </body>
 </html>
