@@ -594,9 +594,10 @@
                 <div class="section-header">
                     <label>入力テキスト（3分割を結合して処理）</label>
                     <div class="tiny-action-row">
-                        <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
-                        <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
-                    </div>
+                    <button id="joinBtn" class="paste-btn" style="background-color: var(--bg-button-save); color: white;" type="button">🔗 連結のみ実行</button>
+                    <button id="pasteBtn" class="paste-btn" type="button">📋 貼り付け</button>
+                    <span class="char-count" id="inputCount">合計0文字 (≈0ﾄｰｸﾝ)</span>
+                </div>
                 </div>
 
                 <p style="font-size: 11px; color: var(--text-secondary); margin-top: -6px;">
@@ -2381,7 +2382,13 @@ document.getElementById('pasteBtn').addEventListener('click', async () => {
 clearPart1Btn.addEventListener('click', () => { inputPart1El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('前半を削除しました'); });
 clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('中盤を削除しました'); });
 clearPart3Btn.addEventListener('click', () => { inputPart3El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
-
+document.getElementById('joinBtn').addEventListener('click', () => {
+    syncCombinedInput();
+    outputEl.value = inputEl.value;
+    updateCounts();
+    saveWorkspaceDebounced();
+    showToast('3分割テキストを連結しました');
+});
 document.getElementById('replaceBtn').addEventListener('click', () => {
     syncCombinedInput(); const src = replaceSourceEl.value, tgt = replaceTargetEl.value; let text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
