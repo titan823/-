@@ -544,16 +544,6 @@
             color: var(--text-secondary);
             margin-top: 4px;
         }
-
-        .extra-ops-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px 12px;
-        }
-        .extra-ops-grid .checkbox-label {
-            margin-bottom: 2px;
-            font-size: 12px;
-        }
     </style>
 </head>
 <body>
@@ -655,24 +645,6 @@
 
                 <textarea id="inputText" hidden aria-hidden="true" tabindex="-1"></textarea>
 
-                <!-- ========== フッター（末尾ヘッダー）自動追加 ========== -->
-                <details style="margin-top: 5px;">
-                    <summary style="font-size: 12px; cursor: pointer; color: var(--text-secondary); outline: none;">📝 プロンプト末尾に注意書きを自動追加</summary>
-                    <div style="margin-top: 8px; font-size: 12px; display: grid; gap: 6px; padding-left: 10px;">
-                        <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                            <span>末尾に注意書き（フッター）を自動追加する:</span>
-                            <input type="checkbox" id="footerHeaderEnabled">
-                        </label>
-                        <div style="font-size: 11px; color: var(--text-secondary);">
-                            圧縮・連結・その他の処理の出力時に、以下のテキストがプロンプト末尾に自動付与されます。
-                        </div>
-                        <textarea id="footerHeaderText" rows="4" style="min-height: 80px; font-size: 12px; padding: 8px;" placeholder="例:&#10;[注意] 上記のテキストは要約されたものです。元の表現を尊重して回答してください。&#10;&#10;または:&#10;Please respond in Japanese. Do not use abbreviations in your response."></textarea>
-                        <div style="font-size: 10px; color: var(--text-secondary);">
-                            ヒント: AI向けの追加指示、言語指定、注意事項などを記入できます。空の場合は何も追加されません。
-                        </div>
-                    </div>
-                </details>
-
                 <div style="margin-top: 5px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                         <div style="font-size: 12px; font-weight: bold; color: var(--text-secondary);">AI向けプロンプト圧縮 (トークン節約)</div>
@@ -770,37 +742,6 @@
                                 反復圧縮の最大回数:
                                 <input type="number" id="autoCompressMaxPasses" min="1" max="10" value="3" style="width: 60px; padding: 4px; margin: 0;">
                             </label>
-
-                            <!-- ========== 追加処理チェックボックス ========== -->
-                            <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
-                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">📋 圧縮時に同時適用する追加処理:</div>
-                                <div class="extra-ops-grid">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpTrimSpace"> 空白を削除
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpRemoveEmptyLines"> 空行を削除
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpRemoveBreaks"> 改行を削除
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpBreaksToSpace"> 改行を空白に
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpToHalfWidth"> 英数→半角
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpToFullWidthKana"> カナ→全角
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpToUpperCase"> 大文字化
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="extraOpToLowerCase"> 小文字化
-                                    </label>
-                                </div>
-                            </div>
 
                             <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
                                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">探索アルゴリズム:</div>
@@ -921,18 +862,20 @@
                 </div>
 
                 <div id="legacyActionButtons" hidden aria-hidden="true">
-                    <button class="tool-btn" data-action="trimSpace" type="button"></button>
-                    <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
-                    <button class="tool-btn" data-action="removeBreaks" type="button"></button>
-                    <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
-                    <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
-                    <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
-                    <button class="tool-btn" data-action="toUpperCase" type="button"></button>
-                    <button class="tool-btn" data-action="toLowerCase" type="button"></button>
-                    <button class="tool-btn" data-action="extractBrackets" type="button"></button>
-                    <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
-                    <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
-                    <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
+                    <div class="tools-grid">
+                        <button class="tool-btn" data-action="trimSpace" type="button"></button>
+                        <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
+                        <button class="tool-btn" data-action="removeBreaks" type="button"></button>
+                        <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
+                        <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
+                        <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
+                        <button class="tool-btn" data-action="toUpperCase" type="button"></button>
+                        <button class="tool-btn" data-action="toLowerCase" type="button"></button>
+                        <button class="tool-btn" data-action="extractBrackets" type="button"></button>
+                        <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
+                        <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
+                        <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
+                    </div>
                     <button id="replaceBtn" type="button"></button>
                     <button id="extractKeywordsBtn" type="button"></button>
                     <button id="compressBtn" type="button"></button>
@@ -955,8 +898,7 @@
                 <div class="action-row">
                     <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
                     <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 結果を前半へ</button>
-                    <button id="copyBtn" class="primary-btn" style="flex-grow: 1;">結果をコピー 📋</button>
-                    <button id="sendToAutomatronBtn" class="primary-btn" style="flex-grow: 1; background-color: #ff9800;">Automatronへ送信 🚀</button>
+                    <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
                 </div>
             </section>
 
@@ -1109,15 +1051,6 @@
                 </select>
             </div>
 
-            <!-- ========== NEW: Automatron連携設定 ========== -->
-            <div class="settings-group">
-                <h3>🚀 Automatron 連携</h3>
-                <label for="automatron-url" style="font-size: 14px; margin-bottom: 4px; display: block;">ngrok URL:</label>
-                <input type="text" id="automatron-url" placeholder="https://....ngrok-free.app">
-                <label for="automatron-secret" style="font-size: 14px; margin-bottom: 4px; display: block;">APIシークレット (合言葉):</label>
-                <input type="password" id="automatron-secret" placeholder="Automatronで設定した合言葉">
-            </div>
-
             <div class="settings-group">
                 <h3>トークン計算</h3>
                 <label for="token-calc-provider" style="font-size: 14px; margin-bottom: 4px; display: block;">対象のAIモデル:</label>
@@ -1193,7 +1126,7 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 9.1+footer+extraOps (GA/BruteForce/StaticProfile/LegacyBatch/FullPipeline)
+                    バージョン: 9.0+legacy (GA/BruteForce/StaticProfile/LegacyBatch/FullPipeline)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
@@ -1372,24 +1305,6 @@ const staticProfileProgressBar=document.getElementById('staticProfileProgressBar
 const staticProfileProgressText=document.getElementById('staticProfileProgressText');
 const staticProfileProgressDetail=document.getElementById('staticProfileProgressDetail');
 const staticProfileNotice=document.getElementById('staticProfileNotice');
-// NEW: Automatron send elements
-const sendToAutomatronBtn = document.getElementById('sendToAutomatronBtn');
-const automatronUrlInput = document.getElementById('automatron-url');
-const automatronSecretInput = document.getElementById('automatron-secret');
-
-// ========== NEW: Footer header elements ==========
-const footerHeaderEnabledToggle = document.getElementById('footerHeaderEnabled');
-const footerHeaderTextArea = document.getElementById('footerHeaderText');
-
-// ========== NEW: Extra operations checkboxes ==========
-const extraOpTrimSpace = document.getElementById('extraOpTrimSpace');
-const extraOpRemoveEmptyLines = document.getElementById('extraOpRemoveEmptyLines');
-const extraOpRemoveBreaks = document.getElementById('extraOpRemoveBreaks');
-const extraOpBreaksToSpace = document.getElementById('extraOpBreaksToSpace');
-const extraOpToHalfWidth = document.getElementById('extraOpToHalfWidth');
-const extraOpToFullWidthKana = document.getElementById('extraOpToFullWidthKana');
-const extraOpToUpperCase = document.getElementById('extraOpToUpperCase');
-const extraOpToLowerCase = document.getElementById('extraOpToLowerCase');
 
 const INPUT_JOINER='';
 let lastFocusedInputPart=inputPart1El;
@@ -1424,43 +1339,6 @@ function setSplitInputText(ft){inputPart1El.value=ft||'';inputPart2El.value='';i
 function updateResponseModeStatus(){
     if(abbrResponseToggle.checked){responseModeStatus.innerHTML='<strong>返答モード:</strong> AIにも略号で返答させます（復元前提）。';}
     else{responseModeStatus.innerHTML='<strong>返答モード:</strong> AIには正式名称で返答させます。';}
-}
-
-// ========== NEW: Get footer text ==========
-function getFooterHeaderText() {
-    if (!footerHeaderEnabledToggle.checked) return '';
-    const text = (footerHeaderTextArea.value || '').trim();
-    if (!text) return '';
-    return '\n\n' + text;
-}
-
-// ========== NEW: Apply extra operations to text ==========
-function applyExtraOperations(text) {
-    // Apply in a logical order
-    if (extraOpToHalfWidth.checked) {
-        text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-    }
-    if (extraOpToFullWidthKana.checked) {
-        text = text.replace(kanaRegex, m => kanaMap[m]);
-    }
-    if (extraOpTrimSpace.checked) {
-        text = text.replace(/[ 　\t]+/g, '');
-    }
-    if (extraOpRemoveEmptyLines.checked) {
-        text = text.replace(/^\s*[\r\n]/gm, '');
-    }
-    if (extraOpRemoveBreaks.checked) {
-        text = text.replace(/[\r\n]+/g, '');
-    } else if (extraOpBreaksToSpace.checked) {
-        text = text.replace(/[\r\n]+/g, ' ').trim();
-    }
-    if (extraOpToUpperCase.checked) {
-        text = text.toUpperCase();
-    }
-    if (extraOpToLowerCase.checked) {
-        text = text.toLowerCase();
-    }
-    return text;
 }
 
 function buildCompressedHeader(replacedMap, formatOptions = {}) {
@@ -1757,21 +1635,7 @@ let appSettings = {
         handoff:'',
         compressor:'',
         decompressor:''
-    },
-    // NEW settings
-    footerHeaderEnabled: false,
-    footerHeaderText: '',
-    extraOpTrimSpace: false,
-    extraOpRemoveEmptyLines: false,
-    extraOpRemoveBreaks: false,
-    extraOpBreaksToSpace: false,
-    extraOpToHalfWidth: false,
-    extraOpToFullWidthKana: false,
-    extraOpToUpperCase: false,
-    extraOpToLowerCase: false,
-    // NEW: Automatron settings
-    automatronUrl: '',
-    automatronSecret: ''
+    }
 };
 
 let currentTool='formatter';
@@ -1870,24 +1734,6 @@ function loadSettings() {
     if (autoCompressForceStrictHeaderInput) autoCompressForceStrictHeaderInput.checked = appSettings.autoCompressForceStrictHeader !== false;
     if (pipelineForceStrictHeaderToggle) pipelineForceStrictHeaderToggle.checked = appSettings.pipelineForceStrictHeader !== false;
 
-    // NEW: load footer header settings
-    footerHeaderEnabledToggle.checked = !!appSettings.footerHeaderEnabled;
-    footerHeaderTextArea.value = appSettings.footerHeaderText || '';
-
-    // NEW: load extra operations
-    extraOpTrimSpace.checked = !!appSettings.extraOpTrimSpace;
-    extraOpRemoveEmptyLines.checked = !!appSettings.extraOpRemoveEmptyLines;
-    extraOpRemoveBreaks.checked = !!appSettings.extraOpRemoveBreaks;
-    extraOpBreaksToSpace.checked = !!appSettings.extraOpBreaksToSpace;
-    extraOpToHalfWidth.checked = !!appSettings.extraOpToHalfWidth;
-    extraOpToFullWidthKana.checked = !!appSettings.extraOpToFullWidthKana;
-    extraOpToUpperCase.checked = !!appSettings.extraOpToUpperCase;
-    extraOpToLowerCase.checked = !!appSettings.extraOpToLowerCase;
-
-    // NEW: load Automatron settings
-    automatronUrlInput.value = appSettings.automatronUrl || '';
-    automatronSecretInput.value = appSettings.automatronSecret || '';
-
     updateApiKeyVisibility();
     syncInputState();
 
@@ -1964,24 +1810,6 @@ function collectCurrentState() {
     if(autoCompressForceStrictHeaderInput) appSettings.autoCompressForceStrictHeader=autoCompressForceStrictHeaderInput.checked;
     if(pipelineForceStrictHeaderToggle) appSettings.pipelineForceStrictHeader=pipelineForceStrictHeaderToggle.checked;
 
-    // NEW: collect footer header settings
-    appSettings.footerHeaderEnabled = footerHeaderEnabledToggle.checked;
-    appSettings.footerHeaderText = footerHeaderTextArea.value;
-
-    // NEW: collect extra operations
-    appSettings.extraOpTrimSpace = extraOpTrimSpace.checked;
-    appSettings.extraOpRemoveEmptyLines = extraOpRemoveEmptyLines.checked;
-    appSettings.extraOpRemoveBreaks = extraOpRemoveBreaks.checked;
-    appSettings.extraOpBreaksToSpace = extraOpBreaksToSpace.checked;
-    appSettings.extraOpToHalfWidth = extraOpToHalfWidth.checked;
-    appSettings.extraOpToFullWidthKana = extraOpToFullWidthKana.checked;
-    appSettings.extraOpToUpperCase = extraOpToUpperCase.checked;
-    appSettings.extraOpToLowerCase = extraOpToLowerCase.checked;
-
-    // NEW: collect Automatron settings
-    appSettings.automatronUrl = automatronUrlInput.value;
-    appSettings.automatronSecret = automatronSecretInput.value;
-
     if(appSettings.persistWorkspace){
         syncCombinedInput();appSettings.inputText=inputEl.value;
         appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;appSettings.inputTextPart3=inputPart3El.value;
@@ -2015,12 +1843,6 @@ persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
 const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
 [themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput,gaTwoStageEvalToggle].forEach(el=>el.addEventListener('change',handleSettingChange));
 [autoCompressForceStrictHeaderInput,pipelineForceStrictHeaderToggle].forEach(el=>{if(el)el.addEventListener('change',handleSettingChange);});
-// NEW: add event listeners for new settings
-[footerHeaderEnabledToggle, extraOpTrimSpace, extraOpRemoveEmptyLines, extraOpRemoveBreaks, extraOpBreaksToSpace, extraOpToHalfWidth, extraOpToFullWidthKana, extraOpToUpperCase, extraOpToLowerCase].forEach(el => el.addEventListener('change', handleSettingChange));
-footerHeaderTextArea.addEventListener('input', handleSettingChange);
-// NEW: add event listeners for Automatron settings
-[automatronUrlInput, automatronSecretInput].forEach(el => el.addEventListener('input', handleSettingChange));
-
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
 [autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();refreshAnalysisCorpusCount();});
@@ -2470,10 +2292,10 @@ function processAbbreviation(text, regex, dictCallback, successMessage) {
     const newText = bodyText.replace(regex, matchStr => { isReplaced = true; return dictCallback(matchStr, replacedMap); });
     if (isReplaced || replacedMap.size > 0) {
         const forceStrict = autoCompressForceStrictHeaderInput ? autoCompressForceStrictHeaderInput.checked : false;
-        outputEl.value = chooseBestCompressedHeader(replacedMap, newText, { forceStrictHeader: forceStrict }, null) + newText + getFooterHeaderText();
+        outputEl.value = chooseBestCompressedHeader(replacedMap, newText, { forceStrictHeader: forceStrict }, null) + newText;
         updateCounts(); saveWorkspaceDebounced(); showToast(successMessage);
     } else {
-        outputEl.value = text + getFooterHeaderText(); updateCounts(); saveWorkspaceDebounced(); showToast('略称化できる単語が見つかりませんでした');
+        outputEl.value = text; updateCounts(); saveWorkspaceDebounced(); showToast('略称化できる単語が見つかりませんでした');
     }
 }
 
@@ -2536,7 +2358,7 @@ function formatText(action) {
             else { showToast('復元できるマッピングが見つかりませんでした'); return; } break;
         }
     }
-    outputEl.value = text + getFooterHeaderText(); updateCounts(); saveWorkspaceDebounced();
+    outputEl.value = text; updateCounts(); saveWorkspaceDebounced();
 }
 
 document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => {
@@ -2562,7 +2384,7 @@ clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCom
 clearPart3Btn.addEventListener('click', () => { inputPart3El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
 document.getElementById('joinBtn').addEventListener('click', () => {
     syncCombinedInput();
-    outputEl.value = inputEl.value + getFooterHeaderText();
+    outputEl.value = inputEl.value;
     updateCounts();
     saveWorkspaceDebounced();
     showToast('3分割テキストを連結しました');
@@ -2572,7 +2394,7 @@ document.getElementById('replaceBtn').addEventListener('click', () => {
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!src) { showToast('検索文字列を入力してください'); return; }
     resetHighlightMode();
-    outputEl.value = text.replace(new RegExp(escRegex(src), 'g'), tgt) + getFooterHeaderText();
+    outputEl.value = text.replace(new RegExp(escRegex(src), 'g'), tgt);
     updateCounts(); saveWorkspaceDebounced(); showToast('置換しました');
 });
 
@@ -2612,7 +2434,17 @@ function countOccurrences(text, needle){if(!needle)return 0;let count=0,pos=0;wh
 function tokenizeTextLikeWords(text){return text.match(/[A-Za-z0-9_]+|[ぁ-んァ-ヶー一-龠々〆ヵヶ]+|[^\s]/g)||[];}
 function printableAlias(s){return !!s && !/\s/.test(s) && /^[\x21-\x7E]+$/.test(s);}
 
-const ANALYSIS_CONTEXTS=[['',''], [' ',''], ['\n',''], ['A','B'], ['あ','い'], ['「','」'], [':',''], ['','。'], ['<','>']];
+const ANALYSIS_CONTEXTS=[
+    ['',''],
+    [' ',''],
+    ['\n',''],
+    ['A','B'],
+    ['あ','い'],
+    ['「','」'],
+    [':',''],
+    ['','。'],
+    ['<','>']
+];
 
 const ANALYSIS_HEADER_LIBRARY=[
     {name:'eq_min',prefix:'',entry:'{alias}={value}\n',suffix:'--\n'},
@@ -2651,13 +2483,57 @@ function generateAliasCandidates(prefixes, probeLimit=2500){
     const safeSymbols='@#~$%&*?!^';
     const emitted=new Set();
     const out=[];
-    function push(s){if(out.length>=probeLimit) return;if(emitted.has(s)) return;if(!printableAlias(s)) return;if(!isSafeMapAlias(s)) return;emitted.add(s);out.push(s);}
+
+    function push(s){
+        if(out.length>=probeLimit) return;
+        if(emitted.has(s)) return;
+        if(!printableAlias(s)) return;
+        if(!isSafeMapAlias(s)) return;
+        emitted.add(s);
+        out.push(s);
+    }
+
     [...upper,...lower,...digits,...safeSymbols].forEach(ch=>push(ch));
-    prefixes.forEach(pref=>{if(!isSafeMapAlias(pref)) return;[...upper,...lower,...digits].forEach(ch=>push(pref+ch));});
-    for(const a of upper){for(const b of upper){push(a+b);if(out.length>=probeLimit) return out;}}
-    for(const a of upper){for(const b of digits){push(a+b);if(out.length>=probeLimit) return out;}}
-    prefixes.forEach(pref=>{if(!isSafeMapAlias(pref)) return;for(const a of upper){for(const b of digits){push(pref+a+b);if(out.length>=probeLimit) return out;}}});
-    prefixes.forEach(pref=>{if(!isSafeMapAlias(pref)) return;for(const a of upper){for(const b of upper){push(pref+a+b);if(out.length>=probeLimit) return out;}}});
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        [...upper,...lower,...digits].forEach(ch=>push(pref+ch));
+    });
+
+    for(const a of upper){
+        for(const b of upper){
+            push(a+b);
+            if(out.length>=probeLimit) return out;
+        }
+    }
+
+    for(const a of upper){
+        for(const b of digits){
+            push(a+b);
+            if(out.length>=probeLimit) return out;
+        }
+    }
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        for(const a of upper){
+            for(const b of digits){
+                push(pref+a+b);
+                if(out.length>=probeLimit) return out;
+            }
+        }
+    });
+
+    prefixes.forEach(pref=>{
+        if(!isSafeMapAlias(pref)) return;
+        for(const a of upper){
+            for(const b of upper){
+                push(pref+a+b);
+                if(out.length>=probeLimit) return out;
+            }
+        }
+    });
+
     return out.slice(0, probeLimit);
 }
 
@@ -2666,14 +2542,27 @@ function analyzeAliasPoolWeb(corpus, prefixes, keepLimit=128, probeLimit=2500){
     const candidates=generateAliasCandidates(prefixes, probeLimit);
     for(const cand of candidates){
         if(corpus.includes(cand)) continue;
-        results.push({alias:cand,isolated_tokens:getExactTokenCount(cand),avg_marginal_tokens:averageMarginalCost(cand),length:cand.length});
+        results.push({
+            alias:cand,
+            isolated_tokens:getExactTokenCount(cand),
+            avg_marginal_tokens:averageMarginalCost(cand),
+            length:cand.length
+        });
     }
-    results.sort((a,b)=>a.avg_marginal_tokens-b.avg_marginal_tokens || a.isolated_tokens-b.isolated_tokens || a.length-b.length || a.alias.localeCompare(b.alias));
+    results.sort((a,b)=>
+        a.avg_marginal_tokens-b.avg_marginal_tokens ||
+        a.isolated_tokens-b.isolated_tokens ||
+        a.length-b.length ||
+        a.alias.localeCompare(b.alias)
+    );
     return results.slice(0, keepLimit);
 }
 function analyzeSeparatorsWeb(separators){
     const probes=[['A','B'],['QZ','主人公'],['AA','トウカイテイオー'],['K1','メジロマックイーン']];
-    const rows=separators.map(sep=>{const samples=probes.map(([l,r])=>getExactTokenCount(`${l}${sep}${r}\n`));return {separator:sep,avg_tokens:Number(mean(samples).toFixed(4)),samples};});
+    const rows=separators.map(sep=>{
+        const samples=probes.map(([l,r])=>getExactTokenCount(`${l}${sep}${r}\n`));
+        return {separator:sep,avg_tokens:Number(mean(samples).toFixed(4)),samples};
+    });
     rows.sort((a,b)=>a.avg_tokens-b.avg_tokens || a.separator.localeCompare(b.separator));
     return rows;
 }
@@ -2692,7 +2581,10 @@ function analyzeHeaderTemplatesWeb(aliasPool, sampleValues){
     const fallback=[{alias:'AA'},{alias:'AB'},{alias:'AC'},{alias:'AD'}];
     const pool=aliasPool.length?aliasPool:fallback;
     const pairs=sampleValues.slice(0, Math.min(sampleValues.length, pool.length)).map((v,i)=>[pool[i].alias,v]);
-    const rows=ANALYSIS_HEADER_LIBRARY.map(tpl=>{const rendered=renderAnalysisHeader(tpl, pairs);return {name:tpl.name,token_cost:getExactTokenCount(rendered),template:tpl,preview:rendered.slice(0,500)};});
+    const rows=ANALYSIS_HEADER_LIBRARY.map(tpl=>{
+        const rendered=renderAnalysisHeader(tpl, pairs);
+        return {name:tpl.name,token_cost:getExactTokenCount(rendered),template:tpl,preview:rendered.slice(0,500)};
+    });
     rows.sort((a,b)=>a.token_cost-b.token_cost || a.name.localeCompare(b.name));
     return rows;
 }
@@ -2700,7 +2592,10 @@ function analyzeCharBurdenWeb(corpus, limit=80){
     const source=corpus || '「」『』（）()[]{}<>:=|@#~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ぁあア漢字。、「」\n ';
     const counts=new Map();
     for(const ch of source){counts.set(ch, (counts.get(ch)||0)+1);}
-    const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([ch,freq])=>{const avg=averageMarginalCost(ch);return {char:ch,char_display:escapeVisibleChar(ch),freq,avg_marginal_tokens:avg,burden_score:Number((avg*freq).toFixed(4)),ord:ch.codePointAt(0)};});
+    const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([ch,freq])=>{
+        const avg=averageMarginalCost(ch);
+        return {char:ch,char_display:escapeVisibleChar(ch),freq,avg_marginal_tokens:avg,burden_score:Number((avg*freq).toFixed(4)),ord:ch.codePointAt(0)};
+    });
     rows.sort((a,b)=>b.burden_score-a.burden_score || b.avg_marginal_tokens-a.avg_marginal_tokens);
     return rows;
 }
@@ -2710,9 +2605,14 @@ function mineTokenNgramCandidatesWeb(corpus, nMin=2, nMax=8, minCount=2, topLimi
     if(!ids || !ids.length) return [];
     if(ids.length>50000) ids=ids.slice(0,50000);
     const candidates=new Map();
+
     for(let n=nMin; n<=nMax; n++){
         const local=new Map();
-        for(let i=0;i<=ids.length-n;i++){const slice=ids.slice(i,i+n);const key=slice.join(',');local.set(key, (local.get(key)||0)+1);}
+        for(let i=0;i<=ids.length-n;i++){
+            const slice=ids.slice(i,i+n);
+            const key=slice.join(',');
+            local.set(key, (local.get(key)||0)+1);
+        }
         for(const [key,count] of local){
             if(count<minCount) continue;
             const text=(decodeTokenIds(key.split(',').map(Number), provider)||'').trim();
@@ -2726,9 +2626,17 @@ function mineTokenNgramCandidatesWeb(corpus, nMin=2, nMax=8, minCount=2, topLimi
             if(!prev || row.raw_burden>prev.raw_burden) candidates.set(text,row);
         }
     }
+
     return [...candidates.values()].sort((a,b)=>b.raw_burden-a.raw_burden || b.phrase.length-a.phrase.length).slice(0,topLimit);
 }
-function chooseAliasForPhraseWeb(aliasPool, corpus, used){for(const row of aliasPool){if(used.has(row.alias)) continue;if(corpus.includes(row.alias)) continue;return row.alias;}return null;}
+function chooseAliasForPhraseWeb(aliasPool, corpus, used){
+    for(const row of aliasPool){
+        if(used.has(row.alias)) continue;
+        if(corpus.includes(row.alias)) continue;
+        return row.alias;
+    }
+    return null;
+}
 function exactSinglePhraseGainWeb(corpus, phrase, alias, headerTemplate, beforeTokens){
     const count=countOccurrences(corpus, phrase);
     if(count<=0) return {count:0,before_tokens:beforeTokens,after_tokens:beforeTokens,gain:0,header:''};
@@ -2748,7 +2656,19 @@ function analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeaderTemplate, opts
         if(!alias) break;
         const exact=exactSinglePhraseGainWeb(corpus, item.phrase, alias, bestHeaderTemplate.template, beforeTokens);
         if(exact.gain<=0) continue;
-        rows.push({phrase:item.phrase,phrase_preview:compactPreview(item.phrase,80),count:exact.count,phrase_tokens:item.phrase_tokens,alias,alias_isolated_tokens:(aliasPool.find(v=>v.alias===alias)||{}).isolated_tokens ?? null,gain:exact.gain,before_tokens:exact.before_tokens,after_tokens:exact.after_tokens,header_preview:exact.header.slice(0,120),raw_burden:item.raw_burden});
+        rows.push({
+            phrase:item.phrase,
+            phrase_preview:compactPreview(item.phrase,80),
+            count:exact.count,
+            phrase_tokens:item.phrase_tokens,
+            alias,
+            alias_isolated_tokens:(aliasPool.find(v=>v.alias===alias)||{}).isolated_tokens ?? null,
+            gain:exact.gain,
+            before_tokens:exact.before_tokens,
+            after_tokens:exact.after_tokens,
+            header_preview:exact.header.slice(0,120),
+            raw_burden:item.raw_burden
+        });
         used.add(alias);
         if(rows.length>=opts.phraseLimit) break;
     }
@@ -2756,28 +2676,184 @@ function analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeaderTemplate, opts
     return rows;
 }
 function buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows){
-    return {recommended_aliases: aliasPool.slice(0,32).map(v=>v.alias),recommended_separators: separatorRows.slice(0,8).map(v=>v.separator),recommended_header_template: headerRows[0]?.template || null,expensive_chars: charRows.slice(0,24).map(v=>({char:v.char,char_display:v.char_display,avg_marginal_tokens:v.avg_marginal_tokens,burden_score:v.burden_score})),recommended_phrase_replacements: phraseRows.slice(0,24).map(v=>({phrase:v.phrase,alias:v.alias,gain:v.gain,count:v.count}))};
+    return {
+        recommended_aliases: aliasPool.slice(0,32).map(v=>v.alias),
+        recommended_separators: separatorRows.slice(0,8).map(v=>v.separator),
+        recommended_header_template: headerRows[0]?.template || null,
+        expensive_chars: charRows.slice(0,24).map(v=>({char:v.char,char_display:v.char_display,avg_marginal_tokens:v.avg_marginal_tokens,burden_score:v.burden_score})),
+        recommended_phrase_replacements: phraseRows.slice(0,24).map(v=>({phrase:v.phrase,alias:v.alias,gain:v.gain,count:v.count}))
+    };
 }
 function buildAiCompactPacketWeb(profile){
     const rules=profile.distilled_rules||{};
-    return {schema:'tokenizer-distiller-ai-packet.v1',goal:'Minimize token count for the target tokenizer while preserving meaning.',target:profile.target,corpus_stats:profile.corpus,recommended_alias_pool:(rules.recommended_aliases||[]).slice(0,32),recommended_separators:(rules.recommended_separators||[]).slice(0,8),recommended_header_template:rules.recommended_header_template||null,expensive_chars:(rules.expensive_chars||[]).slice(0,20),replacement_candidates:(rules.recommended_phrase_replacements||[]).slice(0,30),operating_rules:['Prefer aliases from the recommended alias pool.','Prefer the recommended header template.','Use only replacements with positive net gain when possible.','Avoid aliases already present in the source text.','Do not change meaning.','If uncertain about semantic safety, skip the replacement.'],required_output:{mapping:[{alias:'AA', original:'...'}],compressed_text:'...',notes:'...',estimated_gain:0}};
+    return {
+        schema:'tokenizer-distiller-ai-packet.v1',
+        goal:'Minimize token count for the target tokenizer while preserving meaning.',
+        target:profile.target,
+        corpus_stats:profile.corpus,
+        recommended_alias_pool:(rules.recommended_aliases||[]).slice(0,32),
+        recommended_separators:(rules.recommended_separators||[]).slice(0,8),
+        recommended_header_template:rules.recommended_header_template||null,
+        expensive_chars:(rules.expensive_chars||[]).slice(0,20),
+        replacement_candidates:(rules.recommended_phrase_replacements||[]).slice(0,30),
+        operating_rules:[
+            'Prefer aliases from the recommended alias pool.',
+            'Prefer the recommended header template.',
+            'Use only replacements with positive net gain when possible.',
+            'Avoid aliases already present in the source text.',
+            'Do not change meaning.',
+            'If uncertain about semantic safety, skip the replacement.'
+        ],
+        required_output:{
+            mapping:[{alias:'AA', original:'...'}],
+            compressed_text:'...',
+            notes:'...',
+            estimated_gain:0
+        }
+    };
 }
-function buildAiHandoffMarkdownWeb(profile){const rules=profile.distilled_rules||{};const exp=(rules.expensive_chars||[]).slice(0,20);const repl=(rules.recommended_phrase_replacements||[]).slice(0,30);const aliases=(rules.recommended_aliases||[]).slice(0,32);const seps=(rules.recommended_separators||[]).slice(0,8);const lines=[];lines.push('# AI Compression Handoff','');lines.push('## Goal');lines.push('Minimize prompt token count for the target tokenizer while preserving meaning exactly.','');lines.push('## Target');lines.push(`- backend: ${profile.target.backend}`);lines.push(`- tokenizer: ${profile.target.target}`);lines.push(`- display_name: ${profile.target.display_name}`,'');lines.push('## Corpus stats');lines.push(`- chars: ${profile.corpus.chars}`);lines.push(`- tokens: ${profile.corpus.tokens}`,'');lines.push('## Recommended alias pool');lines.push(aliases.length ? aliases.join(', ') : '(none)','');lines.push('## Recommended separators');lines.push(seps.length ? seps.join(', ') : '(none)','');lines.push('## Recommended header template');lines.push('```json');lines.push(JSON.stringify(rules.recommended_header_template||null, null, 2));lines.push('```','');lines.push('## Expensive characters / symbols');if(exp.length){exp.forEach(v=>lines.push(`- ${v.char_display} (avg_marginal_tokens=${v.avg_marginal_tokens}, burden=${v.burden_score})`));}else lines.push('(none)');lines.push('');lines.push('## Best replacement candidates');if(repl.length){repl.forEach(v=>lines.push(`- ${v.phrase} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}else lines.push('(none)');lines.push('');lines.push('## Operating procedure');lines.push('1. Prefer aliases from the recommended alias pool.');lines.push('2. Prefer the recommended header template.');lines.push('3. Apply only replacements with positive net gain.');lines.push('4. Avoid aliases already present in the source text.');lines.push('5. Preserve meaning exactly.');lines.push('6. If a replacement may distort semantics, skip it.');lines.push('');lines.push('## Expected output');lines.push('Return:');lines.push('1. mapping table');lines.push('2. compressed text');lines.push('3. brief notes');lines.push('4. estimated token gain');lines.push('');return lines.join('\n');}
-function buildAiCompressorPromptWeb(profile){const packet=buildAiCompactPacketWeb(profile);return `You are an AI assistant performing tokenizer-aware prompt compression.\n\nUse the following tokenizer analysis packet:\n\n\`\`\`json\n${JSON.stringify(packet, null, 2)}\n\`\`\`\n\nTask:\n- Compress the user's text according to the analysis above.\n- Preserve meaning exactly.\n- Prefer aliases from "recommended_alias_pool".\n- Prefer the "recommended_header_template".\n- Prefer replacements listed in "replacement_candidates".\n- Only use replacements that appear semantically safe.\n- Do not invent abbreviations unless the recommended pool is exhausted.\n\nReturn JSON in this schema:\n{\n  "mapping": [\n    {"alias": "AA", "original": "主人公"}\n  ],\n  "compressed_text": "",\n  "notes": "",\n  "estimated_gain": 0\n}`;}
-function buildAiDecompressorPromptWeb(profile){return `You are an AI assistant restoring compressed text.\n\nTarget tokenizer:\n- backend: ${profile.target.backend}\n- tokenizer: ${profile.target.target}\n- display_name: ${profile.target.display_name}\n\nTask:\n- Read the mapping table in the compressed text.\n- Restore abbreviations to original forms.\n- Preserve line breaks and formatting as much as possible.\n- Do not paraphrase unless restoration requires it.\n\nReturn JSON in this schema:\n{\n  "restored_text": "",\n  "notes": ""\n}`;}
-function buildSummaryTextWeb(profile){const rules=profile.distilled_rules||{};const lines=[];lines.push('Tokenizer Analysis Summary');lines.push('========================================');lines.push(`target         : ${profile.target.display_name}`);lines.push(`backend        : ${profile.target.backend}`);lines.push(`tokenizer      : ${profile.target.target}`);lines.push(`corpus chars   : ${profile.corpus.chars}`);lines.push(`corpus tokens  : ${profile.corpus.tokens}`);lines.push('');lines.push(`best header    : ${profile.summary.best_header_name} (cost=${profile.summary.best_header_token_cost})`);lines.push(`top phrase gain: ${profile.summary.top_phrase_gain}`);lines.push('');lines.push('recommended aliases:');lines.push((rules.recommended_aliases||[]).slice(0,20).join(', ') || '(none)');lines.push('');lines.push('recommended separators:');lines.push((rules.recommended_separators||[]).slice(0,8).join(', ') || '(none)');lines.push('');lines.push('top replacement candidates:');const top=(rules.recommended_phrase_replacements||[]).slice(0,10);if(top.length){top.forEach(v=>lines.push(`- ${compactPreview(v.phrase,60)} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}else lines.push('(none)');return lines.join('\n');}
+function buildAiHandoffMarkdownWeb(profile){
+    const rules=profile.distilled_rules||{};
+    const exp=(rules.expensive_chars||[]).slice(0,20);
+    const repl=(rules.recommended_phrase_replacements||[]).slice(0,30);
+    const aliases=(rules.recommended_aliases||[]).slice(0,32);
+    const seps=(rules.recommended_separators||[]).slice(0,8);
+
+    const lines=[];
+    lines.push('# AI Compression Handoff','');
+    lines.push('## Goal');
+    lines.push('Minimize prompt token count for the target tokenizer while preserving meaning exactly.','');
+    lines.push('## Target');
+    lines.push(`- backend: ${profile.target.backend}`);
+    lines.push(`- tokenizer: ${profile.target.target}`);
+    lines.push(`- display_name: ${profile.target.display_name}`,'');
+    lines.push('## Corpus stats');
+    lines.push(`- chars: ${profile.corpus.chars}`);
+    lines.push(`- tokens: ${profile.corpus.tokens}`,'');
+    lines.push('## Recommended alias pool');
+    lines.push(aliases.length ? aliases.join(', ') : '(none)','');
+    lines.push('## Recommended separators');
+    lines.push(seps.length ? seps.join(', ') : '(none)','');
+    lines.push('## Recommended header template');
+    lines.push('```json');
+    lines.push(JSON.stringify(rules.recommended_header_template||null, null, 2));
+    lines.push('```','');
+    lines.push('## Expensive characters / symbols');
+    if(exp.length){exp.forEach(v=>lines.push(`- ${v.char_display} (avg_marginal_tokens=${v.avg_marginal_tokens}, burden=${v.burden_score})`));}
+    else lines.push('(none)');
+    lines.push('');
+    lines.push('## Best replacement candidates');
+    if(repl.length){repl.forEach(v=>lines.push(`- ${v.phrase} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
+    else lines.push('(none)');
+    lines.push('');
+    lines.push('## Operating procedure');
+    lines.push('1. Prefer aliases from the recommended alias pool.');
+    lines.push('2. Prefer the recommended header template.');
+    lines.push('3. Apply only replacements with positive net gain.');
+    lines.push('4. Avoid aliases already present in the source text.');
+    lines.push('5. Preserve meaning exactly.');
+    lines.push('6. If a replacement may distort semantics, skip it.');
+    lines.push('');
+    lines.push('## Expected output');
+    lines.push('Return:');
+    lines.push('1. mapping table');
+    lines.push('2. compressed text');
+    lines.push('3. brief notes');
+    lines.push('4. estimated token gain');
+    lines.push('');
+    return lines.join('\n');
+}
+function buildAiCompressorPromptWeb(profile){
+    const packet=buildAiCompactPacketWeb(profile);
+    return `You are an AI assistant performing tokenizer-aware prompt compression.
+
+Use the following tokenizer analysis packet:
+
+\`\`\`json
+${JSON.stringify(packet, null, 2)}
+\`\`\`
+
+Task:
+- Compress the user's text according to the analysis above.
+- Preserve meaning exactly.
+- Prefer aliases from "recommended_alias_pool".
+- Prefer the "recommended_header_template".
+- Prefer replacements listed in "replacement_candidates".
+- Only use replacements that appear semantically safe.
+- Do not invent abbreviations unless the recommended pool is exhausted.
+
+Return JSON in this schema:
+{
+  "mapping": [
+    {"alias": "AA", "original": "主人公"}
+  ],
+  "compressed_text": "",
+  "notes": "",
+  "estimated_gain": 0
+}`;
+}
+function buildAiDecompressorPromptWeb(profile){
+    return `You are an AI assistant restoring compressed text.
+
+Target tokenizer:
+- backend: ${profile.target.backend}
+- tokenizer: ${profile.target.target}
+- display_name: ${profile.target.display_name}
+
+Task:
+- Read the mapping table in the compressed text.
+- Restore abbreviations to original forms.
+- Preserve line breaks and formatting as much as possible.
+- Do not paraphrase unless restoration requires it.
+
+Return JSON in this schema:
+{
+  "restored_text": "",
+  "notes": ""
+}`;
+}
+function buildSummaryTextWeb(profile){
+    const rules=profile.distilled_rules||{};
+    const lines=[];
+    lines.push('Tokenizer Analysis Summary');
+    lines.push('========================================');
+    lines.push(`target         : ${profile.target.display_name}`);
+    lines.push(`backend        : ${profile.target.backend}`);
+    lines.push(`tokenizer      : ${profile.target.target}`);
+    lines.push(`corpus chars   : ${profile.corpus.chars}`);
+    lines.push(`corpus tokens  : ${profile.corpus.tokens}`);
+    lines.push('');
+    lines.push(`best header    : ${profile.summary.best_header_name} (cost=${profile.summary.best_header_token_cost})`);
+    lines.push(`top phrase gain: ${profile.summary.top_phrase_gain}`);
+    lines.push('');
+    lines.push('recommended aliases:');
+    lines.push((rules.recommended_aliases||[]).slice(0,20).join(', ') || '(none)');
+    lines.push('');
+    lines.push('recommended separators:');
+    lines.push((rules.recommended_separators||[]).slice(0,8).join(', ') || '(none)');
+    lines.push('');
+    lines.push('top replacement candidates:');
+    const top=(rules.recommended_phrase_replacements||[]).slice(0,10);
+    if(top.length){top.forEach(v=>lines.push(`- ${compactPreview(v.phrase,60)} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
+    else lines.push('(none)');
+    return lines.join('\n');
+}
 
 runTokenizerAnalysisBtn.addEventListener('click', async()=>{
     const corpus=normalizeTextLite(analysisCorpusText.value);
     if(!corpus.trim()){showToast('分析対象テキストがありません');return;}
+
     const provider=appSettings.tokenCalcProvider||'openai';
     runTokenizerAnalysisBtn.disabled=true;
     analysisRunNotice.textContent='トークナイザーを準備しています…';
+
     try{
         await initLocalTokenizer();
         const entry=localTokenizers[provider];
         if(!entry || entry.status!=='ready') throw new Error('ローカルトークナイザーの準備に失敗しました');
+
         analysisRunNotice.textContent='略号候補・重い文字列・置換候補を分析中…';
+
         const prefixes=uniqArray(['@','#','~','Q','Z']);
         const separators=uniqArray(['=',':','|','@','#','>','~',';']);
         const aliasPool=analyzeAliasPoolWeb(corpus, prefixes, parseInt(analysisAliasKeepLimitInput.value,10)||128, parseInt(analysisAliasProbeLimitInput.value,10)||2500);
@@ -2786,19 +2862,79 @@ runTokenizerAnalysisBtn.addEventListener('click', async()=>{
         const headerRows=analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
         const charRows=analyzeCharBurdenWeb(corpus, parseInt(analysisCharLimitInput.value,10)||80);
         const bestHeader=headerRows[0] || {name:'fallback',token_cost:0,template:ANALYSIS_HEADER_LIBRARY[0]};
-        const phraseRows=analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeader, {ngramMin:parseInt(analysisNgramMinInput.value,10)||2,ngramMax:parseInt(analysisNgramMaxInput.value,10)||8,minCount:parseInt(analysisMinCountInput.value,10)||2,phraseLimit:parseInt(analysisPhraseLimitInput.value,10)||40});
+        const phraseRows=analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeader, {
+            ngramMin:parseInt(analysisNgramMinInput.value,10)||2,
+            ngramMax:parseInt(analysisNgramMaxInput.value,10)||8,
+            minCount:parseInt(analysisMinCountInput.value,10)||2,
+            phraseLimit:parseInt(analysisPhraseLimitInput.value,10)||40
+        });
         const distilledRules=buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
-        const profile={schema:'toolbox-tokenizer-analysis.v1',created_at:new Date().toISOString(),app:{name:'Toolbox PWA',version:'9.1+analyzer'},target:{backend:provider,target:provider,display_name:provider,tokenizer_status:entry.status,precise_mode:provider==='deepseek' ? !!appSettings.deepseekPreciseTokenizer : null},corpus:{chars:corpus.length,tokens:getExactTokenCount(corpus),sample_values:sampleValues},settings:{alias_probe_limit:parseInt(analysisAliasProbeLimitInput.value,10)||2500,alias_keep_limit:parseInt(analysisAliasKeepLimitInput.value,10)||128,ngram_min:parseInt(analysisNgramMinInput.value,10)||2,ngram_max:parseInt(analysisNgramMaxInput.value,10)||8,min_count:parseInt(analysisMinCountInput.value,10)||2,phrase_limit:parseInt(analysisPhraseLimitInput.value,10)||40,char_limit:parseInt(analysisCharLimitInput.value,10)||80},summary:{best_header_name:headerRows[0]?.name||null,best_header_token_cost:headerRows[0]?.token_cost||null,best_separators:separatorRows.slice(0,5).map(v=>v.separator),best_aliases:aliasPool.slice(0,12).map(v=>v.alias),top_phrase_gain:phraseRows[0]?.gain||0},alias_pool:aliasPool,separators:separatorRows,header_templates:headerRows,char_burden:charRows,phrase_suggestions:phraseRows,distilled_rules:distilledRules,notes:['This JSON contains a static tokenizer tendency analysis and compression gain estimates for the given corpus.','For auto-compression, use these results as candidate seeds and re-score with the real tokenizer on the full text.']};
+
+        const profile={
+            schema:'toolbox-tokenizer-analysis.v1',
+            created_at:new Date().toISOString(),
+            app:{name:'Toolbox PWA',version:'9.0+analyzer'},
+            target:{
+                backend:provider,
+                target:provider,
+                display_name:provider,
+                tokenizer_status:entry.status,
+                precise_mode:provider==='deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
+            },
+            corpus:{chars:corpus.length,tokens:getExactTokenCount(corpus),sample_values:sampleValues},
+            settings:{
+                alias_probe_limit:parseInt(analysisAliasProbeLimitInput.value,10)||2500,
+                alias_keep_limit:parseInt(analysisAliasKeepLimitInput.value,10)||128,
+                ngram_min:parseInt(analysisNgramMinInput.value,10)||2,
+                ngram_max:parseInt(analysisNgramMaxInput.value,10)||8,
+                min_count:parseInt(analysisMinCountInput.value,10)||2,
+                phrase_limit:parseInt(analysisPhraseLimitInput.value,10)||40,
+                char_limit:parseInt(analysisCharLimitInput.value,10)||80
+            },
+            summary:{
+                best_header_name:headerRows[0]?.name||null,
+                best_header_token_cost:headerRows[0]?.token_cost||null,
+                best_separators:separatorRows.slice(0,5).map(v=>v.separator),
+                best_aliases:aliasPool.slice(0,12).map(v=>v.alias),
+                top_phrase_gain:phraseRows[0]?.gain||0
+            },
+            alias_pool:aliasPool,
+            separators:separatorRows,
+            header_templates:headerRows,
+            char_burden:charRows,
+            phrase_suggestions:phraseRows,
+            distilled_rules:distilledRules,
+            notes:[
+                'This JSON contains a static tokenizer tendency analysis and compression gain estimates for the given corpus.',
+                'For auto-compression, use these results as candidate seeds and re-score with the real tokenizer on the full text.'
+            ]
+        };
+
         const packet=buildAiCompactPacketWeb(profile);
         const handoff=buildAiHandoffMarkdownWeb(profile);
         const compressor=buildAiCompressorPromptWeb(profile);
         const decompressor=buildAiDecompressorPromptWeb(profile);
         const summary=buildSummaryTextWeb(profile);
-        analysisOutputs.summary=summary;analysisOutputs.profile=JSON.stringify(profile, null, 2);analysisOutputs.packet=JSON.stringify(packet, null, 2);analysisOutputs.handoff=handoff;analysisOutputs.compressor=compressor;analysisOutputs.decompressor=decompressor;
-        analysisActiveTab='summary';renderAnalysisTab();
+
+        analysisOutputs.summary=summary;
+        analysisOutputs.profile=JSON.stringify(profile, null, 2);
+        analysisOutputs.packet=JSON.stringify(packet, null, 2);
+        analysisOutputs.handoff=handoff;
+        analysisOutputs.compressor=compressor;
+        analysisOutputs.decompressor=decompressor;
+
+        analysisActiveTab='summary';
+        renderAnalysisTab();
         analysisRunNotice.textContent=`分析完了: alias ${aliasPool.length}件 / phrases ${phraseRows.length}件 / best gain ${profile.summary.top_phrase_gain}`;
-        saveWorkspaceDebounced();showToast('トークナイザー分析が完了しました');
-    }catch(err){console.error(err);analysisRunNotice.textContent=`分析失敗: ${err.message||err}`;showToast('分析に失敗しました');}finally{runTokenizerAnalysisBtn.disabled=false;}
+        saveWorkspaceDebounced();
+        showToast('トークナイザー分析が完了しました');
+    }catch(err){
+        console.error(err);
+        analysisRunNotice.textContent=`分析失敗: ${err.message||err}`;
+        showToast('分析に失敗しました');
+    }finally{
+        runTokenizerAnalysisBtn.disabled=false;
+    }
 });
 
 const _usedAbbrs = new Set();
@@ -2808,167 +2944,481 @@ function generateOptimalAbbr(index, textContext, replacedMap) {
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
     const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const candidates = [];
+
     for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) candidates.push(alpha[a] + alpha[b]);
     for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) for (let d = 0; d < 10; d++) candidates.push(alpha[a] + alpha[b] + d);
-    for (const pref of ['Q','Z','@','#','~']) {for (let a = 0; a < 26; a++) for (let d = 0; d < 10; d++) candidates.push(pref + alpha[a] + d);}
-    for (const c of candidates) {
-        if (!isSafeMapAlias(c)) continue;if (_usedAbbrs.has(c)) continue;if (replacedMap.has(c)) continue;if (textContext.includes(c)) continue;
-        if (hasEncoder) {const tokenCount = countTokensLocal(c, p);if (tokenCount !== null && tokenCount > 1) continue;}
-        _usedAbbrs.add(c);return c;
+    for (const pref of ['Q','Z','@','#','~']) {
+        for (let a = 0; a < 26; a++) for (let d = 0; d < 10; d++) candidates.push(pref + alpha[a] + d);
     }
+
+    for (const c of candidates) {
+        if (!isSafeMapAlias(c)) continue;
+        if (_usedAbbrs.has(c)) continue;
+        if (replacedMap.has(c)) continue;
+        if (textContext.includes(c)) continue;
+        if (hasEncoder) {
+            const tokenCount = countTokensLocal(c, p);
+            if (tokenCount !== null && tokenCount > 1) continue;
+        }
+        _usedAbbrs.add(c);
+        return c;
+    }
+
     let fi = index;
-    for (let tries = 0; tries < 1000; tries++) {const fallback = 'v' + toBase62(fi);fi++;if (!isSafeMapAlias(fallback)) continue;if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {_usedAbbrs.add(fallback);return fallback;}}
+    for (let tries = 0; tries < 1000; tries++) {
+        const fallback = 'v' + toBase62(fi);
+        fi++;
+        if (!isSafeMapAlias(fallback)) continue;
+        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {
+            _usedAbbrs.add(fallback);
+            return fallback;
+        }
+    }
     return 'Q' + toBase62(Date.now() % 10000);
 }
 
 function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum) {
     const p = appSettings.tokenCalcProvider || 'openai';
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+
     const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
     const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
     const ngrams = new Map();
-    for (let n = 1; n <= 6; n++) {for (let i = 0; i <= segments.length - n; i++) {let phrase = '';for (let j = 0; j < n; j++) phrase += segments[i + j].segment;phrase = phrase.trim();if (!phrase || phrase.length < minLen) continue;if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) continue;if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;if (excludeAlnum && containsAlnum(phrase)) continue;ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);}}
+
+    for (let n = 1; n <= 6; n++) {
+        for (let i = 0; i <= segments.length - n; i++) {
+            let phrase = '';
+            for (let j = 0; j < n; j++) phrase += segments[i + j].segment;
+            phrase = phrase.trim();
+            if (!phrase || phrase.length < minLen) continue;
+            if (/^[ぁ-ん]+$/.test(phrase) && phrase.length < 3) continue;
+            if (/^[!-/:-@[-`{-~]+$/.test(phrase)) continue;
+            if (excludeAlnum && containsAlnum(phrase)) continue;
+            ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
+        }
+    }
+
     if (hasEncoder) {
         const tokenIds = encodeToTokenIds(text, p);
         if (tokenIds && tokenIds.length > 0) {
             for (let n = 2; n <= 8; n++) {
                 const tokenNgramMap = new Map();
-                for (let i = 0; i <= tokenIds.length - n; i++) {const slice = tokenIds.slice(i, i + n);const key = slice.join(',');if (!tokenNgramMap.has(key)) tokenNgramMap.set(key, { ids: slice, count: 0 });tokenNgramMap.get(key).count++;}
+                for (let i = 0; i <= tokenIds.length - n; i++) {
+                    const slice = tokenIds.slice(i, i + n);
+                    const key = slice.join(',');
+                    if (!tokenNgramMap.has(key)) tokenNgramMap.set(key, { ids: slice, count: 0 });
+                    tokenNgramMap.get(key).count++;
+                }
+
                 for (const [, entry] of tokenNgramMap) {
                     if (entry.count < minCount) continue;
-                    const decoded = decodeTokenIds(entry.ids, p);if (!decoded || decoded.length < minLen) continue;const trimmed = decoded.trim();if (!trimmed || trimmed.length < minLen) continue;if (/^[\s\r\n]+$/.test(trimmed)) continue;if (excludeAlnum && containsAlnum(trimmed)) continue;
-                    const re = new RegExp(escRegex(trimmed), 'g');const matches = text.match(re);const realCount = matches ? matches.length : 0;if (realCount < minCount) continue;
+                    const decoded = decodeTokenIds(entry.ids, p);
+                    if (!decoded || decoded.length < minLen) continue;
+                    const trimmed = decoded.trim();
+                    if (!trimmed || trimmed.length < minLen) continue;
+                    if (/^[\s\r\n]+$/.test(trimmed)) continue;
+                    if (excludeAlnum && containsAlnum(trimmed)) continue;
+
+                    const re = new RegExp(escRegex(trimmed), 'g');
+                    const matches = text.match(re);
+                    const realCount = matches ? matches.length : 0;
+                    if (realCount < minCount) continue;
+
                     if (!ngrams.has(trimmed) || ngrams.get(trimmed) < realCount) ngrams.set(trimmed, realCount);
                 }
             }
         }
     }
+
     const results = [];
-    for (const [phrase, count] of ngrams) {if (count < minCount) continue;const phraseTokCost = getExactTokenCount(phrase);const abbrTokCost = 1;const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);if (saving > 0) results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });}
+    for (const [phrase, count] of ngrams) {
+        if (count < minCount) continue;
+        const phraseTokCost = getExactTokenCount(phrase);
+        const abbrTokCost = 1;
+        const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);
+        const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);
+        if (saving > 0) results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });
+    }
+
     results.sort((a, b) => b.phrase.length - a.phrase.length);
     const filtered = [];
-    for (const item of results) {let isSub = false;for (const kept of filtered) {if (kept.phrase.includes(item.phrase)) {const remainingCount = Math.max(0, item.count - kept.count);const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);if (remainingSaving <= 0) { isSub = true; break; }}}if (!isSub) filtered.push(item);}
+    for (const item of results) {
+        let isSub = false;
+        for (const kept of filtered) {
+            if (kept.phrase.includes(item.phrase)) {
+                const remainingCount = Math.max(0, item.count - kept.count);
+                const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);
+                if (remainingSaving <= 0) { isSub = true; break; }
+            }
+        }
+        if (!isSub) filtered.push(item);
+    }
     filtered.sort((a, b) => b.saving - a.saving);
     return filtered.slice(0, maxItems);
 }
 
-function hasOriginalInMap(replacedMap, original){for(const [,v] of replacedMap.entries()){if(v===original) return true;}return false;}
-function getParsedAnalysisProfile(){try{if(analysisOutputs && analysisOutputs.profile) return JSON.parse(analysisOutputs.profile);}catch(e){}return null;}
-function isAnalysisProfileCompatible(profile){if(!profile || !profile.target) return false;const provider=appSettings.tokenCalcProvider||'openai';const backend=profile.target.backend||'';const target=profile.target.target||'';const display=profile.target.display_name||'';return backend===provider || target===provider || display===provider;}
-function getRecommendedAliasPool(profile){const aliases=profile?.distilled_rules?.recommended_aliases || [];return aliases.filter(a=>isSafeMapAlias(a));}
+function hasOriginalInMap(replacedMap, original){
+    for(const [,v] of replacedMap.entries()){
+        if(v===original) return true;
+    }
+    return false;
+}
+function getParsedAnalysisProfile(){
+    try{
+        if(analysisOutputs && analysisOutputs.profile) return JSON.parse(analysisOutputs.profile);
+    }catch(e){}
+    return null;
+}
+function isAnalysisProfileCompatible(profile){
+    if(!profile || !profile.target) return false;
+    const provider=appSettings.tokenCalcProvider||'openai';
+    const backend=profile.target.backend||'';
+    const target=profile.target.target||'';
+    const display=profile.target.display_name||'';
+    return backend===provider || target===provider || display===provider;
+}
+function getRecommendedAliasPool(profile){
+    const aliases=profile?.distilled_rules?.recommended_aliases || [];
+    return aliases.filter(a=>isSafeMapAlias(a));
+}
 function chooseAliasWithAnalysis(index, textContext, replacedMap, profile){
-    const recommended=getRecommendedAliasPool(profile);const provider=appSettings.tokenCalcProvider||'openai';const hasEncoder=localTokenizers[provider]?.status==='ready' && localTokenizers[provider]?.encoder;
-    for(const alias of recommended){if(!alias) continue;if(!isSafeMapAlias(alias)) continue;if(_usedAbbrs.has(alias)) continue;if(replacedMap.has(alias)) continue;if(textContext.includes(alias)) continue;if(hasEncoder){const tok=countTokensLocal(alias, provider);if(tok!==null && tok>1) continue;}_usedAbbrs.add(alias);return alias;}
+    const recommended=getRecommendedAliasPool(profile);
+    const provider=appSettings.tokenCalcProvider||'openai';
+    const hasEncoder=localTokenizers[provider]?.status==='ready' && localTokenizers[provider]?.encoder;
+
+    for(const alias of recommended){
+        if(!alias) continue;
+        if(!isSafeMapAlias(alias)) continue;
+        if(_usedAbbrs.has(alias)) continue;
+        if(replacedMap.has(alias)) continue;
+        if(textContext.includes(alias)) continue;
+        if(hasEncoder){
+            const tok=countTokensLocal(alias, provider);
+            if(tok!==null && tok>1) continue;
+        }
+        _usedAbbrs.add(alias);
+        return alias;
+    }
     return generateOptimalAbbr(index, textContext, replacedMap);
 }
 function buildCompactHeaderFromTemplate(replacedMap, formatOptions, template){
-    const hasMap = replacedMap && replacedMap.size > 0;const hasFmt = !!(formatOptions?.mergedDialogues || formatOptions?.replacedBrackets);if(!hasMap && !hasFmt) return '';if(!hasMap) return buildCompressedHeader(replacedMap, formatOptions);
-    const tpl = template || {prefix:'', entry:'{alias}={value}\n', suffix:'--\n'};const lines=[];const prefix=(tpl.prefix||'').replace(/\n+$/,'');const suffix=(tpl.suffix||'--\n').replace(/\n+$/,'');
-    if(prefix) lines.push(prefix);if(formatOptions?.replacedBrackets) lines.push('! dialogue: NAME>TEXT / "quote" / \'title\' / (note)');if(formatOptions?.mergedDialogues) lines.push('! same-speaker lines may be merged');
-    replacedMap.forEach((original, abbr)=>{const line=(tpl.entry||'{alias}={value}\n').replace('{alias}', abbr).replace('{value}', original).replace(/\n+$/,'');lines.push(line);});
-    if(suffix) lines.push(suffix);return lines.join('\n') + '\n';
+    const hasMap = replacedMap && replacedMap.size > 0;
+    const hasFmt = !!(formatOptions?.mergedDialogues || formatOptions?.replacedBrackets);
+    if(!hasMap && !hasFmt) return '';
+    if(!hasMap) return buildCompressedHeader(replacedMap, formatOptions);
+
+    const tpl = template || {prefix:'', entry:'{alias}={value}\n', suffix:'--\n'};
+    const lines=[];
+    const prefix=(tpl.prefix||'').replace(/\n+$/,'');
+    const suffix=(tpl.suffix||'--\n').replace(/\n+$/,'');
+
+    if(prefix) lines.push(prefix);
+    if(formatOptions?.replacedBrackets) lines.push('! dialogue: NAME>TEXT / "quote" / \'title\' / (note)');
+    if(formatOptions?.mergedDialogues) lines.push('! same-speaker lines may be merged');
+
+    replacedMap.forEach((original, abbr)=>{
+        const line=(tpl.entry||'{alias}={value}\n').replace('{alias}', abbr).replace('{value}', original).replace(/\n+$/,'');
+        lines.push(line);
+    });
+
+    if(suffix) lines.push(suffix);
+    return lines.join('\n') + '\n';
 }
 function buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile){
-    const candidates = [];const seen = new Set();
-    function pushCandidate(header, label){const h=header||'';if(seen.has(h)) return;seen.add(h);candidates.push({label, header:h, tokens:getExactTokenCount(h + (bodyText||''))});}
+    const candidates = [];
+    const seen = new Set();
+    function pushCandidate(header, label){
+        const h=header||'';
+        if(seen.has(h)) return;
+        seen.add(h);
+        candidates.push({label, header:h, tokens:getExactTokenCount(h + (bodyText||''))});
+    }
+
     pushCandidate(buildCompressedHeader(replacedMap, formatOptions), 'verbose-en');
-    const profTpl = profile?.distilled_rules?.recommended_header_template || null;if(profTpl) pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, profTpl), 'profile-template');
-    if(Array.isArray(ANALYSIS_HEADER_LIBRARY)){ANALYSIS_HEADER_LIBRARY.forEach((tpl, i)=>{pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, tpl), `lib-${tpl.name||i}`);});}
-    candidates.sort((a,b)=>a.tokens-b.tokens || a.header.length-b.header.length);return candidates;
+
+    const profTpl = profile?.distilled_rules?.recommended_header_template || null;
+    if(profTpl) pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, profTpl), 'profile-template');
+
+    if(Array.isArray(ANALYSIS_HEADER_LIBRARY)){
+        ANALYSIS_HEADER_LIBRARY.forEach((tpl, i)=>{
+            pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, tpl), `lib-${tpl.name||i}`);
+        });
+    }
+
+    candidates.sort((a,b)=>a.tokens-b.tokens || a.header.length-b.header.length);
+    return candidates;
 }
 function chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile){
-    if (formatOptions && formatOptions.forceStrictHeader) {return buildCompressedHeader(replacedMap, formatOptions);}
-    const candidates = buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile);return candidates[0]?.header || '';
+    if (formatOptions && formatOptions.forceStrictHeader) {
+        return buildCompressedHeader(replacedMap, formatOptions);
+    }
+    const candidates = buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile);
+    return candidates[0]?.header || '';
 }
 function scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile){
-    const beforeHeader = chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile);const beforeTokens = getExactTokenCount(beforeHeader + bodyText);
-    const testMap = new Map(replacedMap);testMap.set(alias, phrase);
-    const replacedBody = bodyText.split(phrase).join(alias);const afterHeader = chooseBestCompressedHeader(testMap, replacedBody, formatOptions, profile);const afterTokens = getExactTokenCount(afterHeader + replacedBody);
-    return {gain: beforeTokens - afterTokens,before_tokens: beforeTokens,after_tokens: afterTokens,replacedBody,afterHeader};
+    const beforeHeader = chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile);
+    const beforeTokens = getExactTokenCount(beforeHeader + bodyText);
+
+    const testMap = new Map(replacedMap);
+    testMap.set(alias, phrase);
+
+    const replacedBody = bodyText.split(phrase).join(alias);
+    const afterHeader = chooseBestCompressedHeader(testMap, replacedBody, formatOptions, profile);
+    const afterTokens = getExactTokenCount(afterHeader + replacedBody);
+
+    return {
+        gain: beforeTokens - afterTokens,
+        before_tokens: beforeTokens,
+        after_tokens: afterTokens,
+        replacedBody,
+        afterHeader
+    };
 }
 function applyAnalyzedSuggestionsFirst(bodyText, replacedMap, formatOptions, profile){
-    const suggestions = [...(profile?.distilled_rules?.recommended_phrase_replacements || [])].sort((a,b)=>(b.gain||0)-(a.gain||0));let appliedCount = 0;let appliedGain = 0;
-    for(const item of suggestions){const phrase = item?.phrase;if(!phrase) continue;if(!bodyText.includes(phrase)) continue;if(hasOriginalInMap(replacedMap, phrase)) continue;
-        let alias = item.alias;if(!alias || !isSafeMapAlias(alias) || _usedAbbrs.has(alias) || replacedMap.has(alias) || bodyText.includes(alias)){alias = chooseAliasWithAnalysis(replacedMap.size + appliedCount + 1, bodyText, replacedMap, profile);}else{_usedAbbrs.add(alias);}if(!alias) continue;
-        const exact = scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile);if(exact.gain <= 0){_usedAbbrs.delete(alias);continue;}
-        bodyText = exact.replacedBody;replacedMap.set(alias, phrase);appliedCount++;appliedGain += exact.gain;
+    const suggestions = [...(profile?.distilled_rules?.recommended_phrase_replacements || [])].sort((a,b)=>(b.gain||0)-(a.gain||0));
+    let appliedCount = 0;
+    let appliedGain = 0;
+
+    for(const item of suggestions){
+        const phrase = item?.phrase;
+        if(!phrase) continue;
+        if(!bodyText.includes(phrase)) continue;
+        if(hasOriginalInMap(replacedMap, phrase)) continue;
+
+        let alias = item.alias;
+        if(!alias || !isSafeMapAlias(alias) || _usedAbbrs.has(alias) || replacedMap.has(alias) || bodyText.includes(alias)){
+            alias = chooseAliasWithAnalysis(replacedMap.size + appliedCount + 1, bodyText, replacedMap, profile);
+        }else{
+            _usedAbbrs.add(alias);
+        }
+        if(!alias) continue;
+
+        const exact = scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile);
+        if(exact.gain <= 0){
+            _usedAbbrs.delete(alias);
+            continue;
+        }
+
+        bodyText = exact.replacedBody;
+        replacedMap.set(alias, phrase);
+        appliedCount++;
+        appliedGain += exact.gain;
     }
+
     return { text: bodyText, appliedCount, appliedGain };
 }
 function rescoreCompressionCandidatesExactly(bodyText, replacedMap, formatOptions, profile, rawCandidates, maxExact=8){
-    const shortlist = rawCandidates.slice(0, Math.max(maxExact * 3, 12));const rescored = [];let tempIndex = replacedMap.size + 1;
-    for(const cand of shortlist){if(!cand?.phrase) continue;if(hasOriginalInMap(replacedMap, cand.phrase)) continue;if(!bodyText.includes(cand.phrase)) continue;
-        const alias = chooseAliasWithAnalysis(tempIndex, bodyText, replacedMap, profile);tempIndex++;if(!alias) continue;
-        const exact = scoreReplacementExact(bodyText, replacedMap, cand.phrase, alias, formatOptions, profile);_usedAbbrs.delete(alias);if(exact.gain <= 0) continue;
-        rescored.push({...cand,alias,gain: exact.gain,before_tokens: exact.before_tokens,after_tokens: exact.after_tokens,replacedBody: exact.replacedBody});
+    const shortlist = rawCandidates.slice(0, Math.max(maxExact * 3, 12));
+    const rescored = [];
+    let tempIndex = replacedMap.size + 1;
+
+    for(const cand of shortlist){
+        if(!cand?.phrase) continue;
+        if(hasOriginalInMap(replacedMap, cand.phrase)) continue;
+        if(!bodyText.includes(cand.phrase)) continue;
+
+        const alias = chooseAliasWithAnalysis(tempIndex, bodyText, replacedMap, profile);
+        tempIndex++;
+
+        if(!alias) continue;
+
+        const exact = scoreReplacementExact(bodyText, replacedMap, cand.phrase, alias, formatOptions, profile);
+        _usedAbbrs.delete(alias);
+
+        if(exact.gain <= 0) continue;
+
+        rescored.push({
+            ...cand,
+            alias,
+            gain: exact.gain,
+            before_tokens: exact.before_tokens,
+            after_tokens: exact.after_tokens,
+            replacedBody: exact.replacedBody
+        });
     }
-    rescored.sort((a,b)=>(b.gain||0)-(a.gain||0) || (b.saving||0)-(a.saving||0) || b.phrase.length-a.phrase.length);return rescored.slice(0, maxExact);
+
+    rescored.sort((a,b)=>(b.gain||0)-(a.gain||0) || (b.saving||0)-(a.saving||0) || b.phrase.length-a.phrase.length);
+    return rescored.slice(0, maxExact);
 }
 
+// ============================================================
+// Shared evaluation for BruteForce / GA
+// ============================================================
 function evaluateSolution(bodyText, candidates, bits, baseReplacedMap, formatOptions, profile, useExact) {
-    const tempMap = new Map(baseReplacedMap);let text = bodyText;
-    for (let i = 0; i < candidates.length; i++) {if (!bits[i]) continue;const cand = candidates[i];if (!text.includes(cand.phrase)) continue;text = text.split(cand.phrase).join(cand._alias);tempMap.set(cand._alias, cand.phrase);}
-    if (useExact) {const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);return getExactTokenCount(header + text);}
-    else {const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);const p = appSettings.tokenCalcProvider || 'openai';return estimateTokensApprox(header + text, p);}
+    const tempMap = new Map(baseReplacedMap);
+    let text = bodyText;
+    for (let i = 0; i < candidates.length; i++) {
+        if (!bits[i]) continue;
+        const cand = candidates[i];
+        if (!text.includes(cand.phrase)) continue;
+        text = text.split(cand.phrase).join(cand._alias);
+        tempMap.set(cand._alias, cand.phrase);
+    }
+    if (useExact) {
+        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
+        return getExactTokenCount(header + text);
+    } else {
+        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
+        const p = appSettings.tokenCalcProvider || 'openai';
+        return estimateTokensApprox(header + text, p);
+    }
 }
 function applySolution(bodyText, candidates, bits, baseReplacedMap) {
-    const resultMap = new Map(baseReplacedMap);let text = bodyText;
-    for (let i = 0; i < candidates.length; i++) {if (!bits[i]) continue;const cand = candidates[i];if (!text.includes(cand.phrase)) continue;text = text.split(cand.phrase).join(cand._alias);resultMap.set(cand._alias, cand.phrase);}
+    const resultMap = new Map(baseReplacedMap);
+    let text = bodyText;
+    for (let i = 0; i < candidates.length; i++) {
+        if (!bits[i]) continue;
+        const cand = candidates[i];
+        if (!text.includes(cand.phrase)) continue;
+        text = text.split(cand.phrase).join(cand._alias);
+        resultMap.set(cand._alias, cand.phrase);
+    }
     return { text, replacedMap: resultMap };
 }
 
+// ============================================================
+// Brute Force
+// ============================================================
 async function bruteForceCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, onProgress) {
-    const n = rawCandidates.length;const total = 1 << n;let bestBits = new Array(n).fill(false);let bestScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
-    for (let mask = 1; mask < total; mask++) {const bits = [];for (let i = 0; i < n; i++) bits.push(!!(mask & (1 << i)));const score = evaluateSolution(bodyText, rawCandidates, bits, baseReplacedMap, formatOptions, profile, true);if (score < bestScore) { bestScore = score; bestBits = [...bits]; }if (mask % 64 === 0 || mask === total - 1) {const pct = Math.round((mask / total) * 100);if (onProgress) onProgress(pct, `全探索: ${mask}/${total}通り (best=${bestScore}tok)`);await new Promise(r => setTimeout(r, 0));}}
+    const n = rawCandidates.length;
+    const total = 1 << n;
+    let bestBits = new Array(n).fill(false);
+    let bestScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
+    for (let mask = 1; mask < total; mask++) {
+        const bits = [];
+        for (let i = 0; i < n; i++) bits.push(!!(mask & (1 << i)));
+        const score = evaluateSolution(bodyText, rawCandidates, bits, baseReplacedMap, formatOptions, profile, true);
+        if (score < bestScore) { bestScore = score; bestBits = [...bits]; }
+        if (mask % 64 === 0 || mask === total - 1) {
+            const pct = Math.round((mask / total) * 100);
+            if (onProgress) onProgress(pct, `全探索: ${mask}/${total}通り (best=${bestScore}tok)`);
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
     return { bits: bestBits, score: bestScore };
 }
 
+// ============================================================
+// Genetic Algorithm
+// ============================================================
 function gaCreateRandomIndividual(n) { const bits = []; for (let i = 0; i < n; i++) bits.push(Math.random() < 0.4); return bits; }
-function gaTournamentSelect(population, fitnesses, tournamentSize) {let bestIdx = -1, bestFit = Infinity;for (let t = 0; t < tournamentSize; t++) { const idx = Math.floor(Math.random() * population.length); if (fitnesses[idx] < bestFit) { bestFit = fitnesses[idx]; bestIdx = idx; } }return population[bestIdx];}
+function gaTournamentSelect(population, fitnesses, tournamentSize) {
+    let bestIdx = -1, bestFit = Infinity;
+    for (let t = 0; t < tournamentSize; t++) { const idx = Math.floor(Math.random() * population.length); if (fitnesses[idx] < bestFit) { bestFit = fitnesses[idx]; bestIdx = idx; } }
+    return population[bestIdx];
+}
 function gaUniformCrossover(p1, p2) { const child = []; for (let i = 0; i < p1.length; i++) child.push(Math.random() < 0.5 ? p1[i] : p2[i]); return child; }
 function gaTwoPointCrossover(p1, p2) { const n = p1.length; let a = Math.floor(Math.random() * n), b = Math.floor(Math.random() * n); if (a > b) [a, b] = [b, a]; const child = [...p1]; for (let i = a; i <= b; i++) child[i] = p2[i]; return child; }
 function gaMutate(individual, mutationRate) { const r = [...individual]; for (let i = 0; i < r.length; i++) if (Math.random() * 100 < mutationRate) r[i] = !r[i]; return r; }
 
 async function gaCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, params, onProgress) {
-    const n = rawCandidates.length;const { populationSize = 50, generations = 80, mutationRate = 8, eliteCount = 3, tournamentSize = 4, twoStageEval = true } = params;
-    let population = [];const greedySeed = new Array(n).fill(false);for (let i = 0; i < Math.min(n, 5); i++) greedySeed[i] = true;population.push([...greedySeed]);population.push(new Array(n).fill(false));population.push(new Array(n).fill(true));while (population.length < populationSize) population.push(gaCreateRandomIndividual(n));
-    let globalBestBits = new Array(n).fill(false);let globalBestScore = Infinity;const baselineScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);globalBestScore = baselineScore;
+    const n = rawCandidates.length;
+    const { populationSize = 50, generations = 80, mutationRate = 8, eliteCount = 3, tournamentSize = 4, twoStageEval = true } = params;
+    let population = [];
+    const greedySeed = new Array(n).fill(false);
+    for (let i = 0; i < Math.min(n, 5); i++) greedySeed[i] = true;
+    population.push([...greedySeed]);
+    population.push(new Array(n).fill(false));
+    population.push(new Array(n).fill(true));
+    while (population.length < populationSize) population.push(gaCreateRandomIndividual(n));
+    let globalBestBits = new Array(n).fill(false);
+    let globalBestScore = Infinity;
+    const baselineScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
+    globalBestScore = baselineScore;
     for (let gen = 0; gen < generations; gen++) {
-        const fitnesses = [];for (let i = 0; i < population.length; i++) {const useExact = !twoStageEval || population.length <= 20;fitnesses.push(evaluateSolution(bodyText, rawCandidates, population[i], baseReplacedMap, formatOptions, profile, useExact));}
-        if (twoStageEval && population.length > 20) {const indexed = fitnesses.map((f, i) => ({ f, i })); indexed.sort((a, b) => a.f - b.f);const topCount = Math.max(eliteCount * 2, Math.ceil(population.length * 0.2));for (let k = 0; k < Math.min(topCount, indexed.length); k++) {const idx = indexed[k].i;fitnesses[idx] = evaluateSolution(bodyText, rawCandidates, population[idx], baseReplacedMap, formatOptions, profile, true);}}
+        const fitnesses = [];
+        for (let i = 0; i < population.length; i++) {
+            const useExact = !twoStageEval || population.length <= 20;
+            fitnesses.push(evaluateSolution(bodyText, rawCandidates, population[i], baseReplacedMap, formatOptions, profile, useExact));
+        }
+        if (twoStageEval && population.length > 20) {
+            const indexed = fitnesses.map((f, i) => ({ f, i })); indexed.sort((a, b) => a.f - b.f);
+            const topCount = Math.max(eliteCount * 2, Math.ceil(population.length * 0.2));
+            for (let k = 0; k < Math.min(topCount, indexed.length); k++) {
+                const idx = indexed[k].i;
+                fitnesses[idx] = evaluateSolution(bodyText, rawCandidates, population[idx], baseReplacedMap, formatOptions, profile, true);
+            }
+        }
         for (let i = 0; i < population.length; i++) { if (fitnesses[i] < globalBestScore) { globalBestScore = fitnesses[i]; globalBestBits = [...population[i]]; } }
-        const pct = Math.round(((gen + 1) / generations) * 100);const gain = baselineScore - globalBestScore;if (onProgress) onProgress(pct, `GA: 世代 ${gen + 1}/${generations} | best=${globalBestScore}tok (↓${gain})`);if (gen % 5 === 0) await new Promise(r => setTimeout(r, 0));if (gen === generations - 1) break;
-        const eliteIndices = fitnesses.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f).slice(0, eliteCount).map(e => e.i);const newPopulation = [];for (const ei of eliteIndices) newPopulation.push([...population[ei]]);
-        while (newPopulation.length < populationSize) {const parent1 = gaTournamentSelect(population, fitnesses, tournamentSize);const parent2 = gaTournamentSelect(population, fitnesses, tournamentSize);let child = Math.random() < 0.5 ? gaUniformCrossover(parent1, parent2) : gaTwoPointCrossover(parent1, parent2);child = gaMutate(child, mutationRate);newPopulation.push(child);}
+        const pct = Math.round(((gen + 1) / generations) * 100);
+        const gain = baselineScore - globalBestScore;
+        if (onProgress) onProgress(pct, `GA: 世代 ${gen + 1}/${generations} | best=${globalBestScore}tok (↓${gain})`);
+        if (gen % 5 === 0) await new Promise(r => setTimeout(r, 0));
+        if (gen === generations - 1) break;
+        const eliteIndices = fitnesses.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f).slice(0, eliteCount).map(e => e.i);
+        const newPopulation = [];
+        for (const ei of eliteIndices) newPopulation.push([...population[ei]]);
+        while (newPopulation.length < populationSize) {
+            const parent1 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            const parent2 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            let child = Math.random() < 0.5 ? gaUniformCrossover(parent1, parent2) : gaTwoPointCrossover(parent1, parent2);
+            child = gaMutate(child, mutationRate);
+            newPopulation.push(child);
+        }
         population = newPopulation;
     }
     return { bits: globalBestBits, score: globalBestScore };
 }
 
+// ============================================================
+// Progress helpers
+// ============================================================
 function showCompressProgress(pct, detail) { compressProgressDiv.style.display = 'block'; compressProgressBar.style.width = pct + '%'; compressProgressText.textContent = pct + '%'; compressProgressDetail.textContent = detail || ''; }
 function hideCompressProgress() { compressProgressDiv.style.display = 'none'; compressProgressBar.style.width = '0%'; compressProgressText.textContent = '0%'; compressProgressDetail.textContent = ''; }
 
 function assignAliasesToCandidates(candidates, bodyText, replacedMap, profile) {
-    const assigned = [];for (let i = 0; i < candidates.length; i++) {const cand = { ...candidates[i] };const alias = chooseAliasWithAnalysis(replacedMap.size + i + 1, bodyText, replacedMap, profile);if (!alias) continue;cand._alias = alias;assigned.push(cand);}return assigned;
+    const assigned = [];
+    for (let i = 0; i < candidates.length; i++) {
+        const cand = { ...candidates[i] };
+        const alias = chooseAliasWithAnalysis(replacedMap.size + i + 1, bodyText, replacedMap, profile);
+        if (!alias) continue;
+        cand._alias = alias;
+        assigned.push(cand);
+    }
+    return assigned;
 }
 
 document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     syncCombinedInput(); const text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出に非対応です'); return; }
-    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+
+    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+
     const filtered = findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum);
-    const p = appSettings.tokenCalcProvider || 'openai';const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;const engineLabel = hasEncoder ? '🎯 正確' : '≈ 近似';
-    const listContainer = document.getElementById('keywordList');listContainer.innerHTML = '';
-    if (filtered.length === 0) {listContainer.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">抽出できるキーワードがありませんでした。</p>';} else {
+
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    const engineLabel = hasEncoder ? '🎯 正確' : '≈ 近似';
+
+    const listContainer = document.getElementById('keywordList');
+    listContainer.innerHTML = '';
+    if (filtered.length === 0) {
+        listContainer.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">抽出できるキーワードがありませんでした。</p>';
+    } else {
         filtered.forEach((item, index) => {
             const div = document.createElement('div'); div.className = 'keyword-item';
-            const infoDiv = document.createElement('div');infoDiv.className = 'keyword-info';
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'keyword-info';
             const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
-            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats';statsDiv.textContent = `出現:${item.count}回 / ${item.phraseTokCost}tok×${item.count}→1tok×${item.count} / ${engineLabel}節約:${item.saving}ﾄｰｸﾝ`;
+            const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats';
+            statsDiv.textContent = `出現:${item.count}回 / ${item.phraseTokCost}tok×${item.count}→1tok×${item.count} / ${engineLabel}節約:${item.saving}ﾄｰｸﾝ`;
             infoDiv.appendChild(wordDiv); infoDiv.appendChild(statsDiv);
             const addBtn = document.createElement('button'); addBtn.className = 'add-keyword-btn'; addBtn.textContent = '+ 辞書へ';
-            addBtn.addEventListener('click', () => {const cd = dictArea.value;const autoAbbr = generateOptimalAbbr(index + 1, text, new Map());_usedAbbrs.delete(autoAbbr);const ne = `${item.phrase}=${autoAbbr}`;if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }dictArea.value = cd.trim() === '' ? ne : cd + '\n' + ne;if (autoSaveToggle.checked) saveSettings(false);addBtn.textContent = '追加済'; addBtn.disabled = true;showToast(`「${item.phrase}」を辞書に追加`); saveWorkspaceDebounced();});
+            addBtn.addEventListener('click', () => {
+                const cd = dictArea.value;
+                const autoAbbr = generateOptimalAbbr(index + 1, text, new Map());
+                _usedAbbrs.delete(autoAbbr);
+                const ne = `${item.phrase}=${autoAbbr}`;
+                if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }
+                dictArea.value = cd.trim() === '' ? ne : cd + '\n' + ne;
+                if (autoSaveToggle.checked) saveSettings(false);
+                addBtn.textContent = '追加済'; addBtn.disabled = true;
+                showToast(`「${item.phrase}」を辞書に追加`); saveWorkspaceDebounced();
+            });
             div.appendChild(infoDiv); div.appendChild(addBtn); listContainer.appendChild(div);
         });
     }
@@ -3004,19 +3454,32 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
     let processedBody = bodyText;
     let builtinCount = 0;
 
-    if (autoCompressApplyUmaInput.checked) {const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);processedBody = r.text; builtinCount += r.count;for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);}
-    if (autoCompressApplyPronounInput.checked) {const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);processedBody = r.text; builtinCount += r.count;for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);}
+    if (autoCompressApplyUmaInput.checked) {
+        const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+        for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
+    }
+    if (autoCompressApplyPronounInput.checked) {
+        const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
+        processedBody = r.text; builtinCount += r.count;
+        for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
+    }
 
     if (autoCompressTrimWhitespaceInput.checked) processedBody = trimWhitespaceForCompression(processedBody);
 
     let dialogueMergeCount = 0;
-    if (autoCompressMergeDialoguesInput.checked) {const r = mergeConsecutiveDialogues(processedBody);processedBody = r.text;dialogueMergeCount = r.mergedCount;}
+    if (autoCompressMergeDialoguesInput.checked) {
+        const r = mergeConsecutiveDialogues(processedBody);
+        processedBody = r.text;
+        dialogueMergeCount = r.mergedCount;
+    }
 
     let bracketReplacedCount = 0;
-    if (autoCompressReplaceBracketsInput.checked) {const r = replaceBracketsLightweight(processedBody);processedBody = r.text;bracketReplacedCount = r.replacedCount;}
-
-    // NEW: Apply extra operations
-    processedBody = applyExtraOperations(processedBody);
+    if (autoCompressReplaceBracketsInput.checked) {
+        const r = replaceBracketsLightweight(processedBody);
+        processedBody = r.text;
+        bracketReplacedCount = r.replacedCount;
+    }
 
     const formatOptions = {
         mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
@@ -3027,9 +3490,17 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
     let analyzedAppliedCount = 0;
     let newText = processedBody;
 
-    if (usableProfile) {const guided = applyAnalyzedSuggestionsFirst(newText, replacedMap, formatOptions, usableProfile);newText = guided.text;analyzedAppliedCount = guided.appliedCount;}
+    if (usableProfile) {
+        const guided = applyAnalyzedSuggestionsFirst(newText, replacedMap, formatOptions, usableProfile);
+        newText = guided.text;
+        analyzedAppliedCount = guided.appliedCount;
+    }
 
-    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;const excludeAlnum = autoCompressExcludeAlnumInput.checked;const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
+    const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+    const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+    const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+    const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+    const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
 
     let totalCompressedCount = 0;
     const autoCompressBtn = document.getElementById('autoCompressBtn');
@@ -3038,49 +3509,141 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
     try {
         if (algorithm === 'greedy') {
             for (let pass = 0; pass < maxPasses; pass++) {
-                const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);if (!rawCandidates.length) break;
-                const rescored = rescoreCompressionCandidatesExactly(newText, replacedMap, formatOptions, usableProfile, rawCandidates, 8);if (!rescored.length) break;
-                const best = rescored[0];if (!best || best.gain <= 0) break;
-                let finalAlias = best.alias;if (!finalAlias || _usedAbbrs.has(finalAlias) || replacedMap.has(finalAlias) || newText.includes(finalAlias)) {finalAlias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + 1, newText, replacedMap, usableProfile);} else { _usedAbbrs.add(finalAlias); }if (!finalAlias) break;
-                const exact = scoreReplacementExact(newText, replacedMap, best.phrase, finalAlias, formatOptions, usableProfile);if (exact.gain <= 0) { _usedAbbrs.delete(finalAlias); break; }
-                newText = exact.replacedBody;replacedMap.set(finalAlias, best.phrase);totalCompressedCount++;
+                const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
+                if (!rawCandidates.length) break;
+                const rescored = rescoreCompressionCandidatesExactly(newText, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
+                if (!rescored.length) break;
+                const best = rescored[0];
+                if (!best || best.gain <= 0) break;
+                let finalAlias = best.alias;
+                if (!finalAlias || _usedAbbrs.has(finalAlias) || replacedMap.has(finalAlias) || newText.includes(finalAlias)) {
+                    finalAlias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + 1, newText, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(finalAlias); }
+                if (!finalAlias) break;
+                const exact = scoreReplacementExact(newText, replacedMap, best.phrase, finalAlias, formatOptions, usableProfile);
+                if (exact.gain <= 0) { _usedAbbrs.delete(finalAlias); break; }
+                newText = exact.replacedBody;
+                replacedMap.set(finalAlias, best.phrase);
+                totalCompressedCount++;
             }
         } else if (algorithm === 'legacy_batch') {
             let abbrIndex = replacedMap.size + 1;
             for (let pass = 0; pass < maxPasses; pass++) {
-                const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);if (candidates.length === 0) break;
-                let passReplaced = false;const abbrAssignment = new Map();
-                for (const cand of candidates) {let alreadyExists = false;for (const [, existingOriginal] of replacedMap.entries()) {if (existingOriginal === cand.phrase) { alreadyExists = true; break; }}if (alreadyExists) continue;let abbr = chooseAliasWithAnalysis(abbrIndex, newText, replacedMap, usableProfile);if (!abbr) abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);abbrAssignment.set(cand.phrase, abbr);abbrIndex++;}
+                const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
+                if (candidates.length === 0) break;
+
+                let passReplaced = false;
+                const abbrAssignment = new Map();
+
+                for (const cand of candidates) {
+                    let alreadyExists = false;
+                    for (const [, existingOriginal] of replacedMap.entries()) {
+                        if (existingOriginal === cand.phrase) { alreadyExists = true; break; }
+                    }
+                    if (alreadyExists) continue;
+
+                    let abbr = chooseAliasWithAnalysis(abbrIndex, newText, replacedMap, usableProfile);
+                    if (!abbr) abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);
+                    
+                    abbrAssignment.set(cand.phrase, abbr);
+                    abbrIndex++;
+                }
+
                 const sortedForReplace = [...abbrAssignment.entries()].sort((a, b) => b[0].length - a[0].length);
-                for (const [original, abbr] of sortedForReplace) {const regex = new RegExp(escRegex(original), 'g');if (regex.test(newText)) {newText = newText.replace(regex, abbr);replacedMap.set(abbr, original);passReplaced = true;totalCompressedCount++;}}
+                for (const [original, abbr] of sortedForReplace) {
+                    const regex = new RegExp(escRegex(original), 'g');
+                    if (regex.test(newText)) {
+                        newText = newText.replace(regex, abbr);
+                        replacedMap.set(abbr, original);
+                        passReplaced = true;
+                        totalCompressedCount++;
+                    }
+                }
                 if (!passReplaced) break;
             }
         } else if (algorithm === 'bruteforce') {
-            const bfMax = parseInt(bruteforceMaxCandidatesInput.value, 10) || 15;const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, Math.max(maxItems, bfMax * 2), excludeAlnum);const topCandidates = rawCandidates.slice(0, bfMax);
-            if (topCandidates.length > 0) {const assigned = assignAliasesToCandidates(topCandidates, newText, replacedMap, usableProfile);if (assigned.length > 0) {showCompressProgress(0, '全探索: 準備中...');const result = await bruteForceCompress(newText, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(pct, detail));const applied = applySolution(newText, assigned, result.bits, replacedMap);newText = applied.text;for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }totalCompressedCount = result.bits.filter(b => b).length;hideCompressProgress();}}
+            const bfMax = parseInt(bruteforceMaxCandidatesInput.value, 10) || 15;
+            const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, Math.max(maxItems, bfMax * 2), excludeAlnum);
+            const topCandidates = rawCandidates.slice(0, bfMax);
+            if (topCandidates.length > 0) {
+                const assigned = assignAliasesToCandidates(topCandidates, newText, replacedMap, usableProfile);
+                if (assigned.length > 0) {
+                    showCompressProgress(0, '全探索: 準備中...');
+                    const result = await bruteForceCompress(newText, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(pct, detail));
+                    const applied = applySolution(newText, assigned, result.bits, replacedMap);
+                    newText = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                    hideCompressProgress();
+                }
+            }
         } else if (algorithm === 'ga') {
             const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
-            if (rawCandidates.length > 0) {const assigned = assignAliasesToCandidates(rawCandidates, newText, replacedMap, usableProfile);if (assigned.length > 0) {showCompressProgress(0, 'GA: 初期化中...');const gaParams = {populationSize: parseInt(gaPopulationSizeInput.value, 10) || 50,generations: parseInt(gaGenerationsInput.value, 10) || 80,mutationRate: parseInt(gaMutationRateInput.value, 10) || 8,eliteCount: parseInt(gaEliteCountInput.value, 10) || 3,tournamentSize: parseInt(gaTournamentSizeInput.value, 10) || 4,twoStageEval: gaTwoStageEvalToggle.checked};const result = await gaCompress(newText, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(pct, detail));const applied = applySolution(newText, assigned, result.bits, replacedMap);newText = applied.text;for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }totalCompressedCount = result.bits.filter(b => b).length;hideCompressProgress();}}
+            if (rawCandidates.length > 0) {
+                const assigned = assignAliasesToCandidates(rawCandidates, newText, replacedMap, usableProfile);
+                if (assigned.length > 0) {
+                    showCompressProgress(0, 'GA: 初期化中...');
+                    const gaParams = {
+                        populationSize: parseInt(gaPopulationSizeInput.value, 10) || 50,
+                        generations: parseInt(gaGenerationsInput.value, 10) || 80,
+                        mutationRate: parseInt(gaMutationRateInput.value, 10) || 8,
+                        eliteCount: parseInt(gaEliteCountInput.value, 10) || 3,
+                        tournamentSize: parseInt(gaTournamentSizeInput.value, 10) || 4,
+                        twoStageEval: gaTwoStageEvalToggle.checked
+                    };
+                    const result = await gaCompress(newText, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(pct, detail));
+                    const applied = applySolution(newText, assigned, result.bits, replacedMap);
+                    newText = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                    hideCompressProgress();
+                }
+            }
         }
-    } catch (err) {console.error('Compression error:', err);hideCompressProgress();showToast('圧縮中にエラーが発生しました: ' + (err.message || err));autoCompressBtn.disabled = false;return;}
+    } catch (err) {
+        console.error('Compression error:', err);
+        hideCompressProgress();
+        showToast('圧縮中にエラーが発生しました: ' + (err.message || err));
+        autoCompressBtn.disabled = false;
+        return;
+    }
 
     autoCompressBtn.disabled = false;
 
-    if (totalCompressedCount === 0 && analyzedAppliedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {showToast('自動圧縮できるワードがありませんでした');return;}
+    if (totalCompressedCount === 0 && analyzedAppliedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
+        showToast('自動圧縮できるワードがありませんでした');
+        return;
+    }
 
     const finalHeader = chooseBestCompressedHeader(replacedMap, newText, formatOptions, usableProfile);
-    const finalOutput = finalHeader + newText + getFooterHeaderText();
+    const finalOutput = finalHeader + newText;
 
-    outputEl.value = finalOutput;updateCounts();saveWorkspaceDebounced();
+    outputEl.value = finalOutput;
+    updateCounts();
+    saveWorkspaceDebounced();
 
-    const outputTokensAfter = getExactTokenCount(finalOutput);const saved = inputTokensBefore - outputTokensAfter;const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+    const outputTokensAfter = getExactTokenCount(finalOutput);
+    const saved = inputTokensBefore - outputTokensAfter;
+    const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
 
     const parts = [];
-    if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);if (analyzedAppliedCount > 0) parts.push(`分析候補${analyzedAppliedCount}語`);
-    if (totalCompressedCount > 0) {let algoName = '自動';if (algorithm === 'greedy') algoName = '貪欲';else if (algorithm === 'legacy_batch') algoName = '一括';else if (algorithm === 'bruteforce') algoName = '全探索';else if (algorithm === 'ga') algoName = 'GA';parts.push(`${algoName}${totalCompressedCount}語`);}
-    if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
-    const detail = parts.length ? `（${parts.join('・')}）` : '';const engineLabel = hasEncoder ? '🎯' : '≈';
-    if (saved > 0) showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);else showToast(`🚀 圧縮完了 ${detail}`);
+    if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
+    if (analyzedAppliedCount > 0) parts.push(`分析候補${analyzedAppliedCount}語`);
+    if (totalCompressedCount > 0) {
+        let algoName = '自動';
+        if (algorithm === 'greedy') algoName = '貪欲';
+        else if (algorithm === 'legacy_batch') algoName = '一括';
+        else if (algorithm === 'bruteforce') algoName = '全探索';
+        else if (algorithm === 'ga') algoName = 'GA';
+        parts.push(`${algoName}${totalCompressedCount}語`);
+    }
+    if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
+    if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
+    const detail = parts.length ? `（${parts.join('・')}）` : '';
+    const engineLabel = hasEncoder ? '🎯' : '≈';
+
+    if (saved > 0) showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);
+    else showToast(`🚀 圧縮完了 ${detail}`);
 });
 
 // ============================================================
@@ -3089,98 +3652,453 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
 function showStaticProgress(pct, detail) { staticProfileProgressDiv.style.display = 'block'; staticProfileProgressBar.style.width = pct + '%'; staticProfileProgressText.textContent = pct + '%'; staticProfileProgressDetail.textContent = detail || ''; }
 function hideStaticProgress() { staticProfileProgressDiv.style.display = 'none'; }
 
-function probeAsciiCharCosts() {const results = [];for (let cp = 0x21; cp <= 0x7E; cp++) {const ch = String.fromCodePoint(cp);results.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch), category: categorizePrintableChar(ch) });}return results;}
+function probeAsciiCharCosts() {
+    const results = [];
+    for (let cp = 0x21; cp <= 0x7E; cp++) {
+        const ch = String.fromCodePoint(cp);
+        results.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch), category: categorizePrintableChar(ch) });
+    }
+    return results;
+}
 function categorizePrintableChar(ch) { if (/[A-Z]/.test(ch)) return 'upper'; if (/[a-z]/.test(ch)) return 'lower'; if (/[0-9]/.test(ch)) return 'digit'; return 'symbol'; }
 
 function probeJapaneseCharCosts(samplesPerCategory) {
-    const categories = {hiragana: { start: 0x3041, end: 0x3096, label: 'ひらがな' },katakana: { start: 0x30A1, end: 0x30FA, label: 'カタカナ' },kanji_common: { start: 0x4E00, end: 0x9FFF, label: '漢字(常用域)' },fullwidth_alpha: { start: 0xFF21, end: 0xFF5A, label: '全角英字' },fullwidth_digit: { start: 0xFF10, end: 0xFF19, label: '全角数字' },jp_punctuation: { start: 0x3000, end: 0x303F, label: '日本語記号' },cjk_symbols: { start: 0xFE30, end: 0xFE4F, label: 'CJK互換記号' }};
+    const categories = {
+        hiragana: { start: 0x3041, end: 0x3096, label: 'ひらがな' },
+        katakana: { start: 0x30A1, end: 0x30FA, label: 'カタカナ' },
+        kanji_common: { start: 0x4E00, end: 0x9FFF, label: '漢字(常用域)' },
+        fullwidth_alpha: { start: 0xFF21, end: 0xFF5A, label: '全角英字' },
+        fullwidth_digit: { start: 0xFF10, end: 0xFF19, label: '全角数字' },
+        jp_punctuation: { start: 0x3000, end: 0x303F, label: '日本語記号' },
+        cjk_symbols: { start: 0xFE30, end: 0xFE4F, label: 'CJK互換記号' }
+    };
     const results = {};
-    for (const [key, cat] of Object.entries(categories)) {const range = cat.end - cat.start + 1;const step = Math.max(1, Math.floor(range / samplesPerCategory));const samples = [];for (let cp = cat.start; cp <= cat.end && samples.length < samplesPerCategory; cp += step) {const ch = String.fromCodePoint(cp);if (ch.trim().length === 0) continue;samples.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch) });}const costs = samples.map(s => s.isolated_tokens);results[key] = { label: cat.label, range: `U+${cat.start.toString(16).toUpperCase()}-U+${cat.end.toString(16).toUpperCase()}`, sample_count: samples.length, avg_tokens: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(4)) : 0, min_tokens: costs.length ? Math.min(...costs) : 0, max_tokens: costs.length ? Math.max(...costs) : 0, samples: samples.slice(0, 20) };}
+    for (const [key, cat] of Object.entries(categories)) {
+        const range = cat.end - cat.start + 1;
+        const step = Math.max(1, Math.floor(range / samplesPerCategory));
+        const samples = [];
+        for (let cp = cat.start; cp <= cat.end && samples.length < samplesPerCategory; cp += step) {
+            const ch = String.fromCodePoint(cp);
+            if (ch.trim().length === 0) continue;
+            samples.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch) });
+        }
+        const costs = samples.map(s => s.isolated_tokens);
+        results[key] = { label: cat.label, range: `U+${cat.start.toString(16).toUpperCase()}-U+${cat.end.toString(16).toUpperCase()}`, sample_count: samples.length, avg_tokens: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(4)) : 0, min_tokens: costs.length ? Math.min(...costs) : 0, max_tokens: costs.length ? Math.max(...costs) : 0, samples: samples.slice(0, 20) };
+    }
     return results;
 }
 
 function probeAliasCosts(probeCount, keepCount) {
-    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower = 'abcdefghijklmnopqrstuvwxyz', digits = '0123456789', symbols = '@#~$%&*?!^';const allChars = upper + lower + digits + symbols;const candidates = [], seen = new Set();
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower = 'abcdefghijklmnopqrstuvwxyz', digits = '0123456789', symbols = '@#~$%&*?!^';
+    const allChars = upper + lower + digits + symbols;
+    const candidates = [], seen = new Set();
     function add(s) { if (seen.has(s) || candidates.length >= probeCount) return; seen.add(s); candidates.push(s); }
-    for (const ch of allChars) add(ch);for (const a of upper) { for (const b of upper) add(a + b); }for (const a of upper) { for (const b of lower) add(a + b); }for (const a of upper) { for (const b of digits) add(a + b); }for (const a of lower) { for (const b of upper) add(a + b); }for (const a of lower) { for (const b of lower) add(a + b); }for (const p of symbols) { for (const b of upper) add(p + b); }for (const p of symbols) { for (const b of lower) add(p + b); }for (const a of upper) { for (const b of upper) { for (const c of digits) { add(a + b + c); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }for (const p of symbols) { for (const a of upper) { for (const b of digits) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }for (const p of symbols) { for (const a of upper) { for (const b of upper) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
-    const measured = candidates.map(alias => ({ alias, length: alias.length, isolated_tokens: getExactTokenCount(alias), pattern: categorizeAliasPattern(alias) }));measured.sort((a, b) => a.isolated_tokens - b.isolated_tokens || a.length - b.length || a.alias.localeCompare(b.alias));
-    const oneTokenAliases = measured.filter(m => m.isolated_tokens <= 1);const multiTokenAliases = measured.filter(m => m.isolated_tokens > 1);
-    const patternStats = {};for (const m of measured) {if (!patternStats[m.pattern]) patternStats[m.pattern] = { total: 0, one_token: 0, examples: [] };patternStats[m.pattern].total++;if (m.isolated_tokens <= 1) patternStats[m.pattern].one_token++;if (patternStats[m.pattern].examples.length < 5) patternStats[m.pattern].examples.push(m.alias);}
+    for (const ch of allChars) add(ch);
+    for (const a of upper) { for (const b of upper) add(a + b); }
+    for (const a of upper) { for (const b of lower) add(a + b); }
+    for (const a of upper) { for (const b of digits) add(a + b); }
+    for (const a of lower) { for (const b of upper) add(a + b); }
+    for (const a of lower) { for (const b of lower) add(a + b); }
+    for (const p of symbols) { for (const b of upper) add(p + b); }
+    for (const p of symbols) { for (const b of lower) add(p + b); }
+    for (const a of upper) { for (const b of upper) { for (const c of digits) { add(a + b + c); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+    for (const p of symbols) { for (const a of upper) { for (const b of digits) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+    for (const p of symbols) { for (const a of upper) { for (const b of upper) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
+
+    const measured = candidates.map(alias => ({ alias, length: alias.length, isolated_tokens: getExactTokenCount(alias), pattern: categorizeAliasPattern(alias) }));
+    measured.sort((a, b) => a.isolated_tokens - b.isolated_tokens || a.length - b.length || a.alias.localeCompare(b.alias));
+    const oneTokenAliases = measured.filter(m => m.isolated_tokens <= 1);
+    const multiTokenAliases = measured.filter(m => m.isolated_tokens > 1);
+    const patternStats = {};
+    for (const m of measured) {
+        if (!patternStats[m.pattern]) patternStats[m.pattern] = { total: 0, one_token: 0, examples: [] };
+        patternStats[m.pattern].total++;
+        if (m.isolated_tokens <= 1) patternStats[m.pattern].one_token++;
+        if (patternStats[m.pattern].examples.length < 5) patternStats[m.pattern].examples.push(m.alias);
+    }
     return { total_probed: measured.length, one_token_count: oneTokenAliases.length, multi_token_count: multiTokenAliases.length, one_token_rate: measured.length ? Number((oneTokenAliases.length / measured.length * 100).toFixed(1)) : 0, pattern_stats: patternStats, best_aliases: oneTokenAliases.slice(0, keepCount).map(m => ({ alias: m.alias, length: m.length, isolated_tokens: m.isolated_tokens, pattern: m.pattern })), worst_examples: multiTokenAliases.slice(0, 30).map(m => ({ alias: m.alias, isolated_tokens: m.isolated_tokens, pattern: m.pattern })) };
 }
 function categorizeAliasPattern(alias) {
-    if (/^[A-Z]$/.test(alias)) return '1-upper'; if (/^[a-z]$/.test(alias)) return '1-lower'; if (/^[0-9]$/.test(alias)) return '1-digit'; if (/^[^A-Za-z0-9]$/.test(alias)) return '1-symbol';if (/^[A-Z]{2}$/.test(alias)) return '2-UU'; if (/^[A-Z][a-z]$/.test(alias)) return '2-Ul'; if (/^[A-Z][0-9]$/.test(alias)) return '2-Ud'; if (/^[a-z]{2}$/.test(alias)) return '2-ll'; if (/^[a-z][A-Z]$/.test(alias)) return '2-lU'; if (/^[^A-Za-z0-9][A-Za-z]$/.test(alias)) return '2-sX';if (/^[A-Z]{2}[0-9]$/.test(alias)) return '3-UUd'; if (/^[^A-Za-z0-9][A-Z][0-9]$/.test(alias)) return '3-sUd'; if (/^[^A-Za-z0-9][A-Z]{2}$/.test(alias)) return '3-sUU';return `${alias.length}-other`;
+    if (/^[A-Z]$/.test(alias)) return '1-upper'; if (/^[a-z]$/.test(alias)) return '1-lower'; if (/^[0-9]$/.test(alias)) return '1-digit'; if (/^[^A-Za-z0-9]$/.test(alias)) return '1-symbol';
+    if (/^[A-Z]{2}$/.test(alias)) return '2-UU'; if (/^[A-Z][a-z]$/.test(alias)) return '2-Ul'; if (/^[A-Z][0-9]$/.test(alias)) return '2-Ud'; if (/^[a-z]{2}$/.test(alias)) return '2-ll'; if (/^[a-z][A-Z]$/.test(alias)) return '2-lU'; if (/^[^A-Za-z0-9][A-Za-z]$/.test(alias)) return '2-sX';
+    if (/^[A-Z]{2}[0-9]$/.test(alias)) return '3-UUd'; if (/^[^A-Za-z0-9][A-Z][0-9]$/.test(alias)) return '3-sUd'; if (/^[^A-Za-z0-9][A-Z]{2}$/.test(alias)) return '3-sUU';
+    return `${alias.length}-other`;
 }
 
 function probeSeparatorCosts() {
-    const separators = ['=', ':', '|', '>', '/', ';', '-', '~', ',', '\t', ' '];const contexts = [['AA', '主人公'], ['BB', 'トウカイテイオー'], ['CC', 'メジロマックイーン'], ['Q1', 'スペシャルウィーク'], ['ZZ', '会長'], ['@A', '短い'], ['#B', 'やや長めのテスト文字列']];
-    return separators.map(sep => {const costs = contexts.map(([alias, value]) => getExactTokenCount(`${alias}${sep}${value}\n`));return { separator: sep, display: sep === '\t' ? '\\t' : sep === ' ' ? '[space]' : sep, avg_line_tokens: Number(mean(costs).toFixed(4)), min_line_tokens: Math.min(...costs), max_line_tokens: Math.max(...costs), samples: contexts.map(([alias, value], i) => ({ line: `${alias}${sep}${value}`, tokens: costs[i] })) };}).sort((a, b) => a.avg_line_tokens - b.avg_line_tokens);
+    const separators = ['=', ':', '|', '>', '/', ';', '-', '~', ',', '\t', ' '];
+    const contexts = [['AA', '主人公'], ['BB', 'トウカイテイオー'], ['CC', 'メジロマックイーン'], ['Q1', 'スペシャルウィーク'], ['ZZ', '会長'], ['@A', '短い'], ['#B', 'やや長めのテスト文字列']];
+    return separators.map(sep => {
+        const costs = contexts.map(([alias, value]) => getExactTokenCount(`${alias}${sep}${value}\n`));
+        return { separator: sep, display: sep === '\t' ? '\\t' : sep === ' ' ? '[space]' : sep, avg_line_tokens: Number(mean(costs).toFixed(4)), min_line_tokens: Math.min(...costs), max_line_tokens: Math.max(...costs), samples: contexts.map(([alias, value], i) => ({ line: `${alias}${sep}${value}`, tokens: costs[i] })) };
+    }).sort((a, b) => a.avg_line_tokens - b.avg_line_tokens);
 }
 
 function probeHeaderTemplateCosts(aliasPool, exhaustive) {
-    const samplePairs = [['主人公', 'MC向けテスト'], ['トウカイテイオー', 'キャラ名'], ['メジロマックイーン', '長めの名前'], ['スペシャルウィーク', '4つ目']];const topAliases = aliasPool.slice(0, 4).map(a => a.alias || a);while (topAliases.length < 4) topAliases.push('Q' + topAliases.length);const pairs = samplePairs.map((sp, i) => [topAliases[i], sp[0]]);
+    const samplePairs = [['主人公', 'MC向けテスト'], ['トウカイテイオー', 'キャラ名'], ['メジロマックイーン', '長めの名前'], ['スペシャルウィーク', '4つ目']];
+    const topAliases = aliasPool.slice(0, 4).map(a => a.alias || a);
+    while (topAliases.length < 4) topAliases.push('Q' + topAliases.length);
+    const pairs = samplePairs.map((sp, i) => [topAliases[i], sp[0]]);
     const templates = [...ANALYSIS_HEADER_LIBRARY];
-    if (exhaustive) {const extraPrefixes = ['', '@\n', '#\n', '---\n'];const extraSuffixes = ['--\n', '#\n', '>\n', '---\n', '\n'];const extraEntryFormats = ['{alias}={value}\n', '{alias}:{value}\n', '{alias}|{value}\n', '{alias}>{value}\n', '{alias}/{value}\n', '@{alias}={value}\n', '{alias} = {value}\n'];for (const prefix of extraPrefixes) { for (const entry of extraEntryFormats) { for (const suffix of extraSuffixes) {const name = `custom_${prefix.trim()||'none'}_${entry.charAt(entry.indexOf('{value}') - 1)}_${suffix.trim()||'none'}`;if (!templates.find(t => t.prefix === prefix && t.entry === entry && t.suffix === suffix)) {templates.push({ name, prefix, entry, suffix });}}}}}
-    return templates.map(tpl => {const rendered = renderAnalysisHeader(tpl, pairs);const tokens = getExactTokenCount(rendered);return { name: tpl.name, template: tpl, token_cost: tokens, rendered_preview: rendered.slice(0, 300), rendered_length: rendered.length, tokens_per_entry: pairs.length ? Number((tokens / pairs.length).toFixed(2)) : 0 };}).sort((a, b) => a.token_cost - b.token_cost);
+    if (exhaustive) {
+        const extraPrefixes = ['', '@\n', '#\n', '---\n'];
+        const extraSuffixes = ['--\n', '#\n', '>\n', '---\n', '\n'];
+        const extraEntryFormats = ['{alias}={value}\n', '{alias}:{value}\n', '{alias}|{value}\n', '{alias}>{value}\n', '{alias}/{value}\n', '@{alias}={value}\n', '{alias} = {value}\n'];
+        for (const prefix of extraPrefixes) { for (const entry of extraEntryFormats) { for (const suffix of extraSuffixes) {
+                    const name = `custom_${prefix.trim()||'none'}_${entry.charAt(entry.indexOf('{value}') - 1)}_${suffix.trim()||'none'}`;
+                    if (!templates.find(t => t.prefix === prefix && t.entry === entry && t.suffix === suffix)) {
+                        templates.push({ name, prefix, entry, suffix });
+                    }
+                }
+            }
+        }
+    }
+    return templates.map(tpl => {
+        const rendered = renderAnalysisHeader(tpl, pairs);
+        const tokens = getExactTokenCount(rendered);
+        return { name: tpl.name, template: tpl, token_cost: tokens, rendered_preview: rendered.slice(0, 300), rendered_length: rendered.length, tokens_per_entry: pairs.length ? Number((tokens / pairs.length).toFixed(2)) : 0 };
+    }).sort((a, b) => a.token_cost - b.token_cost);
 }
 
 function probeContextDependentCosts(aliasPool) {
-    const topAliases = aliasPool.slice(0, 20).map(a => a.alias || a);const contexts = [{name:'bare',left:'',right:''},{name:'after_space',left:' ',right:''},{name:'after_newline',left:'\n',right:''},{name:'in_hiragana',left:'あいう',right:'えお'},{name:'in_katakana',left:'アイウ',right:'エオ'},{name:'in_kanji',left:'東京都',right:'大阪府'},{name:'after_bracket',left:'「',right:'」'},{name:'after_colon',left:':',right:''},{name:'in_english',left:'hello',right:'world'},{name:'after_eq_header',left:'XX=テスト\n',right:''},{name:'sentence_start',left:'。\n',right:'は'},{name:'dialogue_name',left:'',right:'>おはよう'}];
-    return topAliases.map(alias => {const contextCosts = contexts.map(ctx => {const without = getExactTokenCount(ctx.left + ctx.right);const withAlias = getExactTokenCount(ctx.left + alias + ctx.right);return { context: ctx.name, marginal_cost: withAlias - without };});const costs = contextCosts.map(c => c.marginal_cost);return { alias, avg_marginal: Number(mean(costs).toFixed(4)), min_marginal: Math.min(...costs), max_marginal: Math.max(...costs), variance: Number((costs.reduce((sum, c) => sum + Math.pow(c - mean(costs), 2), 0) / costs.length).toFixed(4)), by_context: contextCosts };});
+    const topAliases = aliasPool.slice(0, 20).map(a => a.alias || a);
+    const contexts = [
+        { name: 'bare', left: '', right: '' },
+        { name: 'after_space', left: ' ', right: '' },
+        { name: 'after_newline', left: '\n', right: '' },
+        { name: 'in_hiragana', left: 'あいう', right: 'えお' },
+        { name: 'in_katakana', left: 'アイウ', right: 'エオ' },
+        { name: 'in_kanji', left: '東京都', right: '大阪府' },
+        { name: 'after_bracket', left: '「', right: '」' },
+        { name: 'after_colon', left: ':', right: '' },
+        { name: 'in_english', left: 'hello', right: 'world' },
+        { name: 'after_eq_header', left: 'XX=テスト\n', right: '' },
+        { name: 'sentence_start', left: '。\n', right: 'は' },
+        { name: 'dialogue_name', left: '', right: '>おはよう' }
+    ];
+    return topAliases.map(alias => {
+        const contextCosts = contexts.map(ctx => {
+            const without = getExactTokenCount(ctx.left + ctx.right);
+            const withAlias = getExactTokenCount(ctx.left + alias + ctx.right);
+            return { context: ctx.name, marginal_cost: withAlias - without };
+        });
+        const costs = contextCosts.map(c => c.marginal_cost);
+        return { alias, avg_marginal: Number(mean(costs).toFixed(4)), min_marginal: Math.min(...costs), max_marginal: Math.max(...costs), variance: Number((costs.reduce((sum, c) => sum + Math.pow(c - mean(costs), 2), 0) / costs.length).toFixed(4)), by_context: contextCosts };
+    });
 }
 
 function probeJapaneseCompressionPatterns() {
-    const patterns = [{name:'dialogue_bracket_to_gt',before:'太郎「おはようございます」',after:'太郎>おはようございます',description:'Replace Japanese brackets with GT for dialogue'},{name:'double_bracket_to_quote',before:'『タイトル名』',after:"'タイトル名'",description:'Replace double brackets with single quotes for titles'},{name:'paren_full_to_half',before:'（補足説明）',after:'(補足説明)',description:'Replace fullwidth parens with halfwidth'},{name:'colon_dialogue',before:'太郎：「おはよう」',after:'太郎>おはよう',description:'Collapse colon+brackets into GT format'},{name:'merge_same_speaker',before:'太郎「おはよう」\n太郎「元気？」',after:'太郎>おはよう元気？',description:'Merge consecutive same-speaker lines'},{name:'remove_empty_lines',before:'テスト\n\n\nテスト',after:'テスト\nテスト',description:'Remove empty lines'},{name:'fullwidth_to_halfwidth_alpha',before:'Ａｂｃ１２３',after:'Abc123',description:'Convert fullwidth alphanumerics to halfwidth'}];
+    const patterns = [
+        { name: 'dialogue_bracket_to_gt', before: '太郎「おはようございます」', after: '太郎>おはようございます', description: 'Replace Japanese brackets with GT for dialogue' },
+        { name: 'double_bracket_to_quote', before: '『タイトル名』', after: "'タイトル名'", description: 'Replace double brackets with single quotes for titles' },
+        { name: 'paren_full_to_half', before: '（補足説明）', after: '(補足説明)', description: 'Replace fullwidth parens with halfwidth' },
+        { name: 'colon_dialogue', before: '太郎：「おはよう」', after: '太郎>おはよう', description: 'Collapse colon+brackets into GT format' },
+        { name: 'merge_same_speaker', before: '太郎「おはよう」\n太郎「元気？」', after: '太郎>おはよう元気？', description: 'Merge consecutive same-speaker lines' },
+        { name: 'remove_empty_lines', before: 'テスト\n\n\nテスト', after: 'テスト\nテスト', description: 'Remove empty lines' },
+        { name: 'fullwidth_to_halfwidth_alpha', before: 'Ａｂｃ１２３', after: 'Abc123', description: 'Convert fullwidth alphanumerics to halfwidth' }
+    ];
     return patterns.map(p => ({ ...p, before_tokens: getExactTokenCount(p.before), after_tokens: getExactTokenCount(p.after), gain: getExactTokenCount(p.before) - getExactTokenCount(p.after) }));
 }
 
 function probeBoundaryEffects(aliasPool) {
-    const testPhrases = ['おはようございます', 'トウカイテイオー', 'メジロマックイーン', 'スペシャルウィーク', '主人公', '魔法少女', 'レース場', 'トレーニング', '先輩', '大丈夫'];const topAliases = aliasPool.slice(0, 5).map(a => a.alias || a);const results = [];
-    for (const phrase of testPhrases) {for (const alias of topAliases) {const sentence = `彼は${phrase}と言った。${phrase}は大事だ。`;const replaced = sentence.split(phrase).join(alias);const beforeTok = getExactTokenCount(sentence);const afterTok = getExactTokenCount(replaced);const occurrences = 2;const phraseTok = getExactTokenCount(phrase);const aliasTok = getExactTokenCount(alias);const expectedGain = (phraseTok - aliasTok) * occurrences;const actualGain = beforeTok - afterTok;const boundaryEffect = actualGain - expectedGain;results.push({ phrase, alias, phrase_tokens: phraseTok, alias_tokens: aliasTok, expected_gain: expectedGain, actual_gain: actualGain, boundary_effect: boundaryEffect, boundary_effect_description: boundaryEffect > 0 ? 'bonus (boundary merge)' : boundaryEffect < 0 ? 'penalty (boundary split)' : 'neutral' });}}
+    const testPhrases = ['おはようございます', 'トウカイテイオー', 'メジロマックイーン', 'スペシャルウィーク', '主人公', '魔法少女', 'レース場', 'トレーニング', '先輩', '大丈夫'];
+    const topAliases = aliasPool.slice(0, 5).map(a => a.alias || a);
+    const results = [];
+    for (const phrase of testPhrases) {
+        for (const alias of topAliases) {
+            const sentence = `彼は${phrase}と言った。${phrase}は大事だ。`;
+            const replaced = sentence.split(phrase).join(alias);
+            const beforeTok = getExactTokenCount(sentence);
+            const afterTok = getExactTokenCount(replaced);
+            const occurrences = 2;
+            const phraseTok = getExactTokenCount(phrase);
+            const aliasTok = getExactTokenCount(alias);
+            const expectedGain = (phraseTok - aliasTok) * occurrences;
+            const actualGain = beforeTok - afterTok;
+            const boundaryEffect = actualGain - expectedGain;
+            results.push({ phrase, alias, phrase_tokens: phraseTok, alias_tokens: aliasTok, expected_gain: expectedGain, actual_gain: actualGain, boundary_effect: boundaryEffect, boundary_effect_description: boundaryEffect > 0 ? 'bonus (boundary merge)' : boundaryEffect < 0 ? 'penalty (boundary split)' : 'neutral' });
+        }
+    }
     return results;
 }
 
 async function generateStaticProfile(onProgress) {
-    const provider = appSettings.tokenCalcProvider || 'openai';const entry = localTokenizers[provider];if (!entry || entry.status !== 'ready') throw new Error('トークナイザーが準備できていません');
-    const aliasCount = parseInt(staticProbeAliasCountInput.value, 10) || 5000;const aliasKeep = parseInt(staticProbeAliasKeepInput.value, 10) || 500;const jaSamples = parseInt(staticProbeJaSamplesInput.value, 10) || 100;const exhaustiveHeader = staticProbeExhaustiveHeaderToggle.checked;const contextCost = staticProbeContextCostToggle.checked;
-    onProgress(5, 'Probing ASCII character costs...');await new Promise(r => setTimeout(r, 0));const asciiCosts = probeAsciiCharCosts();
-    onProgress(15, 'Probing Japanese character categories...');await new Promise(r => setTimeout(r, 0));const jaCosts = probeJapaneseCharCosts(jaSamples);
-    onProgress(30, `Probing ${aliasCount} alias candidates...`);await new Promise(r => setTimeout(r, 0));const aliasCosts = probeAliasCosts(aliasCount, aliasKeep);
-    onProgress(55, 'Probing separator costs...');await new Promise(r => setTimeout(r, 0));const separatorCosts = probeSeparatorCosts();
-    onProgress(65, 'Probing header template costs...');await new Promise(r => setTimeout(r, 0));const headerCosts = probeHeaderTemplateCosts(aliasCosts.best_aliases, exhaustiveHeader);
-    onProgress(75, 'Probing Japanese compression patterns...');await new Promise(r => setTimeout(r, 0));const jpPatterns = probeJapaneseCompressionPatterns();
-    onProgress(80, 'Probing token boundary effects...');await new Promise(r => setTimeout(r, 0));const boundaryEffects = probeBoundaryEffects(aliasCosts.best_aliases);
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    const entry = localTokenizers[provider];
+    if (!entry || entry.status !== 'ready') throw new Error('トークナイザーが準備できていません');
+
+    const aliasCount = parseInt(staticProbeAliasCountInput.value, 10) || 5000;
+    const aliasKeep = parseInt(staticProbeAliasKeepInput.value, 10) || 500;
+    const jaSamples = parseInt(staticProbeJaSamplesInput.value, 10) || 100;
+    const exhaustiveHeader = staticProbeExhaustiveHeaderToggle.checked;
+    const contextCost = staticProbeContextCostToggle.checked;
+
+    onProgress(5, 'Probing ASCII character costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const asciiCosts = probeAsciiCharCosts();
+
+    onProgress(15, 'Probing Japanese character categories...');
+    await new Promise(r => setTimeout(r, 0));
+    const jaCosts = probeJapaneseCharCosts(jaSamples);
+
+    onProgress(30, `Probing ${aliasCount} alias candidates...`);
+    await new Promise(r => setTimeout(r, 0));
+    const aliasCosts = probeAliasCosts(aliasCount, aliasKeep);
+
+    onProgress(55, 'Probing separator costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const separatorCosts = probeSeparatorCosts();
+
+    onProgress(65, 'Probing header template costs...');
+    await new Promise(r => setTimeout(r, 0));
+    const headerCosts = probeHeaderTemplateCosts(aliasCosts.best_aliases, exhaustiveHeader);
+
+    onProgress(75, 'Probing Japanese compression patterns...');
+    await new Promise(r => setTimeout(r, 0));
+    const jpPatterns = probeJapaneseCompressionPatterns();
+
+    onProgress(80, 'Probing token boundary effects...');
+    await new Promise(r => setTimeout(r, 0));
+    const boundaryEffects = probeBoundaryEffects(aliasCosts.best_aliases);
+
     let contextDependentCosts = null;
-    if (contextCost) {onProgress(88, 'Probing context-dependent costs (slow)...');await new Promise(r => setTimeout(r, 0));contextDependentCosts = probeContextDependentCosts(aliasCosts.best_aliases);}
+    if (contextCost) {
+        onProgress(88, 'Probing context-dependent costs (slow)...');
+        await new Promise(r => setTimeout(r, 0));
+        contextDependentCosts = probeContextDependentCosts(aliasCosts.best_aliases);
+    }
+
     onProgress(95, 'Building profile...');
-    const profile = {schema: 'toolbox-static-tokenizer-profile.v1',created_at: new Date().toISOString(),purpose: 'This is a static analysis of a tokenizer\'s structural characteristics. It does NOT depend on any specific input text. Use this profile to design compression strategies for the target tokenizer.',instructions_for_ai: ['This profile maps how the target tokenizer assigns token costs to characters, alias candidates, separators, and header formats.','Use the alias_analysis.best_aliases list as the preferred abbreviation pool: these are all verified to be 1 token.','Use the header_templates ranking to choose the most token-efficient header format.','Use the separator_analysis to choose the cheapest separator character.','The japanese_compression_patterns show which common Japanese formatting transformations save tokens.','The boundary_effects section shows how replacing a phrase with an alias can cause unexpected token count changes due to tokenizer boundary shifts.','If context_dependent_costs is present, it shows how the same alias costs different amounts depending on surrounding text.','Design a compression algorithm that: (1) uses 1-token aliases, (2) uses the cheapest header format, (3) accounts for boundary effects, (4) applies Japanese formatting optimizations where they save tokens.'],target:{backend:provider,tokenizer_type:entry._type,display_name:provider,precise_mode:provider==='deepseek'?!!appSettings.deepseekPreciseTokenizer:null},probe_settings:{alias_probe_count:aliasCount,alias_keep_count:aliasKeep,ja_samples_per_category:jaSamples,exhaustive_header_search:exhaustiveHeader,context_dependent_cost_enabled:contextCost},ascii_char_costs:asciiCosts,japanese_char_costs:jaCosts,alias_analysis:aliasCosts,separator_analysis:separatorCosts,header_templates:headerCosts,japanese_compression_patterns:jpPatterns,boundary_effects:boundaryEffects,context_dependent_costs:contextDependentCosts,summary:{best_1token_alias_patterns:Object.entries(aliasCosts.pattern_stats).map(([pat,stat])=>({pattern:pat,one_token_rate:stat.total?Number((stat.one_token/stat.total*100).toFixed(1)):0,count:stat.one_token,examples:stat.examples})).sort((a,b)=>b.one_token_rate-a.one_token_rate || b.count-a.count),best_separator:separatorCosts[0]?.separator||'=',best_header_template:headerCosts[0]?.name||'unknown',best_header_token_cost:headerCosts[0]?.token_cost||0,jp_patterns_with_gain:jpPatterns.filter(p=>p.gain>0).map(p=>p.name),boundary_effect_summary:{avg_effect:Number(mean(boundaryEffects.map(b=>b.boundary_effect)).toFixed(4)),positive_count:boundaryEffects.filter(b=>b.boundary_effect>0).length,negative_count:boundaryEffects.filter(b=>b.boundary_effect<0).length,neutral_count:boundaryEffects.filter(b=>b.boundary_effect===0).length}}};
+
+    const profile = {
+        schema: 'toolbox-static-tokenizer-profile.v1',
+        created_at: new Date().toISOString(),
+        purpose: 'This is a static analysis of a tokenizer\'s structural characteristics. It does NOT depend on any specific input text. Use this profile to design compression strategies for the target tokenizer.',
+        instructions_for_ai: [
+            'This profile maps how the target tokenizer assigns token costs to characters, alias candidates, separators, and header formats.',
+            'Use the alias_analysis.best_aliases list as the preferred abbreviation pool: these are all verified to be 1 token.',
+            'Use the header_templates ranking to choose the most token-efficient header format.',
+            'Use the separator_analysis to choose the cheapest separator character.',
+            'The japanese_compression_patterns show which common Japanese formatting transformations save tokens.',
+            'The boundary_effects section shows how replacing a phrase with an alias can cause unexpected token count changes due to tokenizer boundary shifts.',
+            'If context_dependent_costs is present, it shows how the same alias costs different amounts depending on surrounding text.',
+            'Design a compression algorithm that: (1) uses 1-token aliases, (2) uses the cheapest header format, (3) accounts for boundary effects, (4) applies Japanese formatting optimizations where they save tokens.'
+        ],
+        target: {
+            backend: provider,
+            tokenizer_type: entry._type,
+            display_name: provider,
+            precise_mode: provider === 'deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
+        },
+        probe_settings: {
+            alias_probe_count: aliasCount,
+            alias_keep_count: aliasKeep,
+            ja_samples_per_category: jaSamples,
+            exhaustive_header_search: exhaustiveHeader,
+            context_dependent_cost_enabled: contextCost
+        },
+        ascii_char_costs: asciiCosts,
+        japanese_char_costs: jaCosts,
+        alias_analysis: aliasCosts,
+        separator_analysis: separatorCosts,
+        header_templates: headerCosts,
+        japanese_compression_patterns: jpPatterns,
+        boundary_effects: boundaryEffects,
+        context_dependent_costs: contextDependentCosts,
+        summary: {
+            best_1token_alias_patterns: Object.entries(aliasCosts.pattern_stats)
+                .map(([pat, stat]) => ({ pattern: pat, one_token_rate: stat.total ? Number((stat.one_token / stat.total * 100).toFixed(1)) : 0, count: stat.one_token, examples: stat.examples }))
+                .sort((a, b) => b.one_token_rate - a.one_token_rate || b.count - a.count),
+            best_separator: separatorCosts[0]?.separator || '=',
+            best_header_template: headerCosts[0]?.name || 'unknown',
+            best_header_token_cost: headerCosts[0]?.token_cost || 0,
+            jp_patterns_with_gain: jpPatterns.filter(p => p.gain > 0).map(p => p.name),
+            boundary_effect_summary: {
+                avg_effect: Number(mean(boundaryEffects.map(b => b.boundary_effect)).toFixed(4)),
+                positive_count: boundaryEffects.filter(b => b.boundary_effect > 0).length,
+                negative_count: boundaryEffects.filter(b => b.boundary_effect < 0).length,
+                neutral_count: boundaryEffects.filter(b => b.boundary_effect === 0).length
+            }
+        }
+    };
+
     return profile;
 }
 
 function formatStaticProfileAsText(profile) {
-    const lines = [];const hr = '='.repeat(72);const hr2 = '-'.repeat(72);
-    lines.push(hr);lines.push('STATIC TOKENIZER PROFILE');lines.push(hr);lines.push('');lines.push(`Schema       : ${profile.schema}`);lines.push(`Created      : ${profile.created_at}`);lines.push(`Target       : ${profile.target.display_name} (${profile.target.backend})`);lines.push(`Tokenizer    : ${profile.target.tokenizer_type}`);if (profile.target.precise_mode !== null) {lines.push(`Precise mode : ${profile.target.precise_mode}`);}lines.push('');lines.push('PURPOSE:');lines.push(profile.purpose);lines.push('');
-    lines.push(hr2);lines.push('INSTRUCTIONS FOR AI ANALYSIS');lines.push(hr2);profile.instructions_for_ai.forEach((inst, i) => {lines.push(`${i + 1}. ${inst}`);});lines.push('');
-    lines.push(hr2);lines.push('SUMMARY');lines.push(hr2);const s = profile.summary;lines.push(`Best separator       : "${s.best_separator}"`);lines.push(`Best header template : ${s.best_header_template} (cost=${s.best_header_token_cost} tokens)`);lines.push(`JP patterns with gain: ${s.jp_patterns_with_gain.join(', ') || 'none'}`);lines.push('');lines.push('Alias pattern effectiveness (1-token rate):');s.best_1token_alias_patterns.forEach(p => {lines.push(`  ${p.pattern.padEnd(12)} : ${p.one_token_rate}% (${p.count} aliases) e.g. ${p.examples.join(', ')}`);});lines.push('');lines.push('Boundary effects:');const be = s.boundary_effect_summary;lines.push(`  avg=${be.avg_effect}  bonus=${be.positive_count}  penalty=${be.negative_count}  neutral=${be.neutral_count}`);lines.push('');
-    lines.push(hr2);lines.push(`ALIAS POOL (top ${Math.min(profile.alias_analysis.best_aliases.length, 200)} of ${profile.alias_analysis.total_probed} probed, ${profile.alias_analysis.one_token_count} are 1-token)`);lines.push(hr2);const topAliases = profile.alias_analysis.best_aliases.slice(0, 200);for (let i = 0; i < topAliases.length; i += 20) {lines.push('  ' + topAliases.slice(i, i + 20).map(a => a.alias).join(', '));}lines.push('');
-    lines.push(hr2);lines.push('SEPARATOR COSTS');lines.push(hr2);profile.separator_analysis.forEach(sep => {lines.push(`  "${sep.display}" : avg=${sep.avg_line_tokens} tokens/line (min=${sep.min_line_tokens}, max=${sep.max_line_tokens})`);});lines.push('');
-    lines.push(hr2);lines.push('HEADER TEMPLATE RANKING (top 10)');lines.push(hr2);profile.header_templates.slice(0, 10).forEach((h, i) => {lines.push(`  #${i + 1} ${h.name} : ${h.token_cost} tokens (${h.tokens_per_entry} per entry)`);lines.push(`      Preview: ${h.rendered_preview.replace(/\n/g, '\\n').slice(0, 120)}`);});lines.push('');
-    lines.push(hr2);lines.push('JAPANESE COMPRESSION PATTERNS');lines.push(hr2);profile.japanese_compression_patterns.forEach(p => {const marker = p.gain > 0 ? '✓' : p.gain === 0 ? '=' : '✗';lines.push(`  ${marker} ${p.name}: ${p.description}`);lines.push(`    before=${p.before_tokens}tok  after=${p.after_tokens}tok  gain=${p.gain}`);lines.push(`    "${p.before}" -> "${p.after}"`);});lines.push('');
-    lines.push(hr2);lines.push('BOUNDARY EFFECT SAMPLES');lines.push(hr2);const grouped = {};profile.boundary_effects.forEach(b => {if (!grouped[b.phrase]) grouped[b.phrase] = [];grouped[b.phrase].push(b);});for (const [phrase, effects] of Object.entries(grouped)) {lines.push(`  Phrase: "${phrase}" (${effects[0].phrase_tokens} tokens)`);effects.forEach(e => {lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`);});}lines.push('');
-    if (profile.context_dependent_costs) {lines.push(hr2);lines.push('CONTEXT-DEPENDENT ALIAS COSTS');lines.push(hr2);profile.context_dependent_costs.forEach(c => {lines.push(`  ${c.alias}: avg=${c.avg_marginal} min=${c.min_marginal} max=${c.max_marginal} variance=${c.variance}`);c.by_context.forEach(ctx => {lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`);});});lines.push('');}
-    lines.push(hr2);lines.push('ASCII CHARACTER COSTS');lines.push(hr2);const byCat = { upper: [], lower: [], digit: [], symbol: [] };profile.ascii_char_costs.forEach(c => { if (byCat[c.category]) byCat[c.category].push(c); });for (const [cat, chars] of Object.entries(byCat)) {const costs = chars.map(c => c.isolated_tokens);lines.push(`  ${cat}: avg=${mean(costs).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);}lines.push('');
-lines.push('');
-    lines.push(hr);lines.push('END OF STATIC PROFILE');lines.push(hr);return lines.join('\n');
+    const lines = [];
+    const hr = '='.repeat(72);
+    const hr2 = '-'.repeat(72);
+
+    lines.push(hr);
+    lines.push('STATIC TOKENIZER PROFILE');
+    lines.push(hr);
+    lines.push('');
+    lines.push(`Schema       : ${profile.schema}`);
+    lines.push(`Created      : ${profile.created_at}`);
+    lines.push(`Target       : ${profile.target.display_name} (${profile.target.backend})`);
+    lines.push(`Tokenizer    : ${profile.target.tokenizer_type}`);
+    if (profile.target.precise_mode !== null) {
+        lines.push(`Precise mode : ${profile.target.precise_mode}`);
+    }
+    lines.push('');
+    lines.push('PURPOSE:');
+    lines.push(profile.purpose);
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('INSTRUCTIONS FOR AI ANALYSIS');
+    lines.push(hr2);
+    profile.instructions_for_ai.forEach((inst, i) => {
+        lines.push(`${i + 1}. ${inst}`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('SUMMARY');
+    lines.push(hr2);
+    const s = profile.summary;
+    lines.push(`Best separator       : "${s.best_separator}"`);
+    lines.push(`Best header template : ${s.best_header_template} (cost=${s.best_header_token_cost} tokens)`);
+    lines.push(`JP patterns with gain: ${s.jp_patterns_with_gain.join(', ') || 'none'}`);
+    lines.push('');
+    lines.push('Alias pattern effectiveness (1-token rate):');
+    s.best_1token_alias_patterns.forEach(p => {
+        lines.push(`  ${p.pattern.padEnd(12)} : ${p.one_token_rate}% (${p.count} aliases) e.g. ${p.examples.join(', ')}`);
+    });
+    lines.push('');
+    lines.push('Boundary effects:');
+    const be = s.boundary_effect_summary;
+    lines.push(`  avg=${be.avg_effect}  bonus=${be.positive_count}  penalty=${be.negative_count}  neutral=${be.neutral_count}`);
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push(`ALIAS POOL (top ${Math.min(profile.alias_analysis.best_aliases.length, 200)} of ${profile.alias_analysis.total_probed} probed, ${profile.alias_analysis.one_token_count} are 1-token)`);
+    lines.push(hr2);
+    const topAliases = profile.alias_analysis.best_aliases.slice(0, 200);
+    for (let i = 0; i < topAliases.length; i += 20) {
+        lines.push('  ' + topAliases.slice(i, i + 20).map(a => a.alias).join(', '));
+    }
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('SEPARATOR COSTS');
+    lines.push(hr2);
+    profile.separator_analysis.forEach(sep => {
+        lines.push(`  "${sep.display}" : avg=${sep.avg_line_tokens} tokens/line (min=${sep.min_line_tokens}, max=${sep.max_line_tokens})`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('HEADER TEMPLATE RANKING (top 10)');
+    lines.push(hr2);
+    profile.header_templates.slice(0, 10).forEach((h, i) => {
+        lines.push(`  #${i + 1} ${h.name} : ${h.token_cost} tokens (${h.tokens_per_entry} per entry)`);
+        lines.push(`      Preview: ${h.rendered_preview.replace(/\n/g, '\\n').slice(0, 120)}`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('JAPANESE COMPRESSION PATTERNS');
+    lines.push(hr2);
+    profile.japanese_compression_patterns.forEach(p => {
+        const marker = p.gain > 0 ? '✓' : p.gain === 0 ? '=' : '✗';
+        lines.push(`  ${marker} ${p.name}: ${p.description}`);
+        lines.push(`    before=${p.before_tokens}tok  after=${p.after_tokens}tok  gain=${p.gain}`);
+        lines.push(`    "${p.before}" -> "${p.after}"`);
+    });
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('BOUNDARY EFFECT SAMPLES');
+    lines.push(hr2);
+    const grouped = {};
+    profile.boundary_effects.forEach(b => {
+        if (!grouped[b.phrase]) grouped[b.phrase] = [];
+        grouped[b.phrase].push(b);
+    });
+    for (const [phrase, effects] of Object.entries(grouped)) {
+        lines.push(`  Phrase: "${phrase}" (${effects[0].phrase_tokens} tokens)`);
+        effects.forEach(e => {
+            lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`);
+        });
+    }
+    lines.push('');
+
+    if (profile.context_dependent_costs) {
+        lines.push(hr2);
+        lines.push('CONTEXT-DEPENDENT ALIAS COSTS');
+        lines.push(hr2);
+        profile.context_dependent_costs.forEach(c => {
+            lines.push(`  ${c.alias}: avg=${c.avg_marginal} min=${c.min_marginal} max=${c.max_marginal} variance=${c.variance}`);
+            c.by_context.forEach(ctx => {
+                lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`);
+            });
+        });
+        lines.push('');
+    }
+
+    lines.push(hr2);
+    lines.push('ASCII CHARACTER COSTS');
+    lines.push(hr2);
+    const byCat = { upper: [], lower: [], digit: [], symbol: [] };
+    profile.ascii_char_costs.forEach(c => { if (byCat[c.category]) byCat[c.category].push(c); });
+    for (const [cat, chars] of Object.entries(byCat)) {
+        const costs = chars.map(c => c.isolated_tokens);
+        lines.push(`  ${cat}: avg=${mean(costs).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);
+    }
+    lines.push('');
+
+    lines.push(hr2);
+    lines.push('JAPANESE CHARACTER CATEGORY COSTS');
+    lines.push(hr2);
+    for (const [key, cat] of Object.entries(profile.japanese_char_costs)) {
+        lines.push(`  ${cat.label} (${cat.range}): avg=${cat.avg_tokens} min=${cat.min_tokens} max=${cat.max_tokens} (${cat.sample_count} samples)`);
+    }
+    lines.push('');
+
+    lines.push(hr);
+    lines.push('END OF STATIC PROFILE');
+    lines.push(hr);
+
+    return lines.join('\n');
 }
 
 runStaticProfileBtn.addEventListener('click', async () => {
-    const provider = appSettings.tokenCalcProvider || 'openai';runStaticProfileBtn.disabled = true;staticProfileNotice.textContent = 'トークナイザーを準備しています…';
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    runStaticProfileBtn.disabled = true;
+    staticProfileNotice.textContent = 'トークナイザーを準備しています…';
+
     try {
-        await initLocalTokenizer();const entry = localTokenizers[provider];if (!entry || entry.status !== 'ready') throw new Error('トークナイザーの準備に失敗しました');
-        const profile = await generateStaticProfile((pct, detail) => {showStaticProgress(pct, detail);});
-        const textOutput = formatStaticProfileAsText(profile);analysisOutputs.static = textOutput;analysisActiveTab = 'static';renderAnalysisTab();saveWorkspaceDebounced();
-        showStaticProgress(100, 'Complete');setTimeout(hideStaticProgress, 1500);staticProfileNotice.textContent = `完了: ${provider} / 略号${profile.alias_analysis.one_token_count}件が1トークン / best header="${profile.summary.best_header_template}"`;showToast('静的プロファイル生成完了');
-    } catch (err) {console.error(err);staticProfileNotice.textContent = `失敗: ${err.message || err}`;showToast('静的プロファイル生成に失敗しました');hideStaticProgress();} finally {runStaticProfileBtn.disabled = false;}
+        await initLocalTokenizer();
+        const entry = localTokenizers[provider];
+        if (!entry || entry.status !== 'ready') throw new Error('トークナイザーの準備に失敗しました');
+
+        const profile = await generateStaticProfile((pct, detail) => {
+            showStaticProgress(pct, detail);
+        });
+
+        const textOutput = formatStaticProfileAsText(profile);
+
+        analysisOutputs.static = textOutput;
+
+        analysisActiveTab = 'static';
+        renderAnalysisTab();
+        saveWorkspaceDebounced();
+
+        showStaticProgress(100, 'Complete');
+        setTimeout(hideStaticProgress, 1500);
+        staticProfileNotice.textContent = `完了: ${provider} / 略号${profile.alias_analysis.one_token_count}件が1トークン / best header="${profile.summary.best_header_template}"`;
+        showToast('静的プロファイル生成完了');
+
+    } catch (err) {
+        console.error(err);
+        staticProfileNotice.textContent = `失敗: ${err.message || err}`;
+        showToast('静的プロファイル生成に失敗しました');
+        hideStaticProgress();
+    } finally {
+        runStaticProfileBtn.disabled = false;
+    }
 });
 
 // ============================================================
@@ -3188,27 +4106,73 @@ runStaticProfileBtn.addEventListener('click', async () => {
 // ============================================================
 function getHighlightedHTML(text, searchStr = '') {
     if (!text) return '';
-    if (searchStr) {const re = new RegExp(`(${escRegex(searchStr)})`, 'g'); const parts = text.split(re); let html = '';for (let i = 0; i < parts.length; i++) {if (i % 2 === 1) html += `<mark style="background-color:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">${escapeHtml(parts[i])}</mark>`;else html += escapeHtml(parts[i]);}return html;} else {
-        const ml = 8; if (text.length < ml) return escapeHtml(text);let hm = new Array(text.length).fill(false); let ng = new Map();for (let i = 0; i <= text.length - ml; i++) { let sub = text.substring(i, i + ml); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }for (let [, indices] of ng.entries()) { if (indices.length > 1) { for (let idx of indices) { for (let k = 0; k < ml; k++) hm[idx + k] = true; } } }let html = '', inH = false;for (let i = 0; i < text.length; i++) {if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`; inH = true; }else if (!hm[i] && inH) { html += `</mark>`; inH = false; }html += escapeHtml(text[i]);}if (inH) html += `</mark>`;return html;}
+    if (searchStr) {
+        const re = new RegExp(`(${escRegex(searchStr)})`, 'g'); const parts = text.split(re); let html = '';
+        for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 1) html += `<mark style="background-color:#ff9800;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">${escapeHtml(parts[i])}</mark>`;
+            else html += escapeHtml(parts[i]);
+        }
+        return html;
+    } else {
+        const ml = 8; if (text.length < ml) return escapeHtml(text);
+        let hm = new Array(text.length).fill(false); let ng = new Map();
+        for (let i = 0; i <= text.length - ml; i++) { let sub = text.substring(i, i + ml); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }
+        for (let [, indices] of ng.entries()) { if (indices.length > 1) { for (let idx of indices) { for (let k = 0; k < ml; k++) hm[idx + k] = true; } } }
+        let html = '', inH = false;
+        for (let i = 0; i < text.length; i++) {
+            if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`; inH = true; }
+            else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
+            html += escapeHtml(text[i]);
+        }
+        if (inH) html += `</mark>`;
+        return html;
+    }
 }
 
 toggleHighlightBtn.addEventListener('click', () => {
     isHighlightMode = !isHighlightMode;
-    if (isHighlightMode) {const text = outputEl.value;if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }const ss = replaceSourceEl.value;outputPreview.innerHTML = getHighlightedHTML(text, ss);outputEl.style.display = 'none'; outputPreview.style.display = 'block';toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');if (ss) showToast(`「${ss}」をハイライトしました`); else showToast('8文字以上の重複箇所をハイライトしました');} else {resetHighlightMode();}
+    if (isHighlightMode) {
+        const text = outputEl.value;
+        if (!text) { showToast('結果テキストがありません'); isHighlightMode = false; return; }
+        const ss = replaceSourceEl.value;
+        outputPreview.innerHTML = getHighlightedHTML(text, ss);
+        outputEl.style.display = 'none'; outputPreview.style.display = 'block';
+        toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');
+        if (ss) showToast(`「${ss}」をハイライトしました`); else showToast('8文字以上の重複箇所をハイライトしました');
+    } else {
+        resetHighlightMode();
+    }
 });
 
-document.getElementById('clearBtn').addEventListener('click', () => {inputPart1El.value = ''; inputPart2El.value = ''; inputPart3El.value = ''; syncCombinedInput(); outputEl.value = '';updateCounts(); resetHighlightMode(); saveWorkspaceDebounced();});
-document.getElementById('applyToInputBtn').addEventListener('click', () => {if (outputEl.value) {setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました');}});
-document.getElementById('copyBtn').addEventListener('click', async () => {if (!outputEl.value) return;try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); }catch (err) { showToast('コピーに失敗しました'); }});
+document.getElementById('clearBtn').addEventListener('click', () => {
+    inputPart1El.value = ''; inputPart2El.value = ''; inputPart3El.value = ''; syncCombinedInput(); outputEl.value = '';
+    updateCounts(); resetHighlightMode(); saveWorkspaceDebounced();
+});
+document.getElementById('applyToInputBtn').addEventListener('click', () => {
+    if (outputEl.value) {
+        setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました');
+    }
+});
+document.getElementById('copyBtn').addEventListener('click', async () => {
+    if (!outputEl.value) return;
+    try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); }
+    catch (err) { showToast('コピーに失敗しました'); }
+});
 
 runSelectedActionBtn.addEventListener('click', () => {
-    const action = actionPicker.value;if (!action) { showToast('処理を選択してください'); return; }
-    if (action === 'replaceText') { document.getElementById('replaceBtn').click(); return; }if (action === 'extractKeywords') { document.getElementById('extractKeywordsBtn').click(); return; }if (action === 'manualCompress') { document.getElementById('compressBtn').click(); return; }if (action === 'decompressText') { document.getElementById('decompressBtn').click(); return; }
-    const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);if (!legacyBtn) { formatText(action); return; }legacyBtn.click();
+    const action = actionPicker.value;
+    if (!action) { showToast('処理を選択してください'); return; }
+    if (action === 'replaceText') { document.getElementById('replaceBtn').click(); return; }
+    if (action === 'extractKeywords') { document.getElementById('extractKeywordsBtn').click(); return; }
+    if (action === 'manualCompress') { document.getElementById('compressBtn').click(); return; }
+    if (action === 'decompressText') { document.getElementById('decompressBtn').click(); return; }
+    const legacyBtn = document.querySelector(`#legacyActionButtons .tool-btn[data-action="${action}"]`);
+    if (!legacyBtn) { formatText(action); return; }
+    legacyBtn.click();
 });
 
 // ============================================================
-// Full Pipeline Compression
+// Full Pipeline Compression - ワンボタン最強圧縮
 // ============================================================
 const fullPipelineBtn = document.getElementById('fullPipelineBtn');
 const pipelineNormalizeToggle = document.getElementById('pipelineNormalize');
@@ -3219,69 +4183,284 @@ const pipelineGreedyPassesInput = document.getElementById('pipelineGreedyPasses'
 const pipelineBfThresholdInput = document.getElementById('pipelineBfThreshold');
 
 async function runFullPipeline() {
-    syncCombinedInput();let text = inputEl.value;if (!text) { showToast('入力テキストがありません'); return; }if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは非対応です'); return; }resetHighlightMode();
-    const provider = appSettings.tokenCalcProvider || 'openai';fullPipelineBtn.disabled = true;const startTime = Date.now();
+    syncCombinedInput();
+    let text = inputEl.value;
+    if (!text) { showToast('入力テキストがありません'); return; }
+    if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは非対応です'); return; }
+    resetHighlightMode();
+
+    const provider = appSettings.tokenCalcProvider || 'openai';
+    fullPipelineBtn.disabled = true;
+    const startTime = Date.now();
+
     try {
-        showCompressProgress(2, 'Phase 0: トークナイザー準備中...');await initLocalTokenizer();const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;const inputTokensBefore = getExactTokenCount(text);
-        showCompressProgress(5, 'Phase 1: テキスト正規化...');await new Promise(r => setTimeout(r, 0));
-        if (pipelineNormalizeToggle.checked) {text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));text = text.replace(kanaRegex, m => kanaMap[m]);}
-        showCompressProgress(8, 'Phase 2: 既存マッピング解析...');const { replacedMap, bodyText } = extractExistingMappings(text);let processedBody = bodyText;_usedAbbrs.clear();for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
-        showCompressProgress(12, 'Phase 3: 空白・空行削除...');await new Promise(r => setTimeout(r, 0));
-        if (autoCompressTrimWhitespaceInput.checked) {processedBody = trimWhitespaceForCompression(processedBody);}
-        let dialogueMergeCount = 0;if (autoCompressMergeDialoguesInput.checked) {showCompressProgress(15, 'Phase 3: セリフ結合...');const r = mergeConsecutiveDialogues(processedBody);processedBody = r.text;dialogueMergeCount = r.mergedCount;}
-        let bracketReplacedCount = 0;if (autoCompressReplaceBracketsInput.checked) {showCompressProgress(18, 'Phase 3: 鉤括弧→軽量記号...');const r = replaceBracketsLightweight(processedBody);processedBody = r.text;bracketReplacedCount = r.replacedCount;}
+        // --- Phase 0: トークナイザー準備 ---
+        showCompressProgress(2, 'Phase 0: トークナイザー準備中...');
+        await initLocalTokenizer();
+        const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;
 
-        // NEW: Apply extra operations in pipeline too
-        processedBody = applyExtraOperations(processedBody);
+        const inputTokensBefore = getExactTokenCount(text);
 
-        const formatOptions = {mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0,forceStrictHeader: pipelineForceStrictHeaderToggle ? pipelineForceStrictHeaderToggle.checked : false};
-        let builtinCount = 0;if (autoCompressApplyUmaInput.checked) {showCompressProgress(22, 'Phase 4: ウマ娘辞書適用...');const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);processedBody = r.text; builtinCount += r.count;for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);}if (autoCompressApplyPronounInput.checked) {showCompressProgress(25, 'Phase 4: 人称代名詞辞書適用...');const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);processedBody = r.text; builtinCount += r.count;for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);}
+        // --- Phase 1: テキスト正規化 ---
+        showCompressProgress(5, 'Phase 1: テキスト正規化...');
+        await new Promise(r => setTimeout(r, 0));
 
+        if (pipelineNormalizeToggle.checked) {
+            text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            text = text.replace(kanaRegex, m => kanaMap[m]);
+        }
+
+        // --- Phase 2: 既存マッピングの抽出 ---
+        showCompressProgress(8, 'Phase 2: 既存マッピング解析...');
+        const { replacedMap, bodyText } = extractExistingMappings(text);
+        let processedBody = bodyText;
+
+        _usedAbbrs.clear();
+        for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
+
+        // --- Phase 3: 構造的前処理 ---
+        showCompressProgress(12, 'Phase 3: 空白・空行削除...');
+        await new Promise(r => setTimeout(r, 0));
+
+        if (autoCompressTrimWhitespaceInput.checked) {
+            processedBody = trimWhitespaceForCompression(processedBody);
+        }
+
+        let dialogueMergeCount = 0;
+        if (autoCompressMergeDialoguesInput.checked) {
+            showCompressProgress(15, 'Phase 3: セリフ結合...');
+            const r = mergeConsecutiveDialogues(processedBody);
+            processedBody = r.text;
+            dialogueMergeCount = r.mergedCount;
+        }
+
+        let bracketReplacedCount = 0;
+        if (autoCompressReplaceBracketsInput.checked) {
+            showCompressProgress(18, 'Phase 3: 鉤括弧→軽量記号...');
+            const r = replaceBracketsLightweight(processedBody);
+            processedBody = r.text;
+            bracketReplacedCount = r.replacedCount;
+        }
+
+        const formatOptions = {
+            mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
+            replacedBrackets: autoCompressReplaceBracketsInput.checked && bracketReplacedCount > 0,
+            forceStrictHeader: pipelineForceStrictHeaderToggle ? pipelineForceStrictHeaderToggle.checked : false
+        };
+
+        // --- Phase 4: 内蔵辞書適用 ---
+        let builtinCount = 0;
+        if (autoCompressApplyUmaInput.checked) {
+            showCompressProgress(22, 'Phase 4: ウマ娘辞書適用...');
+            const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
+            processedBody = r.text; builtinCount += r.count;
+            for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
+        }
+        if (autoCompressApplyPronounInput.checked) {
+            showCompressProgress(25, 'Phase 4: 人称代名詞辞書適用...');
+            const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
+            processedBody = r.text; builtinCount += r.count;
+            for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
+        }
+
+        // --- Phase 5: 分析プロファイル自動生成 ---
         let usableProfile = null;
         if (pipelineAutoAnalyzeToggle.checked) {
-            showCompressProgress(28, 'Phase 5: 分析プロファイル生成中...');await new Promise(r => setTimeout(r, 0));const existingProfile = getParsedAnalysisProfile();
-            if (isAnalysisProfileCompatible(existingProfile)) {usableProfile = existingProfile;showCompressProgress(35, 'Phase 5: 既存プロファイルを活用');} else if (hasEncoder) {
-                try {const prefixes = ['@', '#', '~', 'Q', 'Z'];const separators = ['=', ':', '|', '>', '~', ';'];const aliasPool = analyzeAliasPoolWeb(processedBody, prefixes, 64, 1000);const separatorRows = analyzeSeparatorsWeb(separators);const sampleValues = pickSampleValuesWeb(processedBody, 4);const headerRows = analyzeHeaderTemplatesWeb(aliasPool, sampleValues);const bestHeader = headerRows[0] || { name: 'fallback', token_cost: 0, template: ANALYSIS_HEADER_LIBRARY[0] };showCompressProgress(38, 'Phase 5: N-gram候補検出中...');await new Promise(r => setTimeout(r, 0));const phraseRows = analyzePhraseSuggestionsWeb(processedBody, aliasPool, bestHeader, { ngramMin: 2, ngramMax: 8, minCount: 2, phraseLimit: 30 });const charRows = analyzeCharBurdenWeb(processedBody, 40);const distilledRules = buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
-                    usableProfile = {schema: 'toolbox-tokenizer-analysis.v1',target: { backend: provider, target: provider, display_name: provider, tokenizer_status: 'ready' },corpus: { chars: processedBody.length, tokens: getExactTokenCount(processedBody) },summary: { best_header_name: headerRows[0]?.name || null, best_header_token_cost: headerRows[0]?.token_cost || null, top_phrase_gain: phraseRows[0]?.gain || 0 },alias_pool: aliasPool,header_templates: headerRows,phrase_suggestions: phraseRows,distilled_rules: distilledRules};showCompressProgress(42, `Phase 5: プロファイル生成完了 (候補${phraseRows.length}件)`);} catch (e) {console.warn('Pipeline: profile generation failed:', e);showCompressProgress(42, 'Phase 5: プロファイル生成スキップ');}
+            showCompressProgress(28, 'Phase 5: 分析プロファイル生成中...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const existingProfile = getParsedAnalysisProfile();
+            if (isAnalysisProfileCompatible(existingProfile)) {
+                usableProfile = existingProfile;
+                showCompressProgress(35, 'Phase 5: 既存プロファイルを活用');
+            } else if (hasEncoder) {
+                try {
+                    const prefixes = ['@', '#', '~', 'Q', 'Z'];
+                    const separators = ['=', ':', '|', '>', '~', ';'];
+                    const aliasPool = analyzeAliasPoolWeb(processedBody, prefixes, 64, 1000);
+                    const separatorRows = analyzeSeparatorsWeb(separators);
+                    const sampleValues = pickSampleValuesWeb(processedBody, 4);
+                    const headerRows = analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
+                    const bestHeader = headerRows[0] || { name: 'fallback', token_cost: 0, template: ANALYSIS_HEADER_LIBRARY[0] };
+
+                    showCompressProgress(38, 'Phase 5: N-gram候補検出中...');
+                    await new Promise(r => setTimeout(r, 0));
+
+                    const phraseRows = analyzePhraseSuggestionsWeb(processedBody, aliasPool, bestHeader, { ngramMin: 2, ngramMax: 8, minCount: 2, phraseLimit: 30 });
+                    const charRows = analyzeCharBurdenWeb(processedBody, 40);
+                    const distilledRules = buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
+
+                    usableProfile = {
+                        schema: 'toolbox-tokenizer-analysis.v1',
+                        target: { backend: provider, target: provider, display_name: provider, tokenizer_status: 'ready' },
+                        corpus: { chars: processedBody.length, tokens: getExactTokenCount(processedBody) },
+                        summary: { best_header_name: headerRows[0]?.name || null, best_header_token_cost: headerRows[0]?.token_cost || null, top_phrase_gain: phraseRows[0]?.gain || 0 },
+                        alias_pool: aliasPool,
+                        header_templates: headerRows,
+                        phrase_suggestions: phraseRows,
+                        distilled_rules: distilledRules
+                    };
+
+                    showCompressProgress(42, `Phase 5: プロファイル生成完了 (候補${phraseRows.length}件)`);
+                } catch (e) {
+                    console.warn('Pipeline: profile generation failed:', e);
+                    showCompressProgress(42, 'Phase 5: プロファイル生成スキップ');
+                }
             }
-        } else {const existing = getParsedAnalysisProfile();if (isAnalysisProfileCompatible(existing)) usableProfile = existing;}
+        } else {
+            const existing = getParsedAnalysisProfile();
+            if (isAnalysisProfileCompatible(existing)) usableProfile = existing;
+        }
 
-        let analyzedAppliedCount = 0;if (usableProfile) {showCompressProgress(45, 'Phase 6: 分析候補を先行適用中...');await new Promise(r => setTimeout(r, 0));const guided = applyAnalyzedSuggestionsFirst(processedBody, replacedMap, formatOptions, usableProfile);processedBody = guided.text;analyzedAppliedCount = guided.appliedCount;}
+        // --- Phase 6: 分析プロファイル候補の先行適用 ---
+        let analyzedAppliedCount = 0;
+        if (usableProfile) {
+            showCompressProgress(45, 'Phase 6: 分析候補を先行適用中...');
+            await new Promise(r => setTimeout(r, 0));
+            const guided = applyAnalyzedSuggestionsFirst(processedBody, replacedMap, formatOptions, usableProfile);
+            processedBody = guided.text;
+            analyzedAppliedCount = guided.appliedCount;
+        }
 
-        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;const excludeAlnum = autoCompressExcludeAlnumInput.checked;const bfThreshold = parseInt(pipelineBfThresholdInput.value, 10) || 15;
-        let totalCompressedCount = 0;let mainAlgoUsed = 'none';
+        // --- Phase 7: メイン圧縮（GA/全探索/greedy 自動選択）---
+        const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
+        const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
+        const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
+        const excludeAlnum = autoCompressExcludeAlnumInput.checked;
+        const bfThreshold = parseInt(pipelineBfThresholdInput.value, 10) || 15;
 
-        showCompressProgress(50, 'Phase 7: 圧縮候補検出中...');await new Promise(r => setTimeout(r, 0));const rawCandidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
+        let totalCompressedCount = 0;
+        let mainAlgoUsed = 'none';
+
+        showCompressProgress(50, 'Phase 7: 圧縮候補検出中...');
+        await new Promise(r => setTimeout(r, 0));
+
+        const rawCandidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
 
         if (rawCandidates.length > 0 && pipelineSmartAlgoToggle.checked) {
             const assigned = assignAliasesToCandidates(rawCandidates, processedBody, replacedMap, usableProfile);
-            if (assigned.length > 0) {
-                if (assigned.length <= bfThreshold) {mainAlgoUsed = `全探索(${assigned.length}候補)`;showCompressProgress(55, `Phase 7: 全探索 (${1 << assigned.length}通り)...`);const result = await bruteForceCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));const applied = applySolution(processedBody, assigned, result.bits, replacedMap);processedBody = applied.text;for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }totalCompressedCount = result.bits.filter(b => b).length;} else {mainAlgoUsed = `GA(${assigned.length}候補)`;showCompressProgress(55, `Phase 7: GA (${assigned.length}候補)...`);const gaParams = {populationSize: Math.min(100, Math.max(50, assigned.length * 3)),generations: Math.min(150, Math.max(80, assigned.length * 4)),mutationRate: 10,eliteCount: Math.max(3, Math.floor(assigned.length * 0.1)),tournamentSize: 4,twoStageEval: true};const result = await gaCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));const applied = applySolution(processedBody, assigned, result.bits, replacedMap);processedBody = applied.text;for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }totalCompressedCount = result.bits.filter(b => b).length;}
-            }
-        } else if (rawCandidates.length > 0) {mainAlgoUsed = 'greedy';const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, rawCandidates, 8);if (rescored.length > 0 && rescored[0].gain > 0) {const best = rescored[0];let alias = best.alias;if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {alias = chooseAliasWithAnalysis(replacedMap.size + 1, processedBody, replacedMap, usableProfile);} else { _usedAbbrs.add(alias); }if (alias) {const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);if (exact.gain > 0) {processedBody = exact.replacedBody;replacedMap.set(alias, best.phrase);totalCompressedCount++;}}}}
 
-        let greedyFinishCount = 0;
-        if (pipelineGreedyFinishToggle.checked) {
-            const greedyPasses = parseInt(pipelineGreedyPassesInput.value, 10) || 3;
-            for (let pass = 0; pass < greedyPasses; pass++) {showCompressProgress(78 + Math.round((pass / greedyPasses) * 15), `Phase 8: greedy仕上げ (${pass + 1}/${greedyPasses})...`);await new Promise(r => setTimeout(r, 0));
-                const candidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, maxItems, excludeAlnum);if (!candidates.length) break;const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, candidates, 8);if (!rescored.length || rescored[0].gain <= 0) break;
-                const best = rescored[0];let alias = best.alias;if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {alias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + greedyFinishCount + 1, processedBody, replacedMap, usableProfile);} else { _usedAbbrs.add(alias); }if (!alias) break;
-                const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);if (exact.gain <= 0) { _usedAbbrs.delete(alias); break; }
-                processedBody = exact.replacedBody;replacedMap.set(alias, best.phrase);greedyFinishCount++;
+            if (assigned.length > 0) {
+                if (assigned.length <= bfThreshold) {
+                    mainAlgoUsed = `全探索(${assigned.length}候補)`;
+                    showCompressProgress(55, `Phase 7: 全探索 (${1 << assigned.length}通り)...`);
+                    const result = await bruteForceCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
+                    const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
+                    processedBody = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                } else {
+                    mainAlgoUsed = `GA(${assigned.length}候補)`;
+                    showCompressProgress(55, `Phase 7: GA (${assigned.length}候補)...`);
+                    const gaParams = {
+                        populationSize: Math.min(100, Math.max(50, assigned.length * 3)),
+                        generations: Math.min(150, Math.max(80, assigned.length * 4)),
+                        mutationRate: 10,
+                        eliteCount: Math.max(3, Math.floor(assigned.length * 0.1)),
+                        tournamentSize: 4,
+                        twoStageEval: true
+                    };
+                    const result = await gaCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
+                    const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
+                    processedBody = applied.text;
+                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    totalCompressedCount = result.bits.filter(b => b).length;
+                }
+            }
+        } else if (rawCandidates.length > 0) {
+            mainAlgoUsed = 'greedy';
+            const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
+            if (rescored.length > 0 && rescored[0].gain > 0) {
+                const best = rescored[0];
+                let alias = best.alias;
+                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
+                    alias = chooseAliasWithAnalysis(replacedMap.size + 1, processedBody, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(alias); }
+                if (alias) {
+                    const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
+                    if (exact.gain > 0) {
+                        processedBody = exact.replacedBody;
+                        replacedMap.set(alias, best.phrase);
+                        totalCompressedCount++;
+                    }
+                }
             }
         }
 
-        showCompressProgress(95, 'Phase 9: 最適ヘッダー構築...');await new Promise(r => setTimeout(r, 0));
+        // --- Phase 8: greedy仕上げパス ---
+        let greedyFinishCount = 0;
+        if (pipelineGreedyFinishToggle.checked) {
+            const greedyPasses = parseInt(pipelineGreedyPassesInput.value, 10) || 3;
+
+            for (let pass = 0; pass < greedyPasses; pass++) {
+                showCompressProgress(78 + Math.round((pass / greedyPasses) * 15), `Phase 8: greedy仕上げ (${pass + 1}/${greedyPasses})...`);
+                await new Promise(r => setTimeout(r, 0));
+
+                const candidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, maxItems, excludeAlnum);
+                if (!candidates.length) break;
+
+                const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, candidates, 8);
+                if (!rescored.length || rescored[0].gain <= 0) break;
+
+                const best = rescored[0];
+                let alias = best.alias;
+                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
+                    alias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + greedyFinishCount + 1, processedBody, replacedMap, usableProfile);
+                } else { _usedAbbrs.add(alias); }
+                if (!alias) break;
+
+                const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
+                if (exact.gain <= 0) { _usedAbbrs.delete(alias); break; }
+
+                processedBody = exact.replacedBody;
+                replacedMap.set(alias, best.phrase);
+                greedyFinishCount++;
+            }
+        }
+
+        // --- Phase 9: 最適ヘッダー選択＆出力 ---
+        showCompressProgress(95, 'Phase 9: 最適ヘッダー構築...');
+        await new Promise(r => setTimeout(r, 0));
+
         const finalHeader = chooseBestCompressedHeader(replacedMap, processedBody, formatOptions, usableProfile);
-        const finalOutput = finalHeader + processedBody + getFooterHeaderText();
+        const finalOutput = finalHeader + processedBody;
 
-        outputEl.value = finalOutput;updateCounts();saveWorkspaceDebounced();
+        outputEl.value = finalOutput;
+        updateCounts();
+        saveWorkspaceDebounced();
 
-        const outputTokensAfter = getExactTokenCount(finalOutput);const saved = inputTokensBefore - outputTokensAfter;const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        const parts = [];if (pipelineNormalizeToggle.checked) parts.push('正規化');if (builtinCount > 0) parts.push(`辞書${builtinCount}件`);if (analyzedAppliedCount > 0) parts.push(`分析${analyzedAppliedCount}語`);if (totalCompressedCount > 0) parts.push(`${mainAlgoUsed}${totalCompressedCount}語`);if (greedyFinishCount > 0) parts.push(`greedy仕上${greedyFinishCount}語`);if (dialogueMergeCount > 0) parts.push(`結合${dialogueMergeCount}行`);if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
-        showCompressProgress(100, `完了！ ${elapsed}秒`);setTimeout(hideCompressProgress, 2000);
-        const engineLabel = hasEncoder ? '🎯' : '≈';if (saved > 0) {showToast(`⚡ ${engineLabel}${saved}トークン節約 (${pct}%↓) [${parts.join('→')}] ${elapsed}秒`);} else {showToast(`⚡ パイプライン完了 [${parts.join('→')}] ${elapsed}秒`);}
-    } catch (err) {console.error('Pipeline error:', err);hideCompressProgress();showToast('パイプライン中にエラー: ' + (err.message || err));} finally {fullPipelineBtn.disabled = false;}
+        // --- 結果表示 ---
+        const outputTokensAfter = getExactTokenCount(finalOutput);
+        const saved = inputTokensBefore - outputTokensAfter;
+        const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        const parts = [];
+        if (pipelineNormalizeToggle.checked) parts.push('正規化');
+        if (builtinCount > 0) parts.push(`辞書${builtinCount}件`);
+        if (analyzedAppliedCount > 0) parts.push(`分析${analyzedAppliedCount}語`);
+        if (totalCompressedCount > 0) parts.push(`${mainAlgoUsed}${totalCompressedCount}語`);
+        if (greedyFinishCount > 0) parts.push(`greedy仕上${greedyFinishCount}語`);
+        if (dialogueMergeCount > 0) parts.push(`結合${dialogueMergeCount}行`);
+        if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
+
+        showCompressProgress(100, `完了！ ${elapsed}秒`);
+        setTimeout(hideCompressProgress, 2000);
+
+        const engineLabel = hasEncoder ? '🎯' : '≈';
+        if (saved > 0) {
+            showToast(`⚡ ${engineLabel}${saved}トークン節約 (${pct}%↓) [${parts.join('→')}] ${elapsed}秒`);
+        } else {
+            showToast(`⚡ パイプライン完了 [${parts.join('→')}] ${elapsed}秒`);
+        }
+
+    } catch (err) {
+        console.error('Pipeline error:', err);
+        hideCompressProgress();
+        showToast('パイプライン中にエラー: ' + (err.message || err));
+    } finally {
+        fullPipelineBtn.disabled = false;
+    }
 }
 
 fullPipelineBtn.addEventListener('click', runFullPipeline);
@@ -3293,58 +4472,18 @@ refreshAnalysisCorpusCount();
 renderAnalysisTab();
 initLocalTokenizer();
 
-window.addEventListener('beforeunload', () => {if (persistWorkspaceToggle.checked) {collectCurrentState();localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));}});
-window.addEventListener('pagehide', () => {if (persistWorkspaceToggle.checked) {collectCurrentState();localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));}});
-
-// ============================================================
-// NEW: Automatron Send Logic
-// ============================================================
-async function sendToAutomatron() {
-    const text = outputEl.value;
-    if (!text) {
-        showToast('送信するテキストがありません');
-        return;
+window.addEventListener('beforeunload', () => {
+    if (persistWorkspaceToggle.checked) {
+        collectCurrentState();
+        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
     }
-    const url = appSettings.automatronUrl;
-    const secret = appSettings.automatronSecret;
-
-    if (!url || !secret) {
-        showToast('設定画面でAutomatronのURLとAPIシークレットを設定してください');
-        showScreen('settings');
-        return;
+});
+window.addEventListener('pagehide', () => {
+    if (persistWorkspaceToggle.checked) {
+        collectCurrentState();
+        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
     }
-
-    const endpoint = (url.endsWith('/') ? url.slice(0, -1) : url) + '/api/message';
-    
-    sendToAutomatronBtn.disabled = true;
-    sendToAutomatronBtn.textContent = '送信中...';
-
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${secret}`
-            },
-            body: JSON.stringify({ text: text })
-        });
-
-        if (response.ok) {
-            showToast('✅ Automatronへ送信しました');
-        } else {
-            const errorData = await response.json().catch(() => ({ error: '不明なエラー' }));
-            showToast(`送信失敗: ${response.status} ${errorData.error || response.statusText}`);
-        }
-    } catch (error) {
-        console.error('Error sending to Automatron:', error);
-        showToast('ネットワークエラーで送信に失敗しました');
-    } finally {
-        sendToAutomatronBtn.disabled = false;
-        sendToAutomatronBtn.textContent = 'Automatronへ送信 🚀';
-    }
-}
-
-sendToAutomatronBtn.addEventListener('click', sendToAutomatron);
+});
 </script>
 </body>
 </html>
