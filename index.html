@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -920,20 +921,18 @@
                 </div>
 
                 <div id="legacyActionButtons" hidden aria-hidden="true">
-                    <div class="tools-grid">
-                        <button class="tool-btn" data-action="trimSpace" type="button"></button>
-                        <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
-                        <button class="tool-btn" data-action="removeBreaks" type="button"></button>
-                        <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
-                        <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
-                        <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
-                        <button class="tool-btn" data-action="toUpperCase" type="button"></button>
-                        <button class="tool-btn" data-action="toLowerCase" type="button"></button>
-                        <button class="tool-btn" data-action="extractBrackets" type="button"></button>
-                        <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
-                        <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
-                        <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
-                    </div>
+                    <button class="tool-btn" data-action="trimSpace" type="button"></button>
+                    <button class="tool-btn" data-action="removeEmptyLines" type="button"></button>
+                    <button class="tool-btn" data-action="removeBreaks" type="button"></button>
+                    <button class="tool-btn" data-action="breaksToSpace" type="button"></button>
+                    <button class="tool-btn" data-action="toHalfWidth" type="button"></button>
+                    <button class="tool-btn" data-action="toFullWidthKana" type="button"></button>
+                    <button class="tool-btn" data-action="toUpperCase" type="button"></button>
+                    <button class="tool-btn" data-action="toLowerCase" type="button"></button>
+                    <button class="tool-btn" data-action="extractBrackets" type="button"></button>
+                    <button class="tool-btn" data-action="reverseDialogues" type="button"></button>
+                    <button class="tool-btn" data-action="mergeDialogues" type="button"></button>
+                    <button class="tool-btn" data-action="toUmaAbbr" type="button"></button>
                     <button id="replaceBtn" type="button"></button>
                     <button id="extractKeywordsBtn" type="button"></button>
                     <button id="compressBtn" type="button"></button>
@@ -956,7 +955,8 @@
                 <div class="action-row">
                     <button id="clearBtn" class="secondary-btn" style="background-color: var(--bg-button-delete);" title="すべてクリア">🗑️</button>
                     <button id="applyToInputBtn" class="secondary-btn" title="結果を入力欄に戻して続けて処理する">🔼 結果を前半へ</button>
-                    <button id="copyBtn" class="primary-btn">結果をコピー 📋</button>
+                    <button id="copyBtn" class="primary-btn" style="flex-grow: 1;">結果をコピー 📋</button>
+                    <button id="sendToAutomatronBtn" class="primary-btn" style="flex-grow: 1; background-color: #ff9800;">Automatronへ送信 🚀</button>
                 </div>
             </section>
 
@@ -1107,6 +1107,15 @@
                     <option value="pastel-rainbow">パステルモード🌈</option>
                     <option value="turf">ターフモード🌱</option>
                 </select>
+            </div>
+
+            <!-- ========== NEW: Automatron連携設定 ========== -->
+            <div class="settings-group">
+                <h3>🚀 Automatron 連携</h3>
+                <label for="automatron-url" style="font-size: 14px; margin-bottom: 4px; display: block;">ngrok URL:</label>
+                <input type="text" id="automatron-url" placeholder="https://....ngrok-free.app">
+                <label for="automatron-secret" style="font-size: 14px; margin-bottom: 4px; display: block;">APIシークレット (合言葉):</label>
+                <input type="password" id="automatron-secret" placeholder="Automatronで設定した合言葉">
             </div>
 
             <div class="settings-group">
@@ -1363,6 +1372,10 @@ const staticProfileProgressBar=document.getElementById('staticProfileProgressBar
 const staticProfileProgressText=document.getElementById('staticProfileProgressText');
 const staticProfileProgressDetail=document.getElementById('staticProfileProgressDetail');
 const staticProfileNotice=document.getElementById('staticProfileNotice');
+// NEW: Automatron send elements
+const sendToAutomatronBtn = document.getElementById('sendToAutomatronBtn');
+const automatronUrlInput = document.getElementById('automatron-url');
+const automatronSecretInput = document.getElementById('automatron-secret');
 
 // ========== NEW: Footer header elements ==========
 const footerHeaderEnabledToggle = document.getElementById('footerHeaderEnabled');
@@ -1755,7 +1768,10 @@ let appSettings = {
     extraOpToHalfWidth: false,
     extraOpToFullWidthKana: false,
     extraOpToUpperCase: false,
-    extraOpToLowerCase: false
+    extraOpToLowerCase: false,
+    // NEW: Automatron settings
+    automatronUrl: '',
+    automatronSecret: ''
 };
 
 let currentTool='formatter';
@@ -1868,6 +1884,10 @@ function loadSettings() {
     extraOpToUpperCase.checked = !!appSettings.extraOpToUpperCase;
     extraOpToLowerCase.checked = !!appSettings.extraOpToLowerCase;
 
+    // NEW: load Automatron settings
+    automatronUrlInput.value = appSettings.automatronUrl || '';
+    automatronSecretInput.value = appSettings.automatronSecret || '';
+
     updateApiKeyVisibility();
     syncInputState();
 
@@ -1958,6 +1978,10 @@ function collectCurrentState() {
     appSettings.extraOpToUpperCase = extraOpToUpperCase.checked;
     appSettings.extraOpToLowerCase = extraOpToLowerCase.checked;
 
+    // NEW: collect Automatron settings
+    appSettings.automatronUrl = automatronUrlInput.value;
+    appSettings.automatronSecret = automatronSecretInput.value;
+
     if(appSettings.persistWorkspace){
         syncCombinedInput();appSettings.inputText=inputEl.value;
         appSettings.inputTextPart1=inputPart1El.value;appSettings.inputTextPart2=inputPart2El.value;appSettings.inputTextPart3=inputPart3El.value;
@@ -1994,6 +2018,8 @@ const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.chec
 // NEW: add event listeners for new settings
 [footerHeaderEnabledToggle, extraOpTrimSpace, extraOpRemoveEmptyLines, extraOpRemoveBreaks, extraOpBreaksToSpace, extraOpToHalfWidth, extraOpToFullWidthKana, extraOpToUpperCase, extraOpToLowerCase].forEach(el => el.addEventListener('change', handleSettingChange));
 footerHeaderTextArea.addEventListener('input', handleSettingChange);
+// NEW: add event listeners for Automatron settings
+[automatronUrlInput, automatronSecretInput].forEach(el => el.addEventListener('input', handleSettingChange));
 
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
 [autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput].forEach(el=>el.addEventListener('change',handleSettingChange));
@@ -3143,7 +3169,7 @@ function formatStaticProfileAsText(profile) {
     lines.push(hr2);lines.push('BOUNDARY EFFECT SAMPLES');lines.push(hr2);const grouped = {};profile.boundary_effects.forEach(b => {if (!grouped[b.phrase]) grouped[b.phrase] = [];grouped[b.phrase].push(b);});for (const [phrase, effects] of Object.entries(grouped)) {lines.push(`  Phrase: "${phrase}" (${effects[0].phrase_tokens} tokens)`);effects.forEach(e => {lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`);});}lines.push('');
     if (profile.context_dependent_costs) {lines.push(hr2);lines.push('CONTEXT-DEPENDENT ALIAS COSTS');lines.push(hr2);profile.context_dependent_costs.forEach(c => {lines.push(`  ${c.alias}: avg=${c.avg_marginal} min=${c.min_marginal} max=${c.max_marginal} variance=${c.variance}`);c.by_context.forEach(ctx => {lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`);});});lines.push('');}
     lines.push(hr2);lines.push('ASCII CHARACTER COSTS');lines.push(hr2);const byCat = { upper: [], lower: [], digit: [], symbol: [] };profile.ascii_char_costs.forEach(c => { if (byCat[c.category]) byCat[c.category].push(c); });for (const [cat, chars] of Object.entries(byCat)) {const costs = chars.map(c => c.isolated_tokens);lines.push(`  ${cat}: avg=${mean(costs).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);}lines.push('');
-    lines.push(hr2);lines.push('JAPANESE CHARACTER CATEGORY COSTS');lines.push(hr2);for (const [key, cat] of Object.entries(profile.japanese_char_costs)) {lines.push(`  ${cat.label} (${cat.range}): avg=${cat.avg_tokens} min=${cat.min_tokens} max=${cat.max_tokens} (${cat.sample_count} samples)`);}lines.push('');
+lines.push('');
     lines.push(hr);lines.push('END OF STATIC PROFILE');lines.push(hr);return lines.join('\n');
 }
 
@@ -3269,6 +3295,56 @@ initLocalTokenizer();
 
 window.addEventListener('beforeunload', () => {if (persistWorkspaceToggle.checked) {collectCurrentState();localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));}});
 window.addEventListener('pagehide', () => {if (persistWorkspaceToggle.checked) {collectCurrentState();localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));}});
+
+// ============================================================
+// NEW: Automatron Send Logic
+// ============================================================
+async function sendToAutomatron() {
+    const text = outputEl.value;
+    if (!text) {
+        showToast('送信するテキストがありません');
+        return;
+    }
+    const url = appSettings.automatronUrl;
+    const secret = appSettings.automatronSecret;
+
+    if (!url || !secret) {
+        showToast('設定画面でAutomatronのURLとAPIシークレットを設定してください');
+        showScreen('settings');
+        return;
+    }
+
+    const endpoint = (url.endsWith('/') ? url.slice(0, -1) : url) + '/api/message';
+    
+    sendToAutomatronBtn.disabled = true;
+    sendToAutomatronBtn.textContent = '送信中...';
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${secret}`
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (response.ok) {
+            showToast('✅ Automatronへ送信しました');
+        } else {
+            const errorData = await response.json().catch(() => ({ error: '不明なエラー' }));
+            showToast(`送信失敗: ${response.status} ${errorData.error || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error sending to Automatron:', error);
+        showToast('ネットワークエラーで送信に失敗しました');
+    } finally {
+        sendToAutomatronBtn.disabled = false;
+        sendToAutomatronBtn.textContent = 'Automatronへ送信 🚀';
+    }
+}
+
+sendToAutomatronBtn.addEventListener('click', sendToAutomatron);
 </script>
 </body>
 </html>
