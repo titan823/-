@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -438,6 +437,7 @@
         .danger-zone { margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-danger); display: flex; flex-direction: column; gap: 10px; }
         .danger-zone button { width: 100%; padding: 10px; font-size: 14px; border-radius: 5px; border: none; cursor: pointer; color: var(--text-light); }
         #update-app-btn { background-color: var(--bg-button-update); }
+        #clear-stable-alias-btn { background-color: var(--bg-button-action); }
         #clear-data-btn { background-color: var(--bg-button-delete); }
 
         #toast {
@@ -671,8 +671,8 @@
                                 <input type="checkbox" id="pipelineAutoAnalyze" checked>
                             </label>
                             <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
-                                <span>GA/全探索を自動選択:</span>
-                                <input type="checkbox" id="pipelineSmartAlgo" checked>
+                                <span>旧GA/全探索を使う（非推奨・低速）:</span>
+                                <input type="checkbox" id="pipelineSmartAlgo">
                             </label>
                             <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
                                 <span>greedy仕上げパス:</span>
@@ -747,13 +747,36 @@
                                 <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">探索アルゴリズム:</div>
                                 <label style="display: flex; justify-content: space-between; align-items: center;">
                                     方式:
-                                    <select id="autoCompressAlgorithm" style="width: 160px; padding: 4px; margin: 0; font-size: 12px;">
-                                        <option value="greedy">貪欲法（1語ずつ・高精度）</option>
+                                    <select id="autoCompressAlgorithm" style="width: 190px; padding: 4px; margin: 0; font-size: 12px;">
+                                        <option value="lazygreedy">遅延貪欲 CELF（推奨）</option>
+                                        <option value="greedy">貪欲法（1語ずつ・従来）</option>
                                         <option value="legacy_batch">一括置換（従来方式・高速）</option>
-                                        <option value="bruteforce">全探索</option>
-                                        <option value="ga">遺伝的アルゴリズム</option>
+                                        <option value="bruteforce">全探索（非推奨・低速）</option>
+                                        <option value="ga">遺伝的アルゴリズム（非推奨）</option>
                                     </select>
                                 </label>
+
+                                <div id="lazyGreedySettings" style="display:none; margin-top: 6px; padding-left: 10px;">
+                                    <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                        <span>接尾辞配列で候補を網羅探索:</span>
+                                        <input type="checkbox" id="autoCompressSuffixMining" checked>
+                                    </label>
+                                    <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                        <span>出現位置を最適パースDPで選択:</span>
+                                        <input type="checkbox" id="autoCompressOptimalParse" checked>
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        正確評価の最大回数:
+                                        <input type="number" id="autoCompressMaxExactEvals" min="50" max="5000" value="600" style="width: 70px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                                        候補プールの上限:
+                                        <input type="number" id="autoCompressCandidatePool" min="50" max="2000" value="400" style="width: 70px; padding: 4px; margin: 0;">
+                                    </label>
+                                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">
+                                        ※ 上界付き優先度キューで、正確評価の回数を抑えつつ多数の語を置換します。
+                                    </div>
+                                </div>
 
                                 <div id="bruteforceSettings" style="display:none; margin-top: 6px; padding-left: 10px;">
                                     <label style="display: flex; justify-content: space-between; align-items: center;">
@@ -793,6 +816,25 @@
                                     <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">
                                         ※ 個体数×世代数 回の評価を実行。
                                     </div>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border-secondary); padding-top: 6px; margin-top: 2px;">
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">品質保護とキャッシュ最適化:</div>
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    マッピング表の最大件数:
+                                    <input type="number" id="autoCompressMaxMapEntries" min="1" max="500" value="40" style="width: 70px; padding: 4px; margin: 0;">
+                                </label>
+                                <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                    <span>略号をセッション間で固定（キャッシュ）:</span>
+                                    <input type="checkbox" id="autoCompressStableAlias" checked>
+                                </label>
+                                <label class="checkbox-label" style="justify-content: space-between; margin-bottom: 0;">
+                                    <span>意味の残る略号を優先（Tou等）:</span>
+                                    <input type="checkbox" id="autoCompressSemanticAlias" checked>
+                                </label>
+                                <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">
+                                    ※ 略号が多すぎるとAIの取り違えが増えます。固定するとヘッダーが毎回同じになり、プロンプトキャッシュが効きます。
                                 </div>
                             </div>
 
@@ -1126,9 +1168,10 @@
 
             <div class="danger-zone">
                 <p style="text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
-                    バージョン: 9.0+legacy (GA/BruteForce/StaticProfile/LegacyBatch/FullPipeline)
+                    バージョン: 9.5 (LazyGreedy/SuffixArray/OptimalParse/StableAlias)
                 </p>
                 <button id="update-app-btn">アプリを更新 (キャッシュクリア)</button>
+                <button id="clear-stable-alias-btn">固定略号辞書をクリア</button>
                 <button id="clear-data-btn">⚠ 全データクリア (初期化) ⚠</button>
             </div>
         </main>
@@ -1228,6 +1271,14 @@ const autoCompressApplyUmaInput=document.getElementById('autoCompressApplyUma');
 const autoCompressApplyPronounInput=document.getElementById('autoCompressApplyPronoun');
 const autoCompressMaxPassesInput=document.getElementById('autoCompressMaxPasses');
 const autoCompressAlgorithmSelect=document.getElementById('autoCompressAlgorithm');
+const lazyGreedySettingsDiv=document.getElementById('lazyGreedySettings');
+const autoCompressSuffixMiningInput=document.getElementById('autoCompressSuffixMining');
+const autoCompressOptimalParseInput=document.getElementById('autoCompressOptimalParse');
+const autoCompressMaxExactEvalsInput=document.getElementById('autoCompressMaxExactEvals');
+const autoCompressCandidatePoolInput=document.getElementById('autoCompressCandidatePool');
+const autoCompressMaxMapEntriesInput=document.getElementById('autoCompressMaxMapEntries');
+const autoCompressStableAliasInput=document.getElementById('autoCompressStableAlias');
+const autoCompressSemanticAliasInput=document.getElementById('autoCompressSemanticAlias');
 const bruteforceSettingsDiv=document.getElementById('bruteforceSettings');
 const gaSettingsDiv=document.getElementById('gaSettings');
 const bruteforceMaxCandidatesInput=document.getElementById('bruteforceMaxCandidates');
@@ -1341,6 +1392,18 @@ function updateResponseModeStatus(){
     else{responseModeStatus.innerHTML='<strong>返答モード:</strong> AIには正式名称で返答させます。';}
 }
 
+function stableAliasEnabled(){return autoCompressStableAliasInput ? autoCompressStableAliasInput.checked : false;}
+function semanticAliasEnabled(){return autoCompressSemanticAliasInput ? autoCompressSemanticAliasInput.checked : false;}
+function optimalParseEnabled(){return autoCompressOptimalParseInput ? autoCompressOptimalParseInput.checked : false;}
+function suffixMiningEnabled(){return autoCompressSuffixMiningInput ? autoCompressSuffixMiningInput.checked : false;}
+function getMapEntryLimit(){const v=parseInt(autoCompressMaxMapEntriesInput?autoCompressMaxMapEntriesInput.value:'40',10);return (isNaN(v)||v<1)?40:v;}
+
+function orderedMapEntries(replacedMap){
+    const arr=[...replacedMap.entries()];
+    if(stableAliasEnabled()) arr.sort((a,b)=>a[0].localeCompare(b[0]));
+    return arr;
+}
+
 function buildCompressedHeader(replacedMap, formatOptions = {}) {
     const hasMap = replacedMap && replacedMap.size > 0;
     const hasFmt = !!(formatOptions.mergedDialogues || formatOptions.replacedBrackets);
@@ -1365,7 +1428,7 @@ function buildCompressedHeader(replacedMap, formatOptions = {}) {
     if (hasMap) {
         lines.push('');
         lines.push('[Mapping]');
-        replacedMap.forEach((original, abbr) => {
+        orderedMapEntries(replacedMap).forEach(([abbr, original]) => {
             lines.push(`${abbr}=${original}`);
         });
     }
@@ -1605,9 +1668,17 @@ let appSettings = {
     autoCompressTrimWhitespace:true, autoCompressReplaceBrackets:true,
     autoCompressApplyUma:false, autoCompressApplyPronoun:false,
     autoCompressMaxPasses:3,
-    autoCompressAlgorithm:'greedy',
+    autoCompressAlgorithm:'lazygreedy',
     autoCompressForceStrictHeader:true,
     pipelineForceStrictHeader:true,
+    autoCompressSuffixMining:true,
+    autoCompressOptimalParse:true,
+    autoCompressMaxExactEvals:600,
+    autoCompressCandidatePool:400,
+    autoCompressMaxMapEntries:40,
+    autoCompressStableAlias:true,
+    autoCompressSemanticAlias:true,
+    stableAliasMap:{},
     bruteforceMaxCandidates:15,
     gaPopulationSize:50, gaGenerations:80, gaMutationRate:8,
     gaEliteCount:3, gaTournamentSize:4, gaTwoStageEval:true,
@@ -1678,10 +1749,15 @@ document.querySelectorAll('#toolMenuList .menu-item[data-tool]').forEach(item=>{
     });
 });
 
-autoCompressAlgorithmSelect.addEventListener('change', () => {
+function syncAlgorithmSettingsUi(){
     const algo = autoCompressAlgorithmSelect.value;
+    lazyGreedySettingsDiv.style.display = algo === 'lazygreedy' ? 'block' : 'none';
     bruteforceSettingsDiv.style.display = algo === 'bruteforce' ? 'block' : 'none';
     gaSettingsDiv.style.display = algo === 'ga' ? 'block' : 'none';
+}
+
+autoCompressAlgorithmSelect.addEventListener('change', () => {
+    syncAlgorithmSettingsUi();
     handleSettingChange();
 });
 
@@ -1708,7 +1784,16 @@ function loadSettings() {
     autoCompressApplyUmaInput.checked=!!appSettings.autoCompressApplyUma;
     autoCompressApplyPronounInput.checked=!!appSettings.autoCompressApplyPronoun;
     autoCompressMaxPassesInput.value=appSettings.autoCompressMaxPasses||3;
-    autoCompressAlgorithmSelect.value=appSettings.autoCompressAlgorithm||'greedy';
+    autoCompressAlgorithmSelect.value=appSettings.autoCompressAlgorithm||'lazygreedy';
+    if(!autoCompressAlgorithmSelect.value) autoCompressAlgorithmSelect.value='lazygreedy';
+    autoCompressSuffixMiningInput.checked=appSettings.autoCompressSuffixMining!==false;
+    autoCompressOptimalParseInput.checked=appSettings.autoCompressOptimalParse!==false;
+    autoCompressMaxExactEvalsInput.value=appSettings.autoCompressMaxExactEvals||600;
+    autoCompressCandidatePoolInput.value=appSettings.autoCompressCandidatePool||400;
+    autoCompressMaxMapEntriesInput.value=appSettings.autoCompressMaxMapEntries||40;
+    autoCompressStableAliasInput.checked=appSettings.autoCompressStableAlias!==false;
+    autoCompressSemanticAliasInput.checked=appSettings.autoCompressSemanticAlias!==false;
+    if(!appSettings.stableAliasMap || typeof appSettings.stableAliasMap!=='object') appSettings.stableAliasMap={};
     bruteforceMaxCandidatesInput.value=appSettings.bruteforceMaxCandidates||15;
     gaPopulationSizeInput.value=appSettings.gaPopulationSize||50;
     gaGenerationsInput.value=appSettings.gaGenerations||80;
@@ -1716,9 +1801,7 @@ function loadSettings() {
     gaEliteCountInput.value=appSettings.gaEliteCount||3;
     gaTournamentSizeInput.value=appSettings.gaTournamentSize||4;
     gaTwoStageEvalToggle.checked=appSettings.gaTwoStageEval!==false;
-    const algoVal=autoCompressAlgorithmSelect.value;
-    bruteforceSettingsDiv.style.display=algoVal==='bruteforce'?'block':'none';
-    gaSettingsDiv.style.display=algoVal==='ga'?'block':'none';
+    syncAlgorithmSettingsUi();
     useApiTokenToggle.checked=!!appSettings.useApiTokenCount;
     tokenProviderSelect.value=appSettings.tokenCalcProvider||'openai';
     geminiApiKeyInput.value=appSettings.geminiApiKey||'';
@@ -1727,7 +1810,7 @@ function loadSettings() {
     grokApiKeyInput.value=appSettings.grokApiKey||'';
     deepseekApiKeyInput.value=appSettings.deepseekApiKey||'';
     deepseekPreciseToggle.checked=!!appSettings.deepseekPreciseTokenizer;
-    
+
     enablePart1Toggle.checked = appSettings.enablePart1 !== false;
     enablePart2Toggle.checked = appSettings.enablePart2 !== false;
     enablePart3Toggle.checked = appSettings.enablePart3 !== false;
@@ -1792,6 +1875,13 @@ function collectCurrentState() {
     appSettings.autoCompressApplyPronoun=autoCompressApplyPronounInput.checked;
     appSettings.autoCompressMaxPasses=parseInt(autoCompressMaxPassesInput.value,10)||3;
     appSettings.autoCompressAlgorithm=autoCompressAlgorithmSelect.value;
+    appSettings.autoCompressSuffixMining=autoCompressSuffixMiningInput.checked;
+    appSettings.autoCompressOptimalParse=autoCompressOptimalParseInput.checked;
+    appSettings.autoCompressMaxExactEvals=parseInt(autoCompressMaxExactEvalsInput.value,10)||600;
+    appSettings.autoCompressCandidatePool=parseInt(autoCompressCandidatePoolInput.value,10)||400;
+    appSettings.autoCompressMaxMapEntries=parseInt(autoCompressMaxMapEntriesInput.value,10)||40;
+    appSettings.autoCompressStableAlias=autoCompressStableAliasInput.checked;
+    appSettings.autoCompressSemanticAlias=autoCompressSemanticAliasInput.checked;
     appSettings.bruteforceMaxCandidates=parseInt(bruteforceMaxCandidatesInput.value,10)||15;
     appSettings.gaPopulationSize=parseInt(gaPopulationSizeInput.value,10)||50;
     appSettings.gaGenerations=parseInt(gaGenerationsInput.value,10)||80;
@@ -1803,7 +1893,7 @@ function collectCurrentState() {
     appSettings.geminiApiKey=geminiApiKeyInput.value;appSettings.anthropicApiKey=anthropicApiKeyInput.value;
     appSettings.openaiApiKey=openaiApiKeyInput.value;appSettings.grokApiKey=grokApiKeyInput.value;
     appSettings.deepseekApiKey=deepseekApiKeyInput.value;appSettings.deepseekPreciseTokenizer=deepseekPreciseToggle.checked;
-    
+
     appSettings.enablePart1=enablePart1Toggle.checked;
     appSettings.enablePart2=enablePart2Toggle.checked;
     appSettings.enablePart3=enablePart3Toggle.checked;
@@ -1841,10 +1931,10 @@ saveBtn.addEventListener('click',()=>saveSettings(true));
 autoSaveToggle.addEventListener('change',()=>{updateSaveUiState();saveSettings(false);});
 persistWorkspaceToggle.addEventListener('change',()=>saveSettings(false));
 const handleSettingChange=()=>{updateResponseModeStatus();if(autoSaveToggle.checked)saveSettings(false);};
-[themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput,gaTwoStageEvalToggle].forEach(el=>el.addEventListener('change',handleSettingChange));
+[themeSelect,abbrResponseToggle,autoCompressExcludeAlnumInput,autoCompressMergeDialoguesInput,autoCompressTrimWhitespaceInput,autoCompressReplaceBracketsInput,autoCompressApplyUmaInput,autoCompressApplyPronounInput,gaTwoStageEvalToggle,autoCompressSuffixMiningInput,autoCompressOptimalParseInput,autoCompressStableAliasInput,autoCompressSemanticAliasInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 [autoCompressForceStrictHeaderInput,pipelineForceStrictHeaderToggle].forEach(el=>{if(el)el.addEventListener('change',handleSettingChange);});
 [dictArea,geminiApiKeyInput,anthropicApiKeyInput,openaiApiKeyInput,grokApiKeyInput,deepseekApiKeyInput].forEach(el=>el.addEventListener('input',handleSettingChange));
-[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput].forEach(el=>el.addEventListener('change',handleSettingChange));
+[autoCompressMinLenInput,autoCompressMinCountInput,autoCompressMaxItemsInput,autoCompressMaxPassesInput,bruteforceMaxCandidatesInput,gaPopulationSizeInput,gaGenerationsInput,gaMutationRateInput,gaEliteCountInput,gaTournamentSizeInput,autoCompressMaxExactEvalsInput,autoCompressCandidatePoolInput,autoCompressMaxMapEntriesInput].forEach(el=>el.addEventListener('change',handleSettingChange));
 tokenProviderSelect.addEventListener('change',()=>{updateApiKeyVisibility();handleSettingChange();initLocalTokenizer();updateCounts();refreshAnalysisCorpusCount();});
 useApiTokenToggle.addEventListener('change',()=>{handleSettingChange();updateCounts();refreshAnalysisCorpusCount();});
 deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(tokenProviderSelect.value==='deepseek'){localTokenizers.deepseek.encoder=null;localTokenizers.deepseek.status='idle';localTokenizers.deepseek._precise=false;initLocalTokenizer();}updateCounts();refreshAnalysisCorpusCount();});
@@ -1852,6 +1942,7 @@ deepseekPreciseToggle.addEventListener('change',()=>{handleSettingChange();if(to
 function applyTheme(t){document.body.className='';if(t!=='light')document.body.classList.add(t+'-mode');const c={'light':'#4a90e2','dark':'#007aff','pastel-pink':'#ff8fab','pastel-blue':'#87cefa','pastel-yellow':'#ffd700','pastel-purple':'#ab47bc','pastel-rainbow':'#ffadad','turf':'#4CAF50'};document.getElementById('theme-color-meta').content=c[t]||'#4a90e2';}
 
 document.getElementById('update-app-btn').addEventListener('click',async()=>{if(await showConfirm("キャッシュクリアして最新版を再取得しますか？")){if('serviceWorker' in navigator&&navigator.serviceWorker.controller){navigator.serviceWorker.addEventListener('message',function h(e){if(e.data&&e.data.action==='cacheCleared'){navigator.serviceWorker.removeEventListener('message',h);window.location.reload(true);}});navigator.serviceWorker.controller.postMessage({action:'clearCache'});}else{window.location.reload(true);}}});
+document.getElementById('clear-stable-alias-btn').addEventListener('click',async()=>{if(await showConfirm("固定略号辞書をクリアしますか？次回以降、略号が新しく割り当てられます。")){appSettings.stableAliasMap={};localStorage.setItem('toolbox_settings',JSON.stringify(appSettings));showToast("固定略号辞書をクリアしました");}});
 document.getElementById('clear-data-btn').addEventListener('click',async()=>{if(await showConfirm("全データを削除しますか？この操作は元に戻せません。")){localStorage.removeItem('toolbox_settings');localStorage.removeItem('formatter_theme');localStorage.removeItem('formatter_compress_dict');showToast("全データをクリアしました");setTimeout(()=>window.location.reload(true),1500);}});
 
 let isHighlightMode=false;
@@ -2084,6 +2175,23 @@ function updateCounts(){
     }
 }
 
+// ============================================================
+// トークン数のメモ化（探索で同じ文字列を何度も数えるため）
+// ============================================================
+const _origTokenCount = getExactTokenCount;
+const _tokCache = new Map();
+getExactTokenCount = function(text){
+    if(!text) return 0;
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const key = p + (p==='deepseek' && appSettings.deepseekPreciseTokenizer ? '#p\u0000' : '\u0000') + text;
+    const hit = _tokCache.get(key);
+    if(hit !== undefined) return hit;
+    const v = _origTokenCount(text);
+    if(_tokCache.size > 40000) _tokCache.clear();
+    _tokCache.set(key, v);
+    return v;
+};
+
 function updateActionPickerUi(){const a=actionPicker.value;replaceFields.classList.toggle('hidden',a!=='replaceText');dictFields.classList.toggle('hidden',a!=='manualCompress');const lm={replaceText:'文字列を置換',extractKeywords:'頻出ワードを抽出',manualCompress:'辞書を使って圧縮',toUmaAbbr:'ウマ娘略称化を実行',mergeDialogues:'同一キャラのセリフを結合',decompressText:'圧縮テキストを復元'};runSelectedActionBtn.textContent=lm[a]||'選択した処理を実行';runSelectedActionBtn.disabled=!a;}
 
 [inputPart1El,inputPart2El,inputPart3El].forEach(el=>{el.addEventListener('focus',()=>{lastFocusedInputPart=el;});el.addEventListener('input',()=>{syncCombinedInput();updateCounts();saveWorkspaceDebounced();});});
@@ -2103,20 +2211,12 @@ function refreshAnalysisCorpusCount(){
     analysisTokenizerNotice.textContent=`現在の分析対象: ${p} / tokenizer状態: ${status}`;
 }
 function renderAnalysisTab(){
-    analysisTabButtons.forEach(btn=>{
-        btn.classList.toggle('active', btn.dataset.tab===analysisActiveTab);
-    });
+    analysisTabButtons.forEach(btn=>{btn.classList.toggle('active', btn.dataset.tab===analysisActiveTab);});
     analysisResultText.value=analysisOutputs[analysisActiveTab]||'';
     const labelMap={static:'Static Profile',summary:'Summary',profile:'JSON',packet:'AI Packet',handoff:'Handoff',compressor:'Compress Prompt',decompressor:'Decompress Prompt'};
     analysisResultMeta.textContent=labelMap[analysisActiveTab]||analysisActiveTab;
 }
-analysisTabButtons.forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        analysisActiveTab=btn.dataset.tab;
-        renderAnalysisTab();
-        saveWorkspaceDebounced();
-    });
-});
+analysisTabButtons.forEach(btn=>{btn.addEventListener('click',()=>{analysisActiveTab=btn.dataset.tab;renderAnalysisTab();saveWorkspaceDebounced();});});
 analysisCorpusText.addEventListener('input',()=>{refreshAnalysisCorpusCount();saveWorkspaceDebounced();});
 analysisUseInputBtn.addEventListener('click',()=>{analysisCorpusText.value=buildCombinedInputText();refreshAnalysisCorpusCount();saveWorkspaceDebounced();showToast('入力欄から読み込みました');});
 analysisUseOutputBtn.addEventListener('click',()=>{analysisCorpusText.value=outputEl.value||'';refreshAnalysisCorpusCount();saveWorkspaceDebounced();showToast('出力欄から読み込みました');});
@@ -2146,144 +2246,60 @@ function parseMapLines(block, replacedMap) {
     });
 }
 function stripLegacyFormatHeader(text) { return text.replace(/^Format:\s.*\n\n/, ''); }
-
-function isSafeMapAlias(alias){
-    return /^[A-Za-z0-9@#~$%&*?!^]{1,8}$/.test(alias);
-}
+function isSafeMapAlias(alias){ return /^[A-Za-z0-9@#~$%&*?!^]{1,8}$/.test(alias); }
 
 function tryExtractCompactAnalysisHeader(text){
     const lines = normalizeTextLite(text).split('\n');
     let i = 0;
     if(lines[i] === '@' || lines[i] === '#') i++;
     const mapLines = [];
-    let foundSuffix = false;
-    let suffixIndex = -1;
-
+    let foundSuffix = false, suffixIndex = -1;
     while(i < lines.length){
         const line = lines[i];
-        if(line === '--' || line === '#' || line === '>'){
-            foundSuffix = true;
-            suffixIndex = i;
-            break;
-        }
-        if(line.startsWith('!')){
-            i++;
-            continue;
-        }
-        if(/^@?[A-Za-z0-9@#~$%&*?!^]{1,8}[=:|\/>].+$/.test(line)){
-            mapLines.push(line);
-            i++;
-            continue;
-        }
+        if(line === '--' || line === '#' || line === '>'){ foundSuffix = true; suffixIndex = i; break; }
+        if(line.startsWith('!')){ i++; continue; }
+        if(/^@?[A-Za-z0-9@#~$%&*?!^]{1,8}[=:|\/>].+$/.test(line)){ mapLines.push(line); i++; continue; }
         return null;
     }
-
     if(!foundSuffix || mapLines.length===0) return null;
-
     const replacedMap = new Map();
     for(const line of mapLines){
         const m = line.match(/^@?([A-Za-z0-9@#~$%&*?!^]{1,8})([=:|\/>])(.*)$/);
         if(!m) continue;
-        const abbr = m[1].trim();
-        const original = (m[3]||'').trim();
+        const abbr = m[1].trim(), original = (m[3]||'').trim();
         if(abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
     }
     if(replacedMap.size===0) return null;
-
-    const bodyText = lines.slice(suffixIndex + 1).join('\n');
-    return { replacedMap, bodyText };
+    return { replacedMap, bodyText: lines.slice(suffixIndex + 1).join('\n') };
 }
 
 function extractExistingMappings(text) {
     const replacedMap = new Map();
     let bodyText = text;
-
     const sysRe = /^<system>\n[\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/i;
     let m = bodyText.match(sysRe);
-    if (m) {
-        parseMapLines(m[1], replacedMap);
-        bodyText = bodyText.replace(sysRe, '');
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
-    }
-
+    if (m) { parseMapLines(m[1], replacedMap); bodyText = stripLegacyFormatHeader(bodyText.replace(sysRe, '')); return { replacedMap, bodyText }; }
     const enRe = /^\[COMPRESSED TEXT - RULES\]\n[\s\S]*?(?:\n\[MAPPING\]\n([\s\S]*?)\n\[TEXT\]\n?|\n\[TEXT\]\n?)/;
     m = bodyText.match(enRe);
-    if (m) {
-        parseMapLines(m[1], replacedMap);
-        bodyText = bodyText.replace(enRe, '');
-        return { replacedMap, bodyText };
-    }
-
+    if (m) { parseMapLines(m[1], replacedMap); bodyText = bodyText.replace(enRe, ''); return { replacedMap, bodyText }; }
     const jpRe = /^【圧縮ルール】\n[\s\S]*?(?:\n【対応表】\n([\s\S]*?)\n【本文】\n?|\n【本文】\n?)/;
     m = bodyText.match(jpRe);
-    if (m) {
-        parseMapLines(m[1], replacedMap);
-        bodyText = bodyText.replace(jpRe, '');
-        return { replacedMap, bodyText };
-    }
-
+    if (m) { parseMapLines(m[1], replacedMap); bodyText = bodyText.replace(jpRe, ''); return { replacedMap, bodyText }; }
     const newRe = /^---\s*Abbreviation Map\b[^\n]*---\n([\s\S]*?)\n---\s*End of Map\s*---\n(?:[^\n]*\n)*?\n/;
     m = bodyText.match(newRe);
-    if (m) {
-        parseMapLines(m[1], replacedMap);
-        bodyText = bodyText.replace(newRe, '');
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
-    }
-
+    if (m) { parseMapLines(m[1], replacedMap); bodyText = stripLegacyFormatHeader(bodyText.replace(newRe, '')); return { replacedMap, bodyText }; }
     const midRe = /^---ABBREVIATION-MAP-START---\n([\s\S]*?)\n---ABBREVIATION-MAP-END---\n+/;
     m = bodyText.match(midRe);
-    if (m) {
-        const mi = m[1].indexOf('[Mapping]');
-        if (mi !== -1) parseMapLines(m[1].substring(mi + 9).trim(), replacedMap);
-        bodyText = bodyText.replace(midRe, '');
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
-    }
-
-    const oldRe1 = /^<system>\n[\s\S]*?\[Mapping\]\n([\s\S]*?)\n<\/system>\n+/;
-    m = bodyText.match(oldRe1);
-    if (m) {
-        m[1].split(',').forEach(pair => {
-            const eq = pair.indexOf('=');
-            if (eq === -1) return;
-            const abbr = pair.substring(0, eq).trim();
-            const original = pair.substring(eq + 1).trim();
-            if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
-        });
-        bodyText = bodyText.replace(oldRe1, '');
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
-    }
-
+    if (m) { const mi = m[1].indexOf('[Mapping]'); if (mi !== -1) parseMapLines(m[1].substring(mi + 9).trim(), replacedMap); bodyText = stripLegacyFormatHeader(bodyText.replace(midRe, '')); return { replacedMap, bodyText }; }
     const oldRe2 = /^\[System Note:[^\]]*\]\n([\s\S]*?)\n---\n+/;
     m = bodyText.match(oldRe2);
     if (m) {
-        m[1].split(',').forEach(pair => {
-            const eq = pair.indexOf('=');
-            if (eq === -1) return;
-            const abbr = pair.substring(0, eq).trim();
-            const original = pair.substring(eq + 1).trim();
-            if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original);
-        });
-        bodyText = bodyText.replace(oldRe2, '');
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
+        m[1].split(',').forEach(pair => { const eq = pair.indexOf('='); if (eq === -1) return; const abbr = pair.substring(0, eq).trim(), original = pair.substring(eq + 1).trim(); if (abbr && original && !replacedMap.has(abbr)) replacedMap.set(abbr, original); });
+        bodyText = stripLegacyFormatHeader(bodyText.replace(oldRe2, '')); return { replacedMap, bodyText };
     }
-
     const compact = tryExtractCompactAnalysisHeader(bodyText);
-    if (compact) {
-        compact.replacedMap.forEach((original, abbr) => {
-            if (!replacedMap.has(abbr)) replacedMap.set(abbr, original);
-        });
-        bodyText = compact.bodyText;
-        bodyText = stripLegacyFormatHeader(bodyText);
-        return { replacedMap, bodyText };
-    }
-
-    bodyText = stripLegacyFormatHeader(bodyText);
-    return { replacedMap, bodyText };
+    if (compact) { compact.replacedMap.forEach((o,a)=>{ if(!replacedMap.has(a)) replacedMap.set(a,o); }); return { replacedMap, bodyText: stripLegacyFormatHeader(compact.bodyText) }; }
+    return { replacedMap, bodyText: stripLegacyFormatHeader(bodyText) };
 }
 
 function processAbbreviation(text, regex, dictCallback, successMessage) {
@@ -2317,7 +2333,6 @@ function formatText(action) {
     let text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
     resetHighlightMode();
-
     switch (action) {
         case 'trimSpace': text = text.replace(/[ 　\t]+/g, ''); break;
         case 'removeEmptyLines': text = text.replace(/^\s*[\r\n]/gm, ''); break;
@@ -2334,8 +2349,7 @@ function formatText(action) {
         }
         case 'mergeDialogues': {
             const r = mergeConsecutiveDialogues(text); text = r.text;
-            if (r.mergedCount > 0) showToast(`${r.mergedCount}行のセリフを結合しました`);
-            else showToast('結合できる連続セリフがありませんでした');
+            if (r.mergedCount > 0) showToast(`${r.mergedCount}行のセリフを結合しました`); else showToast('結合できる連続セリフがありませんでした');
             break;
         }
         case 'extractBrackets': {
@@ -2361,9 +2375,7 @@ function formatText(action) {
     outputEl.value = text; updateCounts(); saveWorkspaceDebounced();
 }
 
-document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => {
-    btn.addEventListener('click', e => formatText(e.target.getAttribute('data-action')));
-});
+document.querySelectorAll('#legacyActionButtons .tool-btn').forEach(btn => { btn.addEventListener('click', e => formatText(e.target.getAttribute('data-action'))); });
 
 document.getElementById('pasteBtn').addEventListener('click', async () => {
     try {
@@ -2382,13 +2394,7 @@ document.getElementById('pasteBtn').addEventListener('click', async () => {
 clearPart1Btn.addEventListener('click', () => { inputPart1El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('前半を削除しました'); });
 clearPart2Btn.addEventListener('click', () => { inputPart2El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('中盤を削除しました'); });
 clearPart3Btn.addEventListener('click', () => { inputPart3El.value = ''; syncCombinedInput(); updateCounts(); saveWorkspaceDebounced(); showToast('後半を削除しました'); });
-document.getElementById('joinBtn').addEventListener('click', () => {
-    syncCombinedInput();
-    outputEl.value = inputEl.value;
-    updateCounts();
-    saveWorkspaceDebounced();
-    showToast('3分割テキストを連結しました');
-});
+document.getElementById('joinBtn').addEventListener('click', () => { syncCombinedInput(); outputEl.value = inputEl.value; updateCounts(); saveWorkspaceDebounced(); showToast('3分割テキストを連結しました'); });
 document.getElementById('replaceBtn').addEventListener('click', () => {
     syncCombinedInput(); const src = replaceSourceEl.value, tgt = replaceTargetEl.value; let text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
@@ -2397,26 +2403,18 @@ document.getElementById('replaceBtn').addEventListener('click', () => {
     outputEl.value = text.replace(new RegExp(escRegex(src), 'g'), tgt);
     updateCounts(); saveWorkspaceDebounced(); showToast('置換しました');
 });
-
 document.getElementById('compressBtn').addEventListener('click', () => {
     syncCombinedInput(); const text = inputEl.value, dt = dictArea.value;
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!dt.trim()) { showToast('圧縮用辞書が空です'); return; }
     resetHighlightMode();
     const dict = {};
-    dt.split('\n').forEach(line => {
-        const p = line.split('=');
-        if (p.length === 2) {
-            const k = p[0].trim(), v = p[1].trim();
-            if (k && v) dict[k] = v;
-        }
-    });
+    dt.split('\n').forEach(line => { const p = line.split('='); if (p.length === 2) { const k = p[0].trim(), v = p[1].trim(); if (k && v) dict[k] = v; } });
     const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
     if (keys.length === 0) { showToast('有効な辞書指定がありません'); return; }
     const regex = new RegExp('(' + keys.map(escRegex).join('|') + ')', 'g');
     processAbbreviation(text, regex, (matchStr, map) => { const abbr = dict[matchStr]; map.set(abbr, matchStr); return abbr; }, 'AI向けに圧縮しました');
 });
-
 document.getElementById('decompressBtn').addEventListener('click', () => {
     syncCombinedInput(); const text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
@@ -2434,18 +2432,7 @@ function countOccurrences(text, needle){if(!needle)return 0;let count=0,pos=0;wh
 function tokenizeTextLikeWords(text){return text.match(/[A-Za-z0-9_]+|[ぁ-んァ-ヶー一-龠々〆ヵヶ]+|[^\s]/g)||[];}
 function printableAlias(s){return !!s && !/\s/.test(s) && /^[\x21-\x7E]+$/.test(s);}
 
-const ANALYSIS_CONTEXTS=[
-    ['',''],
-    [' ',''],
-    ['\n',''],
-    ['A','B'],
-    ['あ','い'],
-    ['「','」'],
-    [':',''],
-    ['','。'],
-    ['<','>']
-];
-
+const ANALYSIS_CONTEXTS=[['',''],[' ',''],['\n',''],['A','B'],['あ','い'],['「','」'],[':',''],['','。'],['<','>']];
 const ANALYSIS_HEADER_LIBRARY=[
     {name:'eq_min',prefix:'',entry:'{alias}={value}\n',suffix:'--\n'},
     {name:'at_eq',prefix:'@\n',entry:'{alias}={value}\n',suffix:'#\n'},
@@ -2455,17 +2442,12 @@ const ANALYSIS_HEADER_LIBRARY=[
     {name:'arrow_gt',prefix:'',entry:'{alias}>{value}\n',suffix:'--\n'},
     {name:'slash',prefix:'',entry:'{alias}/{value}\n',suffix:'--\n'}
 ];
-
 function renderAnalysisHeader(template, pairs){
     const entries=pairs.map(([a,v])=>template.entry.replace('{alias}',a).replace('{value}',v)).join('');
     return `${template.prefix}${entries}${template.suffix}`;
 }
 function averageMarginalCost(piece){
-    const deltas=ANALYSIS_CONTEXTS.map(([l,r])=>{
-        const before=getExactTokenCount(l+r);
-        const after=getExactTokenCount(l+piece+r);
-        return after-before;
-    });
+    const deltas=ANALYSIS_CONTEXTS.map(([l,r])=>getExactTokenCount(l+piece+r)-getExactTokenCount(l+r));
     return Number(mean(deltas).toFixed(4));
 }
 function isSafeAnalysisPiece(text){
@@ -2475,103 +2457,39 @@ function isSafeAnalysisPiece(text){
     if(/^[\W_]+$/u.test(text)) return false;
     return true;
 }
-
 function generateAliasCandidates(prefixes, probeLimit=2500){
-    const upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lower='abcdefghijklmnopqrstuvwxyz';
-    const digits='0123456789';
-    const safeSymbols='@#~$%&*?!^';
-    const emitted=new Set();
-    const out=[];
-
-    function push(s){
-        if(out.length>=probeLimit) return;
-        if(emitted.has(s)) return;
-        if(!printableAlias(s)) return;
-        if(!isSafeMapAlias(s)) return;
-        emitted.add(s);
-        out.push(s);
-    }
-
+    const upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower='abcdefghijklmnopqrstuvwxyz', digits='0123456789', safeSymbols='@#~$%&*?!^';
+    const emitted=new Set(); const out=[];
+    function push(s){ if(out.length>=probeLimit)return; if(emitted.has(s))return; if(!printableAlias(s))return; if(!isSafeMapAlias(s))return; emitted.add(s); out.push(s); }
     [...upper,...lower,...digits,...safeSymbols].forEach(ch=>push(ch));
-
-    prefixes.forEach(pref=>{
-        if(!isSafeMapAlias(pref)) return;
-        [...upper,...lower,...digits].forEach(ch=>push(pref+ch));
-    });
-
-    for(const a of upper){
-        for(const b of upper){
-            push(a+b);
-            if(out.length>=probeLimit) return out;
-        }
-    }
-
-    for(const a of upper){
-        for(const b of digits){
-            push(a+b);
-            if(out.length>=probeLimit) return out;
-        }
-    }
-
-    prefixes.forEach(pref=>{
-        if(!isSafeMapAlias(pref)) return;
-        for(const a of upper){
-            for(const b of digits){
-                push(pref+a+b);
-                if(out.length>=probeLimit) return out;
-            }
-        }
-    });
-
-    prefixes.forEach(pref=>{
-        if(!isSafeMapAlias(pref)) return;
-        for(const a of upper){
-            for(const b of upper){
-                push(pref+a+b);
-                if(out.length>=probeLimit) return out;
-            }
-        }
-    });
-
+    prefixes.forEach(pref=>{ if(!isSafeMapAlias(pref))return; [...upper,...lower,...digits].forEach(ch=>push(pref+ch)); });
+    for(const a of upper){ for(const b of upper){ push(a+b); if(out.length>=probeLimit) return out; } }
+    for(const a of upper){ for(const b of digits){ push(a+b); if(out.length>=probeLimit) return out; } }
+    prefixes.forEach(pref=>{ if(!isSafeMapAlias(pref))return; for(const a of upper){ for(const b of digits){ push(pref+a+b); if(out.length>=probeLimit) return out; } } });
+    prefixes.forEach(pref=>{ if(!isSafeMapAlias(pref))return; for(const a of upper){ for(const b of upper){ push(pref+a+b); if(out.length>=probeLimit) return out; } } });
     return out.slice(0, probeLimit);
 }
-
 function analyzeAliasPoolWeb(corpus, prefixes, keepLimit=128, probeLimit=2500){
     const results=[];
-    const candidates=generateAliasCandidates(prefixes, probeLimit);
-    for(const cand of candidates){
+    for(const cand of generateAliasCandidates(prefixes, probeLimit)){
         if(corpus.includes(cand)) continue;
-        results.push({
-            alias:cand,
-            isolated_tokens:getExactTokenCount(cand),
-            avg_marginal_tokens:averageMarginalCost(cand),
-            length:cand.length
-        });
+        results.push({alias:cand,isolated_tokens:getExactTokenCount(cand),avg_marginal_tokens:averageMarginalCost(cand),length:cand.length});
     }
-    results.sort((a,b)=>
-        a.avg_marginal_tokens-b.avg_marginal_tokens ||
-        a.isolated_tokens-b.isolated_tokens ||
-        a.length-b.length ||
-        a.alias.localeCompare(b.alias)
-    );
+    results.sort((a,b)=>a.avg_marginal_tokens-b.avg_marginal_tokens||a.isolated_tokens-b.isolated_tokens||a.length-b.length||a.alias.localeCompare(b.alias));
     return results.slice(0, keepLimit);
 }
 function analyzeSeparatorsWeb(separators){
     const probes=[['A','B'],['QZ','主人公'],['AA','トウカイテイオー'],['K1','メジロマックイーン']];
-    const rows=separators.map(sep=>{
-        const samples=probes.map(([l,r])=>getExactTokenCount(`${l}${sep}${r}\n`));
-        return {separator:sep,avg_tokens:Number(mean(samples).toFixed(4)),samples};
-    });
-    rows.sort((a,b)=>a.avg_tokens-b.avg_tokens || a.separator.localeCompare(b.separator));
+    const rows=separators.map(sep=>{ const samples=probes.map(([l,r])=>getExactTokenCount(`${l}${sep}${r}\n`)); return {separator:sep,avg_tokens:Number(mean(samples).toFixed(4)),samples}; });
+    rows.sort((a,b)=>a.avg_tokens-b.avg_tokens||a.separator.localeCompare(b.separator));
     return rows;
 }
 function pickSampleValuesWeb(corpus, maxValues=4){
     const pieces=[];
     if(corpus.trim()){
         const counts=new Map();
-        tokenizeTextLikeWords(corpus).forEach(tok=>counts.set(tok, (counts.get(tok)||0)+1));
-        [...counts.entries()].sort((a,b)=>b[1]-a[1] || b[0].length-a[0].length).forEach(([tok])=>{if(tok.length>=3) pieces.push(tok);});
+        tokenizeTextLikeWords(corpus).forEach(tok=>counts.set(tok,(counts.get(tok)||0)+1));
+        [...counts.entries()].sort((a,b)=>b[1]-a[1]||b[0].length-a[0].length).forEach(([tok])=>{if(tok.length>=3)pieces.push(tok);});
         corpus.split('\n').map(v=>v.trim()).filter(v=>v.length>=6).sort((a,b)=>b.length-a.length).slice(0,20).forEach(v=>pieces.push(v));
     }
     ['主人公','トウカイテイオー','メジロマックイーン','会長'].forEach(v=>pieces.push(v));
@@ -2581,38 +2499,115 @@ function analyzeHeaderTemplatesWeb(aliasPool, sampleValues){
     const fallback=[{alias:'AA'},{alias:'AB'},{alias:'AC'},{alias:'AD'}];
     const pool=aliasPool.length?aliasPool:fallback;
     const pairs=sampleValues.slice(0, Math.min(sampleValues.length, pool.length)).map((v,i)=>[pool[i].alias,v]);
-    const rows=ANALYSIS_HEADER_LIBRARY.map(tpl=>{
-        const rendered=renderAnalysisHeader(tpl, pairs);
-        return {name:tpl.name,token_cost:getExactTokenCount(rendered),template:tpl,preview:rendered.slice(0,500)};
-    });
-    rows.sort((a,b)=>a.token_cost-b.token_cost || a.name.localeCompare(b.name));
+    const rows=ANALYSIS_HEADER_LIBRARY.map(tpl=>{ const rendered=renderAnalysisHeader(tpl,pairs); return {name:tpl.name,token_cost:getExactTokenCount(rendered),template:tpl,preview:rendered.slice(0,500)}; });
+    rows.sort((a,b)=>a.token_cost-b.token_cost||a.name.localeCompare(b.name));
     return rows;
 }
 function analyzeCharBurdenWeb(corpus, limit=80){
-    const source=corpus || '「」『』（）()[]{}<>:=|@#~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ぁあア漢字。、「」\n ';
+    const source=corpus || '「」『』（）()[]{}<>:=|@#~ABCXYZabcxyz0123456789ぁあア漢字。、\n ';
     const counts=new Map();
-    for(const ch of source){counts.set(ch, (counts.get(ch)||0)+1);}
+    for(const ch of source) counts.set(ch,(counts.get(ch)||0)+1);
     const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([ch,freq])=>{
         const avg=averageMarginalCost(ch);
         return {char:ch,char_display:escapeVisibleChar(ch),freq,avg_marginal_tokens:avg,burden_score:Number((avg*freq).toFixed(4)),ord:ch.codePointAt(0)};
     });
-    rows.sort((a,b)=>b.burden_score-a.burden_score || b.avg_marginal_tokens-a.avg_marginal_tokens);
+    rows.sort((a,b)=>b.burden_score-a.burden_score||b.avg_marginal_tokens-a.avg_marginal_tokens);
     return rows;
 }
+
+// ============================================================
+// 接尾辞配列 + LCP による極大反復列挙（旧 n-gram 総当たりの置き換え）
+// ============================================================
+function buildSuffixArray(arr){
+    const n=arr.length;
+    if(n===0) return {sa:[],rank:[]};
+    let sa=Array.from({length:n},(_,i)=>i);
+    let rank=Array.from(arr), tmp=new Array(n).fill(0);
+    sa.sort((a,b)=>rank[a]-rank[b]||a-b);
+    let r=0; tmp[sa[0]]=0;
+    for(let i=1;i<n;i++){ if(rank[sa[i]]!==rank[sa[i-1]]) r++; tmp[sa[i]]=r; }
+    rank=tmp.slice();
+    for(let k=1;k<n;k<<=1){
+        const cmp=(a,b)=>{
+            if(rank[a]!==rank[b]) return rank[a]-rank[b];
+            const ra=a+k<n?rank[a+k]:-1, rb=b+k<n?rank[b+k]:-1;
+            return ra-rb;
+        };
+        sa.sort(cmp);
+        tmp=new Array(n).fill(0); r=0; tmp[sa[0]]=0;
+        for(let i=1;i<n;i++){ if(cmp(sa[i-1],sa[i])<0) r++; tmp[sa[i]]=r; }
+        rank=tmp.slice();
+        if(r===n-1) break;
+    }
+    return {sa,rank};
+}
+function buildLCPArray(arr, sa, rank){
+    const n=arr.length; const lcp=new Array(n).fill(0); let h=0;
+    for(let i=0;i<n;i++){
+        if(rank[i]>0){
+            const j=sa[rank[i]-1];
+            while(i+h<n && j+h<n && arr[i+h]===arr[j+h]) h++;
+            lcp[rank[i]]=h;
+            if(h>0) h--;
+        } else h=0;
+    }
+    return lcp;
+}
+function enumerateMaximalRepeats(sa, lcp, n, minTokLen, minCount, cb){
+    const stack=[];
+    for(let i=1;i<=n;i++){
+        const cur = i<n ? lcp[i] : 0;
+        let start=i;
+        while(stack.length && stack[stack.length-1].len>cur){
+            const top=stack.pop();
+            const count=i-top.start+1;
+            if(top.len>=minTokLen && count>=minCount) cb(sa[top.start], top.len, count);
+            start=top.start;
+        }
+        if(cur>0 && (!stack.length || stack[stack.length-1].len<cur)) stack.push({len:cur,start});
+    }
+}
+function mineRepeatsBySuffixArray(text, opts){
+    const provider=appSettings.tokenCalcProvider||'openai';
+    let ids=encodeToTokenIds(text, provider);
+    if(!ids||!ids.length) return null;
+    if(ids.length>60000) ids=ids.slice(0,60000);
+    const {sa,rank}=buildSuffixArray(ids);
+    const lcp=buildLCPArray(ids,sa,rank);
+    const found=new Map();
+    const minTok=Math.max(2, opts.minTokLen||2);
+    enumerateMaximalRepeats(sa,lcp,ids.length,minTok,opts.minCount||2,(startIdx,len,count)=>{
+        if(found.size>=(opts.poolLimit||400)*4) return;
+        if(len>opts.maxTokLen) return;
+        const key=startIdx+':'+len;
+        if(found.has(key)) return;
+        const decoded=decodeTokenIds(ids.slice(startIdx,startIdx+len), provider);
+        if(!decoded) return;
+        const phrase=decoded.trim();
+        if(!phrase||phrase.length<(opts.minLen||3)) return;
+        if(!isSafeAnalysisPiece(phrase)) return;
+        if(opts.excludeAlnum && containsAlnum(phrase)) return;
+        const real=countOccurrences(text, phrase);
+        if(real<(opts.minCount||2)) return;
+        const tok=getExactTokenCount(phrase);
+        if(tok<2) return;
+        const prev=found.get(phrase);
+        const row={phrase,count:real,phraseTokCost:tok,abbrTokCost:1,headerEntryCost:getExactTokenCount(`XX=${phrase}\n`)};
+        row.saving=(row.phraseTokCost*row.count)-(row.abbrTokCost*row.count+row.headerEntryCost);
+        if(!prev||row.saving>prev.saving) found.set(phrase,row);
+    });
+    return [...found.values()].filter(r=>r.saving>0).sort((a,b)=>b.saving-a.saving).slice(0, opts.poolLimit||400);
+}
+
 function mineTokenNgramCandidatesWeb(corpus, nMin=2, nMax=8, minCount=2, topLimit=80){
     const provider=appSettings.tokenCalcProvider||'openai';
     let ids=encodeToTokenIds(corpus, provider);
-    if(!ids || !ids.length) return [];
+    if(!ids||!ids.length) return [];
     if(ids.length>50000) ids=ids.slice(0,50000);
     const candidates=new Map();
-
-    for(let n=nMin; n<=nMax; n++){
+    for(let n=nMin;n<=nMax;n++){
         const local=new Map();
-        for(let i=0;i<=ids.length-n;i++){
-            const slice=ids.slice(i,i+n);
-            const key=slice.join(',');
-            local.set(key, (local.get(key)||0)+1);
-        }
+        for(let i=0;i<=ids.length-n;i++){ const key=ids.slice(i,i+n).join(','); local.set(key,(local.get(key)||0)+1); }
         for(const [key,count] of local){
             if(count<minCount) continue;
             const text=(decodeTokenIds(key.split(',').map(Number), provider)||'').trim();
@@ -2620,21 +2615,15 @@ function mineTokenNgramCandidatesWeb(corpus, nMin=2, nMax=8, minCount=2, topLimi
             const realCount=countOccurrences(corpus, text);
             if(realCount<minCount) continue;
             const phraseTokens=getExactTokenCount(text);
-            const rawBurden=phraseTokens*realCount;
+            const row={phrase:text,count:realCount,phrase_tokens:phraseTokens,raw_burden:phraseTokens*realCount};
             const prev=candidates.get(text);
-            const row={phrase:text,count:realCount,phrase_tokens:phraseTokens,raw_burden:rawBurden};
-            if(!prev || row.raw_burden>prev.raw_burden) candidates.set(text,row);
+            if(!prev||row.raw_burden>prev.raw_burden) candidates.set(text,row);
         }
     }
-
-    return [...candidates.values()].sort((a,b)=>b.raw_burden-a.raw_burden || b.phrase.length-a.phrase.length).slice(0,topLimit);
+    return [...candidates.values()].sort((a,b)=>b.raw_burden-a.raw_burden||b.phrase.length-a.phrase.length).slice(0,topLimit);
 }
 function chooseAliasForPhraseWeb(aliasPool, corpus, used){
-    for(const row of aliasPool){
-        if(used.has(row.alias)) continue;
-        if(corpus.includes(row.alias)) continue;
-        return row.alias;
-    }
+    for(const row of aliasPool){ if(used.has(row.alias)) continue; if(corpus.includes(row.alias)) continue; return row.alias; }
     return null;
 }
 function exactSinglePhraseGainWeb(corpus, phrase, alias, headerTemplate, beforeTokens){
@@ -2649,30 +2638,17 @@ function analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeaderTemplate, opts
     if(!corpus.trim()) return [];
     const rough=mineTokenNgramCandidatesWeb(corpus, opts.ngramMin, opts.ngramMax, opts.minCount, Math.max(opts.phraseLimit*3, 60));
     const beforeTokens=getExactTokenCount(corpus);
-    const used=new Set();
-    const rows=[];
+    const used=new Set(); const rows=[];
     for(const item of rough){
         const alias=chooseAliasForPhraseWeb(aliasPool, corpus, used);
         if(!alias) break;
         const exact=exactSinglePhraseGainWeb(corpus, item.phrase, alias, bestHeaderTemplate.template, beforeTokens);
         if(exact.gain<=0) continue;
-        rows.push({
-            phrase:item.phrase,
-            phrase_preview:compactPreview(item.phrase,80),
-            count:exact.count,
-            phrase_tokens:item.phrase_tokens,
-            alias,
-            alias_isolated_tokens:(aliasPool.find(v=>v.alias===alias)||{}).isolated_tokens ?? null,
-            gain:exact.gain,
-            before_tokens:exact.before_tokens,
-            after_tokens:exact.after_tokens,
-            header_preview:exact.header.slice(0,120),
-            raw_burden:item.raw_burden
-        });
+        rows.push({phrase:item.phrase,phrase_preview:compactPreview(item.phrase,80),count:exact.count,phrase_tokens:item.phrase_tokens,alias,alias_isolated_tokens:(aliasPool.find(v=>v.alias===alias)||{}).isolated_tokens ?? null,gain:exact.gain,before_tokens:exact.before_tokens,after_tokens:exact.after_tokens,header_preview:exact.header.slice(0,120),raw_burden:item.raw_burden});
         used.add(alias);
         if(rows.length>=opts.phraseLimit) break;
     }
-    rows.sort((a,b)=>b.gain-a.gain || b.raw_burden-a.raw_burden || b.phrase.length-a.phrase.length);
+    rows.sort((a,b)=>b.gain-a.gain||b.raw_burden-a.raw_burden||b.phrase.length-a.phrase.length);
     return rows;
 }
 function buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows){
@@ -2689,78 +2665,33 @@ function buildAiCompactPacketWeb(profile){
     return {
         schema:'tokenizer-distiller-ai-packet.v1',
         goal:'Minimize token count for the target tokenizer while preserving meaning.',
-        target:profile.target,
-        corpus_stats:profile.corpus,
+        target:profile.target, corpus_stats:profile.corpus,
         recommended_alias_pool:(rules.recommended_aliases||[]).slice(0,32),
         recommended_separators:(rules.recommended_separators||[]).slice(0,8),
         recommended_header_template:rules.recommended_header_template||null,
         expensive_chars:(rules.expensive_chars||[]).slice(0,20),
         replacement_candidates:(rules.recommended_phrase_replacements||[]).slice(0,30),
-        operating_rules:[
-            'Prefer aliases from the recommended alias pool.',
-            'Prefer the recommended header template.',
-            'Use only replacements with positive net gain when possible.',
-            'Avoid aliases already present in the source text.',
-            'Do not change meaning.',
-            'If uncertain about semantic safety, skip the replacement.'
-        ],
-        required_output:{
-            mapping:[{alias:'AA', original:'...'}],
-            compressed_text:'...',
-            notes:'...',
-            estimated_gain:0
-        }
+        operating_rules:['Prefer aliases from the recommended alias pool.','Prefer the recommended header template.','Use only replacements with positive net gain when possible.','Avoid aliases already present in the source text.','Do not change meaning.','If uncertain about semantic safety, skip the replacement.'],
+        required_output:{mapping:[{alias:'AA', original:'...'}],compressed_text:'...',notes:'...',estimated_gain:0}
     };
 }
 function buildAiHandoffMarkdownWeb(profile){
     const rules=profile.distilled_rules||{};
-    const exp=(rules.expensive_chars||[]).slice(0,20);
-    const repl=(rules.recommended_phrase_replacements||[]).slice(0,30);
-    const aliases=(rules.recommended_aliases||[]).slice(0,32);
-    const seps=(rules.recommended_separators||[]).slice(0,8);
-
+    const exp=(rules.expensive_chars||[]).slice(0,20), repl=(rules.recommended_phrase_replacements||[]).slice(0,30);
+    const aliases=(rules.recommended_aliases||[]).slice(0,32), seps=(rules.recommended_separators||[]).slice(0,8);
     const lines=[];
-    lines.push('# AI Compression Handoff','');
-    lines.push('## Goal');
-    lines.push('Minimize prompt token count for the target tokenizer while preserving meaning exactly.','');
-    lines.push('## Target');
-    lines.push(`- backend: ${profile.target.backend}`);
-    lines.push(`- tokenizer: ${profile.target.target}`);
-    lines.push(`- display_name: ${profile.target.display_name}`,'');
-    lines.push('## Corpus stats');
-    lines.push(`- chars: ${profile.corpus.chars}`);
-    lines.push(`- tokens: ${profile.corpus.tokens}`,'');
-    lines.push('## Recommended alias pool');
-    lines.push(aliases.length ? aliases.join(', ') : '(none)','');
-    lines.push('## Recommended separators');
-    lines.push(seps.length ? seps.join(', ') : '(none)','');
-    lines.push('## Recommended header template');
-    lines.push('```json');
-    lines.push(JSON.stringify(rules.recommended_header_template||null, null, 2));
-    lines.push('```','');
+    lines.push('# AI Compression Handoff','','## Goal','Minimize prompt token count for the target tokenizer while preserving meaning exactly.','');
+    lines.push('## Target',`- backend: ${profile.target.backend}`,`- tokenizer: ${profile.target.target}`,`- display_name: ${profile.target.display_name}`,'');
+    lines.push('## Corpus stats',`- chars: ${profile.corpus.chars}`,`- tokens: ${profile.corpus.tokens}`,'');
+    lines.push('## Recommended alias pool', aliases.length?aliases.join(', '):'(none)','');
+    lines.push('## Recommended separators', seps.length?seps.join(', '):'(none)','');
+    lines.push('## Recommended header template','```json',JSON.stringify(rules.recommended_header_template||null,null,2),'```','');
     lines.push('## Expensive characters / symbols');
-    if(exp.length){exp.forEach(v=>lines.push(`- ${v.char_display} (avg_marginal_tokens=${v.avg_marginal_tokens}, burden=${v.burden_score})`));}
-    else lines.push('(none)');
-    lines.push('');
-    lines.push('## Best replacement candidates');
-    if(repl.length){repl.forEach(v=>lines.push(`- ${v.phrase} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
-    else lines.push('(none)');
-    lines.push('');
-    lines.push('## Operating procedure');
-    lines.push('1. Prefer aliases from the recommended alias pool.');
-    lines.push('2. Prefer the recommended header template.');
-    lines.push('3. Apply only replacements with positive net gain.');
-    lines.push('4. Avoid aliases already present in the source text.');
-    lines.push('5. Preserve meaning exactly.');
-    lines.push('6. If a replacement may distort semantics, skip it.');
-    lines.push('');
-    lines.push('## Expected output');
-    lines.push('Return:');
-    lines.push('1. mapping table');
-    lines.push('2. compressed text');
-    lines.push('3. brief notes');
-    lines.push('4. estimated token gain');
-    lines.push('');
+    if(exp.length) exp.forEach(v=>lines.push(`- ${v.char_display} (avg_marginal_tokens=${v.avg_marginal_tokens}, burden=${v.burden_score})`)); else lines.push('(none)');
+    lines.push('','## Best replacement candidates');
+    if(repl.length) repl.forEach(v=>lines.push(`- ${v.phrase} -> ${v.alias} (gain=${v.gain}, count=${v.count})`)); else lines.push('(none)');
+    lines.push('','## Operating procedure','1. Prefer aliases from the recommended alias pool.','2. Prefer the recommended header template.','3. Apply only replacements with positive net gain.','4. Avoid aliases already present in the source text.','5. Preserve meaning exactly.','6. If a replacement may distort semantics, skip it.','');
+    lines.push('## Expected output','Return:','1. mapping table','2. compressed text','3. brief notes','4. estimated token gain','');
     return lines.join('\n');
 }
 function buildAiCompressorPromptWeb(profile){
@@ -2815,45 +2746,33 @@ Return JSON in this schema:
 function buildSummaryTextWeb(profile){
     const rules=profile.distilled_rules||{};
     const lines=[];
-    lines.push('Tokenizer Analysis Summary');
-    lines.push('========================================');
+    lines.push('Tokenizer Analysis Summary','========================================');
     lines.push(`target         : ${profile.target.display_name}`);
     lines.push(`backend        : ${profile.target.backend}`);
     lines.push(`tokenizer      : ${profile.target.target}`);
     lines.push(`corpus chars   : ${profile.corpus.chars}`);
-    lines.push(`corpus tokens  : ${profile.corpus.tokens}`);
-    lines.push('');
+    lines.push(`corpus tokens  : ${profile.corpus.tokens}`,'');
     lines.push(`best header    : ${profile.summary.best_header_name} (cost=${profile.summary.best_header_token_cost})`);
-    lines.push(`top phrase gain: ${profile.summary.top_phrase_gain}`);
-    lines.push('');
-    lines.push('recommended aliases:');
-    lines.push((rules.recommended_aliases||[]).slice(0,20).join(', ') || '(none)');
-    lines.push('');
-    lines.push('recommended separators:');
-    lines.push((rules.recommended_separators||[]).slice(0,8).join(', ') || '(none)');
-    lines.push('');
+    lines.push(`top phrase gain: ${profile.summary.top_phrase_gain}`,'');
+    lines.push('recommended aliases:',(rules.recommended_aliases||[]).slice(0,20).join(', ')||'(none)','');
+    lines.push('recommended separators:',(rules.recommended_separators||[]).slice(0,8).join(', ')||'(none)','');
     lines.push('top replacement candidates:');
     const top=(rules.recommended_phrase_replacements||[]).slice(0,10);
-    if(top.length){top.forEach(v=>lines.push(`- ${compactPreview(v.phrase,60)} -> ${v.alias} (gain=${v.gain}, count=${v.count})`));}
-    else lines.push('(none)');
+    if(top.length) top.forEach(v=>lines.push(`- ${compactPreview(v.phrase,60)} -> ${v.alias} (gain=${v.gain}, count=${v.count})`)); else lines.push('(none)');
     return lines.join('\n');
 }
 
 runTokenizerAnalysisBtn.addEventListener('click', async()=>{
     const corpus=normalizeTextLite(analysisCorpusText.value);
     if(!corpus.trim()){showToast('分析対象テキストがありません');return;}
-
     const provider=appSettings.tokenCalcProvider||'openai';
     runTokenizerAnalysisBtn.disabled=true;
     analysisRunNotice.textContent='トークナイザーを準備しています…';
-
     try{
         await initLocalTokenizer();
         const entry=localTokenizers[provider];
-        if(!entry || entry.status!=='ready') throw new Error('ローカルトークナイザーの準備に失敗しました');
-
+        if(!entry||entry.status!=='ready') throw new Error('ローカルトークナイザーの準備に失敗しました');
         analysisRunNotice.textContent='略号候補・重い文字列・置換候補を分析中…';
-
         const prefixes=uniqArray(['@','#','~','Q','Z']);
         const separators=uniqArray(['=',':','|','@','#','>','~',';']);
         const aliasPool=analyzeAliasPoolWeb(corpus, prefixes, parseInt(analysisAliasKeepLimitInput.value,10)||128, parseInt(analysisAliasProbeLimitInput.value,10)||2500);
@@ -2861,7 +2780,7 @@ runTokenizerAnalysisBtn.addEventListener('click', async()=>{
         const sampleValues=pickSampleValuesWeb(corpus, 4);
         const headerRows=analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
         const charRows=analyzeCharBurdenWeb(corpus, parseInt(analysisCharLimitInput.value,10)||80);
-        const bestHeader=headerRows[0] || {name:'fallback',token_cost:0,template:ANALYSIS_HEADER_LIBRARY[0]};
+        const bestHeader=headerRows[0]||{name:'fallback',token_cost:0,template:ANALYSIS_HEADER_LIBRARY[0]};
         const phraseRows=analyzePhraseSuggestionsWeb(corpus, aliasPool, bestHeader, {
             ngramMin:parseInt(analysisNgramMinInput.value,10)||2,
             ngramMax:parseInt(analysisNgramMaxInput.value,10)||8,
@@ -2869,60 +2788,22 @@ runTokenizerAnalysisBtn.addEventListener('click', async()=>{
             phraseLimit:parseInt(analysisPhraseLimitInput.value,10)||40
         });
         const distilledRules=buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
-
         const profile={
-            schema:'toolbox-tokenizer-analysis.v1',
-            created_at:new Date().toISOString(),
-            app:{name:'Toolbox PWA',version:'9.0+analyzer'},
-            target:{
-                backend:provider,
-                target:provider,
-                display_name:provider,
-                tokenizer_status:entry.status,
-                precise_mode:provider==='deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
-            },
+            schema:'toolbox-tokenizer-analysis.v1', created_at:new Date().toISOString(),
+            app:{name:'Toolbox PWA',version:'9.5+analyzer'},
+            target:{backend:provider,target:provider,display_name:provider,tokenizer_status:entry.status,precise_mode:provider==='deepseek'?!!appSettings.deepseekPreciseTokenizer:null},
             corpus:{chars:corpus.length,tokens:getExactTokenCount(corpus),sample_values:sampleValues},
-            settings:{
-                alias_probe_limit:parseInt(analysisAliasProbeLimitInput.value,10)||2500,
-                alias_keep_limit:parseInt(analysisAliasKeepLimitInput.value,10)||128,
-                ngram_min:parseInt(analysisNgramMinInput.value,10)||2,
-                ngram_max:parseInt(analysisNgramMaxInput.value,10)||8,
-                min_count:parseInt(analysisMinCountInput.value,10)||2,
-                phrase_limit:parseInt(analysisPhraseLimitInput.value,10)||40,
-                char_limit:parseInt(analysisCharLimitInput.value,10)||80
-            },
-            summary:{
-                best_header_name:headerRows[0]?.name||null,
-                best_header_token_cost:headerRows[0]?.token_cost||null,
-                best_separators:separatorRows.slice(0,5).map(v=>v.separator),
-                best_aliases:aliasPool.slice(0,12).map(v=>v.alias),
-                top_phrase_gain:phraseRows[0]?.gain||0
-            },
-            alias_pool:aliasPool,
-            separators:separatorRows,
-            header_templates:headerRows,
-            char_burden:charRows,
-            phrase_suggestions:phraseRows,
-            distilled_rules:distilledRules,
-            notes:[
-                'This JSON contains a static tokenizer tendency analysis and compression gain estimates for the given corpus.',
-                'For auto-compression, use these results as candidate seeds and re-score with the real tokenizer on the full text.'
-            ]
+            settings:{alias_probe_limit:parseInt(analysisAliasProbeLimitInput.value,10)||2500,alias_keep_limit:parseInt(analysisAliasKeepLimitInput.value,10)||128,ngram_min:parseInt(analysisNgramMinInput.value,10)||2,ngram_max:parseInt(analysisNgramMaxInput.value,10)||8,min_count:parseInt(analysisMinCountInput.value,10)||2,phrase_limit:parseInt(analysisPhraseLimitInput.value,10)||40,char_limit:parseInt(analysisCharLimitInput.value,10)||80},
+            summary:{best_header_name:headerRows[0]?.name||null,best_header_token_cost:headerRows[0]?.token_cost||null,best_separators:separatorRows.slice(0,5).map(v=>v.separator),best_aliases:aliasPool.slice(0,12).map(v=>v.alias),top_phrase_gain:phraseRows[0]?.gain||0},
+            alias_pool:aliasPool, separators:separatorRows, header_templates:headerRows, char_burden:charRows, phrase_suggestions:phraseRows, distilled_rules:distilledRules,
+            notes:['This JSON contains a static tokenizer tendency analysis and compression gain estimates for the given corpus.','For auto-compression, use these results as candidate seeds and re-score with the real tokenizer on the full text.']
         };
-
-        const packet=buildAiCompactPacketWeb(profile);
-        const handoff=buildAiHandoffMarkdownWeb(profile);
-        const compressor=buildAiCompressorPromptWeb(profile);
-        const decompressor=buildAiDecompressorPromptWeb(profile);
-        const summary=buildSummaryTextWeb(profile);
-
-        analysisOutputs.summary=summary;
+        analysisOutputs.summary=buildSummaryTextWeb(profile);
         analysisOutputs.profile=JSON.stringify(profile, null, 2);
-        analysisOutputs.packet=JSON.stringify(packet, null, 2);
-        analysisOutputs.handoff=handoff;
-        analysisOutputs.compressor=compressor;
-        analysisOutputs.decompressor=decompressor;
-
+        analysisOutputs.packet=JSON.stringify(buildAiCompactPacketWeb(profile), null, 2);
+        analysisOutputs.handoff=buildAiHandoffMarkdownWeb(profile);
+        analysisOutputs.compressor=buildAiCompressorPromptWeb(profile);
+        analysisOutputs.decompressor=buildAiDecompressorPromptWeb(profile);
         analysisActiveTab='summary';
         renderAnalysisTab();
         analysisRunNotice.textContent=`分析完了: alias ${aliasPool.length}件 / phrases ${phraseRows.length}件 / best gain ${profile.summary.top_phrase_gain}`;
@@ -2932,59 +2813,123 @@ runTokenizerAnalysisBtn.addEventListener('click', async()=>{
         console.error(err);
         analysisRunNotice.textContent=`分析失敗: ${err.message||err}`;
         showToast('分析に失敗しました');
-    }finally{
-        runTokenizerAnalysisBtn.disabled=false;
-    }
+    }finally{ runTokenizerAnalysisBtn.disabled=false; }
 });
 
+// ============================================================
+// 略号の生成（固定辞書 / 意味の残る略号 / 1トークン保証）
+// ============================================================
 const _usedAbbrs = new Set();
-
+const KANA_ROMAJI={'ア':'a','イ':'i','ウ':'u','エ':'e','オ':'o','カ':'ka','キ':'ki','ク':'ku','ケ':'ke','コ':'ko','サ':'sa','シ':'shi','ス':'su','セ':'se','ソ':'so','タ':'ta','チ':'chi','ツ':'tsu','テ':'te','ト':'to','ナ':'na','ニ':'ni','ヌ':'nu','ネ':'ne','ノ':'no','ハ':'ha','ヒ':'hi','フ':'fu','ヘ':'he','ホ':'ho','マ':'ma','ミ':'mi','ム':'mu','メ':'me','モ':'mo','ヤ':'ya','ユ':'yu','ヨ':'yo','ラ':'ra','リ':'ri','ル':'ru','レ':'re','ロ':'ro','ワ':'wa','ヲ':'wo','ン':'n','ガ':'ga','ギ':'gi','グ':'gu','ゲ':'ge','ゴ':'go','ザ':'za','ジ':'ji','ズ':'zu','ゼ':'ze','ゾ':'zo','ダ':'da','ヂ':'ji','ヅ':'zu','デ':'de','ド':'do','バ':'ba','ビ':'bi','ブ':'bu','ベ':'be','ボ':'bo','パ':'pa','ピ':'pi','プ':'pu','ペ':'pe','ポ':'po','ヴ':'v'};
+function kanaToRomaji(s){
+    let out='';
+    for(const ch of s){
+        const k = ch>='ぁ'&&ch<='ゖ' ? String.fromCharCode(ch.charCodeAt(0)+0x60) : ch;
+        if(KANA_ROMAJI[k]) out+=KANA_ROMAJI[k];
+        else if(/[A-Za-z0-9]/.test(k)) out+=k;
+        if(out.length>=8) break;
+    }
+    return out;
+}
+function semanticAliasCandidates(phrase){
+    const out=[];
+    const ascii=(phrase.match(/[A-Za-z]+/g)||[]).join('');
+    if(ascii.length>=2){ out.push(ascii.slice(0,3), ascii.slice(0,2), ascii.slice(0,4)); }
+    const r=kanaToRomaji(phrase);
+    if(r.length>=2){
+        const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+        out.push(cap(r.slice(0,3)), cap(r.slice(0,2)), cap(r.slice(0,4)), r.slice(0,3).toUpperCase());
+    }
+    return uniqArray(out.filter(a=>a && isSafeMapAlias(a)));
+}
 function generateOptimalAbbr(index, textContext, replacedMap) {
     const p = appSettings.tokenCalcProvider || 'openai';
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
     const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const candidates = [];
-
     for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) candidates.push(alpha[a] + alpha[b]);
     for (let a = 0; a < 26; a++) for (let b = 0; b < 26; b++) for (let d = 0; d < 10; d++) candidates.push(alpha[a] + alpha[b] + d);
-    for (const pref of ['Q','Z','@','#','~']) {
-        for (let a = 0; a < 26; a++) for (let d = 0; d < 10; d++) candidates.push(pref + alpha[a] + d);
-    }
-
+    for (const pref of ['Q','Z','@','#','~']) { for (let a = 0; a < 26; a++) for (let d = 0; d < 10; d++) candidates.push(pref + alpha[a] + d); }
     for (const c of candidates) {
         if (!isSafeMapAlias(c)) continue;
         if (_usedAbbrs.has(c)) continue;
         if (replacedMap.has(c)) continue;
         if (textContext.includes(c)) continue;
-        if (hasEncoder) {
-            const tokenCount = countTokensLocal(c, p);
-            if (tokenCount !== null && tokenCount > 1) continue;
-        }
+        if (hasEncoder) { const tc = countTokensLocal(c, p); if (tc !== null && tc > 1) continue; }
         _usedAbbrs.add(c);
         return c;
     }
-
     let fi = index;
     for (let tries = 0; tries < 1000; tries++) {
-        const fallback = 'v' + toBase62(fi);
-        fi++;
+        const fallback = 'v' + toBase62(fi); fi++;
         if (!isSafeMapAlias(fallback)) continue;
-        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) {
-            _usedAbbrs.add(fallback);
-            return fallback;
-        }
+        if (!_usedAbbrs.has(fallback) && !replacedMap.has(fallback) && !textContext.includes(fallback)) { _usedAbbrs.add(fallback); return fallback; }
     }
     return 'Q' + toBase62(Date.now() % 10000);
+}
+function aliasIsFree(alias, textContext, replacedMap){
+    if(!alias||!isSafeMapAlias(alias)) return false;
+    if(_usedAbbrs.has(alias)) return false;
+    if(replacedMap.has(alias)) return false;
+    if(textContext.includes(alias)) return false;
+    return true;
+}
+function pickAliasForPhrase(phrase, index, textContext, replacedMap, profile){
+    const p = appSettings.tokenCalcProvider || 'openai';
+    const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
+    const okToken = a => !hasEncoder || (countTokensLocal(a,p) ?? 1) <= 1;
+    if(stableAliasEnabled()){
+        const saved = appSettings.stableAliasMap ? appSettings.stableAliasMap[phrase] : null;
+        if(saved && aliasIsFree(saved, textContext, replacedMap)){ _usedAbbrs.add(saved); return saved; }
+    }
+    if(semanticAliasEnabled()){
+        for(const cand of semanticAliasCandidates(phrase)){
+            if(aliasIsFree(cand, textContext, replacedMap) && okToken(cand)){ _usedAbbrs.add(cand); return cand; }
+        }
+    }
+    return chooseAliasWithAnalysis(index, textContext, replacedMap, profile);
+}
+function rememberStableAlias(phrase, alias){
+    if(!stableAliasEnabled()) return;
+    if(!appSettings.stableAliasMap || typeof appSettings.stableAliasMap!=='object') appSettings.stableAliasMap={};
+    appSettings.stableAliasMap[phrase]=alias;
+    const keys=Object.keys(appSettings.stableAliasMap);
+    if(keys.length>2000){ for(const k of keys.slice(0, keys.length-2000)) delete appSettings.stableAliasMap[k]; }
 }
 
 function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum) {
     const p = appSettings.tokenCalcProvider || 'openai';
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
 
+    if (hasEncoder && suffixMiningEnabled()) {
+        const mined = mineRepeatsBySuffixArray(text, {
+            minLen, minCount, excludeAlnum,
+            minTokLen: 2,
+            maxTokLen: 64,
+            poolLimit: Math.max(maxItems, parseInt(autoCompressCandidatePoolInput.value,10) || 400)
+        });
+        if (mined && mined.length) {
+            mined.sort((a,b)=>b.phrase.length-a.phrase.length);
+            const kept=[];
+            for(const item of mined){
+                let isSub=false;
+                for(const k of kept){
+                    if(k.phrase.includes(item.phrase)){
+                        const rem=Math.max(0,item.count-k.count);
+                        const remSave=(item.phraseTokCost*rem)-(item.abbrTokCost*rem+item.headerEntryCost);
+                        if(remSave<=0){isSub=true;break;}
+                    }
+                }
+                if(!isSub) kept.push(item);
+            }
+            kept.sort((a,b)=>b.saving-a.saving);
+            return kept.slice(0, maxItems);
+        }
+    }
+
     const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
     const segments = Array.from(segmenter.segment(text)).filter(s => s.segment.trim().length > 0);
     const ngrams = new Map();
-
     for (let n = 1; n <= 6; n++) {
         for (let i = 0; i <= segments.length - n; i++) {
             let phrase = '';
@@ -2997,58 +2942,23 @@ function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, e
             ngrams.set(phrase, (ngrams.get(phrase) || 0) + 1);
         }
     }
-
-    if (hasEncoder) {
-        const tokenIds = encodeToTokenIds(text, p);
-        if (tokenIds && tokenIds.length > 0) {
-            for (let n = 2; n <= 8; n++) {
-                const tokenNgramMap = new Map();
-                for (let i = 0; i <= tokenIds.length - n; i++) {
-                    const slice = tokenIds.slice(i, i + n);
-                    const key = slice.join(',');
-                    if (!tokenNgramMap.has(key)) tokenNgramMap.set(key, { ids: slice, count: 0 });
-                    tokenNgramMap.get(key).count++;
-                }
-
-                for (const [, entry] of tokenNgramMap) {
-                    if (entry.count < minCount) continue;
-                    const decoded = decodeTokenIds(entry.ids, p);
-                    if (!decoded || decoded.length < minLen) continue;
-                    const trimmed = decoded.trim();
-                    if (!trimmed || trimmed.length < minLen) continue;
-                    if (/^[\s\r\n]+$/.test(trimmed)) continue;
-                    if (excludeAlnum && containsAlnum(trimmed)) continue;
-
-                    const re = new RegExp(escRegex(trimmed), 'g');
-                    const matches = text.match(re);
-                    const realCount = matches ? matches.length : 0;
-                    if (realCount < minCount) continue;
-
-                    if (!ngrams.has(trimmed) || ngrams.get(trimmed) < realCount) ngrams.set(trimmed, realCount);
-                }
-            }
-        }
-    }
-
     const results = [];
     for (const [phrase, count] of ngrams) {
         if (count < minCount) continue;
         const phraseTokCost = getExactTokenCount(phrase);
-        const abbrTokCost = 1;
         const headerEntryCost = getExactTokenCount(`XX=${phrase}\n`);
-        const saving = (phraseTokCost * count) - (abbrTokCost * count + headerEntryCost);
-        if (saving > 0) results.push({ phrase, count, saving, phraseTokCost, abbrTokCost, headerEntryCost });
+        const saving = (phraseTokCost * count) - (1 * count + headerEntryCost);
+        if (saving > 0) results.push({ phrase, count, saving, phraseTokCost, abbrTokCost: 1, headerEntryCost });
     }
-
     results.sort((a, b) => b.phrase.length - a.phrase.length);
     const filtered = [];
     for (const item of results) {
         let isSub = false;
         for (const kept of filtered) {
             if (kept.phrase.includes(item.phrase)) {
-                const remainingCount = Math.max(0, item.count - kept.count);
-                const remainingSaving = (item.phraseTokCost * remainingCount) - (item.abbrTokCost * remainingCount + item.headerEntryCost);
-                if (remainingSaving <= 0) { isSub = true; break; }
+                const rem = Math.max(0, item.count - kept.count);
+                const remSave = (item.phraseTokCost * rem) - (item.abbrTokCost * rem + item.headerEntryCost);
+                if (remSave <= 0) { isSub = true; break; }
             }
         }
         if (!isSub) filtered.push(item);
@@ -3057,45 +2967,21 @@ function findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, e
     return filtered.slice(0, maxItems);
 }
 
-function hasOriginalInMap(replacedMap, original){
-    for(const [,v] of replacedMap.entries()){
-        if(v===original) return true;
-    }
-    return false;
-}
-function getParsedAnalysisProfile(){
-    try{
-        if(analysisOutputs && analysisOutputs.profile) return JSON.parse(analysisOutputs.profile);
-    }catch(e){}
-    return null;
-}
+function hasOriginalInMap(replacedMap, original){ for(const [,v] of replacedMap.entries()){ if(v===original) return true; } return false; }
+function getParsedAnalysisProfile(){ try{ if(analysisOutputs && analysisOutputs.profile) return JSON.parse(analysisOutputs.profile); }catch(e){} return null; }
 function isAnalysisProfileCompatible(profile){
-    if(!profile || !profile.target) return false;
+    if(!profile||!profile.target) return false;
     const provider=appSettings.tokenCalcProvider||'openai';
-    const backend=profile.target.backend||'';
-    const target=profile.target.target||'';
-    const display=profile.target.display_name||'';
-    return backend===provider || target===provider || display===provider;
+    return (profile.target.backend||'')===provider || (profile.target.target||'')===provider || (profile.target.display_name||'')===provider;
 }
-function getRecommendedAliasPool(profile){
-    const aliases=profile?.distilled_rules?.recommended_aliases || [];
-    return aliases.filter(a=>isSafeMapAlias(a));
-}
+function getRecommendedAliasPool(profile){ return (profile?.distilled_rules?.recommended_aliases || []).filter(a=>isSafeMapAlias(a)); }
 function chooseAliasWithAnalysis(index, textContext, replacedMap, profile){
     const recommended=getRecommendedAliasPool(profile);
     const provider=appSettings.tokenCalcProvider||'openai';
     const hasEncoder=localTokenizers[provider]?.status==='ready' && localTokenizers[provider]?.encoder;
-
     for(const alias of recommended){
-        if(!alias) continue;
-        if(!isSafeMapAlias(alias)) continue;
-        if(_usedAbbrs.has(alias)) continue;
-        if(replacedMap.has(alias)) continue;
-        if(textContext.includes(alias)) continue;
-        if(hasEncoder){
-            const tok=countTokensLocal(alias, provider);
-            if(tok!==null && tok>1) continue;
-        }
+        if(!aliasIsFree(alias, textContext, replacedMap)) continue;
+        if(hasEncoder){ const tok=countTokensLocal(alias, provider); if(tok!==null && tok>1) continue; }
         _usedAbbrs.add(alias);
         return alias;
     }
@@ -3106,143 +2992,187 @@ function buildCompactHeaderFromTemplate(replacedMap, formatOptions, template){
     const hasFmt = !!(formatOptions?.mergedDialogues || formatOptions?.replacedBrackets);
     if(!hasMap && !hasFmt) return '';
     if(!hasMap) return buildCompressedHeader(replacedMap, formatOptions);
-
     const tpl = template || {prefix:'', entry:'{alias}={value}\n', suffix:'--\n'};
     const lines=[];
-    const prefix=(tpl.prefix||'').replace(/\n+$/,'');
-    const suffix=(tpl.suffix||'--\n').replace(/\n+$/,'');
-
+    const prefix=(tpl.prefix||'').replace(/\n+$/,''), suffix=(tpl.suffix||'--\n').replace(/\n+$/,'');
     if(prefix) lines.push(prefix);
     if(formatOptions?.replacedBrackets) lines.push('! dialogue: NAME>TEXT / "quote" / \'title\' / (note)');
     if(formatOptions?.mergedDialogues) lines.push('! same-speaker lines may be merged');
-
-    replacedMap.forEach((original, abbr)=>{
-        const line=(tpl.entry||'{alias}={value}\n').replace('{alias}', abbr).replace('{value}', original).replace(/\n+$/,'');
-        lines.push(line);
+    orderedMapEntries(replacedMap).forEach(([abbr, original])=>{
+        lines.push((tpl.entry||'{alias}={value}\n').replace('{alias}', abbr).replace('{value}', original).replace(/\n+$/,''));
     });
-
     if(suffix) lines.push(suffix);
     return lines.join('\n') + '\n';
 }
 function buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile){
-    const candidates = [];
-    const seen = new Set();
-    function pushCandidate(header, label){
-        const h=header||'';
-        if(seen.has(h)) return;
-        seen.add(h);
-        candidates.push({label, header:h, tokens:getExactTokenCount(h + (bodyText||''))});
-    }
-
+    const candidates = []; const seen = new Set();
+    function pushCandidate(header, label){ const h=header||''; if(seen.has(h))return; seen.add(h); candidates.push({label, header:h, tokens:getExactTokenCount(h + (bodyText||''))}); }
     pushCandidate(buildCompressedHeader(replacedMap, formatOptions), 'verbose-en');
-
     const profTpl = profile?.distilled_rules?.recommended_header_template || null;
     if(profTpl) pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, profTpl), 'profile-template');
-
-    if(Array.isArray(ANALYSIS_HEADER_LIBRARY)){
-        ANALYSIS_HEADER_LIBRARY.forEach((tpl, i)=>{
-            pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, tpl), `lib-${tpl.name||i}`);
-        });
-    }
-
-    candidates.sort((a,b)=>a.tokens-b.tokens || a.header.length-b.header.length);
+    if(Array.isArray(ANALYSIS_HEADER_LIBRARY)) ANALYSIS_HEADER_LIBRARY.forEach((tpl,i)=>pushCandidate(buildCompactHeaderFromTemplate(replacedMap, formatOptions, tpl), `lib-${tpl.name||i}`));
+    candidates.sort((a,b)=>a.tokens-b.tokens||a.header.length-b.header.length);
     return candidates;
 }
 function chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile){
-    if (formatOptions && formatOptions.forceStrictHeader) {
-        return buildCompressedHeader(replacedMap, formatOptions);
-    }
-    const candidates = buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile);
-    return candidates[0]?.header || '';
+    if (formatOptions && formatOptions.forceStrictHeader) return buildCompressedHeader(replacedMap, formatOptions);
+    return buildHeaderCandidatesForCompression(replacedMap, bodyText, formatOptions, profile)[0]?.header || '';
 }
 function scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile){
     const beforeHeader = chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile);
     const beforeTokens = getExactTokenCount(beforeHeader + bodyText);
-
-    const testMap = new Map(replacedMap);
-    testMap.set(alias, phrase);
-
+    const testMap = new Map(replacedMap); testMap.set(alias, phrase);
     const replacedBody = bodyText.split(phrase).join(alias);
     const afterHeader = chooseBestCompressedHeader(testMap, replacedBody, formatOptions, profile);
     const afterTokens = getExactTokenCount(afterHeader + replacedBody);
-
-    return {
-        gain: beforeTokens - afterTokens,
-        before_tokens: beforeTokens,
-        after_tokens: afterTokens,
-        replacedBody,
-        afterHeader
-    };
+    return { gain: beforeTokens - afterTokens, before_tokens: beforeTokens, after_tokens: afterTokens, replacedBody, afterHeader };
 }
 function applyAnalyzedSuggestionsFirst(bodyText, replacedMap, formatOptions, profile){
     const suggestions = [...(profile?.distilled_rules?.recommended_phrase_replacements || [])].sort((a,b)=>(b.gain||0)-(a.gain||0));
-    let appliedCount = 0;
-    let appliedGain = 0;
-
+    let appliedCount = 0, appliedGain = 0;
+    const limit = getMapEntryLimit();
     for(const item of suggestions){
+        if(replacedMap.size >= limit) break;
         const phrase = item?.phrase;
-        if(!phrase) continue;
-        if(!bodyText.includes(phrase)) continue;
+        if(!phrase || !bodyText.includes(phrase)) continue;
         if(hasOriginalInMap(replacedMap, phrase)) continue;
-
         let alias = item.alias;
-        if(!alias || !isSafeMapAlias(alias) || _usedAbbrs.has(alias) || replacedMap.has(alias) || bodyText.includes(alias)){
-            alias = chooseAliasWithAnalysis(replacedMap.size + appliedCount + 1, bodyText, replacedMap, profile);
-        }else{
-            _usedAbbrs.add(alias);
-        }
+        if(!aliasIsFree(alias, bodyText, replacedMap)) alias = pickAliasForPhrase(phrase, replacedMap.size + appliedCount + 1, bodyText, replacedMap, profile);
+        else _usedAbbrs.add(alias);
         if(!alias) continue;
-
         const exact = scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile);
-        if(exact.gain <= 0){
-            _usedAbbrs.delete(alias);
-            continue;
-        }
-
+        if(exact.gain <= 0){ _usedAbbrs.delete(alias); continue; }
         bodyText = exact.replacedBody;
         replacedMap.set(alias, phrase);
-        appliedCount++;
-        appliedGain += exact.gain;
+        rememberStableAlias(phrase, alias);
+        appliedCount++; appliedGain += exact.gain;
     }
-
     return { text: bodyText, appliedCount, appliedGain };
 }
 function rescoreCompressionCandidatesExactly(bodyText, replacedMap, formatOptions, profile, rawCandidates, maxExact=8){
     const shortlist = rawCandidates.slice(0, Math.max(maxExact * 3, 12));
-    const rescored = [];
-    let tempIndex = replacedMap.size + 1;
-
+    const rescored = []; let tempIndex = replacedMap.size + 1;
     for(const cand of shortlist){
         if(!cand?.phrase) continue;
         if(hasOriginalInMap(replacedMap, cand.phrase)) continue;
         if(!bodyText.includes(cand.phrase)) continue;
-
-        const alias = chooseAliasWithAnalysis(tempIndex, bodyText, replacedMap, profile);
+        const alias = pickAliasForPhrase(cand.phrase, tempIndex, bodyText, replacedMap, profile);
         tempIndex++;
-
         if(!alias) continue;
-
         const exact = scoreReplacementExact(bodyText, replacedMap, cand.phrase, alias, formatOptions, profile);
         _usedAbbrs.delete(alias);
-
         if(exact.gain <= 0) continue;
-
-        rescored.push({
-            ...cand,
-            alias,
-            gain: exact.gain,
-            before_tokens: exact.before_tokens,
-            after_tokens: exact.after_tokens,
-            replacedBody: exact.replacedBody
-        });
+        rescored.push({ ...cand, alias, gain: exact.gain, before_tokens: exact.before_tokens, after_tokens: exact.after_tokens, replacedBody: exact.replacedBody });
     }
-
-    rescored.sort((a,b)=>(b.gain||0)-(a.gain||0) || (b.saving||0)-(a.saving||0) || b.phrase.length-a.phrase.length);
+    rescored.sort((a,b)=>(b.gain||0)-(a.gain||0)||(b.saving||0)-(a.saving||0)||b.phrase.length-a.phrase.length);
     return rescored.slice(0, maxExact);
 }
 
 // ============================================================
-// Shared evaluation for BruteForce / GA
+// 遅延貪欲 (CELF) — 上界付き優先度キューで正確評価を節約
+// ============================================================
+class MaxHeap {
+    constructor(){ this.a=[]; }
+    get size(){ return this.a.length; }
+    push(item){ const a=this.a; a.push(item); let i=a.length-1; while(i>0){ const p=(i-1)>>1; if(a[p].key>=a[i].key)break; [a[p],a[i]]=[a[i],a[p]]; i=p; } }
+    peekKey(){ return this.a.length ? this.a[0].key : -Infinity; }
+    pop(){ const a=this.a; if(!a.length) return null; const top=a[0]; const last=a.pop();
+        if(a.length){ a[0]=last; let i=0; for(;;){ const l=2*i+1,r=l+1; let m=i; if(l<a.length&&a[l].key>a[m].key)m=l; if(r<a.length&&a[r].key>a[m].key)m=r; if(m===i)break; [a[m],a[i]]=[a[i],a[m]]; i=m; } }
+        return top; }
+}
+async function lazyGreedyCompress(bodyText, candidates, replacedMap, formatOptions, profile, opts, onProgress){
+    const heap = new MaxHeap();
+    for(const c of candidates){
+        if(!c?.phrase) continue;
+        const ub = (c.phraseTokCost - 1) * c.count - (c.headerEntryCost || 0);
+        if(ub <= 0) continue;
+        heap.push({ key: ub, phrase: c.phrase, stale: true });
+    }
+    const maxEntries = opts.maxEntries, maxEvals = opts.maxExactEvals;
+    let evals = 0, committed = 0, totalGain = 0;
+    const startTokens = getExactTokenCount(chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile) + bodyText);
+    let tick = 0;
+    while(heap.size > 0){
+        if(replacedMap.size >= maxEntries) break;
+        if(evals >= maxEvals) break;
+        const top = heap.pop();
+        if(!top) break;
+        const phrase = top.phrase;
+        if(!bodyText.includes(phrase)) continue;
+        if(hasOriginalInMap(replacedMap, phrase)) continue;
+        const alias = pickAliasForPhrase(phrase, replacedMap.size + committed + 1, bodyText, replacedMap, profile);
+        if(!alias) continue;
+        const exact = scoreReplacementExact(bodyText, replacedMap, phrase, alias, formatOptions, profile);
+        evals++;
+        if(exact.gain <= 0){ _usedAbbrs.delete(alias); continue; }
+        if(exact.gain >= heap.peekKey()){
+            bodyText = exact.replacedBody;
+            replacedMap.set(alias, phrase);
+            rememberStableAlias(phrase, alias);
+            committed++; totalGain += exact.gain;
+        } else {
+            _usedAbbrs.delete(alias);
+            heap.push({ key: exact.gain, phrase, stale: false });
+        }
+        if((++tick % 8) === 0){
+            const pct = Math.min(99, Math.round((evals / maxEvals) * 100));
+            if(onProgress) onProgress(pct, `遅延貪欲: 評価${evals}回 / 採用${committed}語 / ↓${totalGain}tok`);
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
+    const endTokens = getExactTokenCount(chooseBestCompressedHeader(replacedMap, bodyText, formatOptions, profile) + bodyText);
+    return { text: bodyText, committed, gain: startTokens - endTokens, evals };
+}
+
+// ============================================================
+// 出現位置の最適パース（重み付き区間スケジューリングDP）
+// ============================================================
+function optimalParseApply(baseText, pairs){
+    const n = baseText.length;
+    if(!n || !pairs.length || n > 400000) return null;
+    const starts = new Array(n).fill(null);
+    for(const p of pairs){
+        if(!p.phrase) continue;
+        let pos = baseText.indexOf(p.phrase);
+        while(pos !== -1){ (starts[pos] || (starts[pos] = [])).push(p); pos = baseText.indexOf(p.phrase, pos + 1); }
+    }
+    const best = new Float64Array(n + 1);
+    const choice = new Array(n + 1).fill(null);
+    for(let i = n - 1; i >= 0; i--){
+        let b = best[i + 1], ch = null;
+        const list = starts[i];
+        if(list) for(const p of list){ const v = p.weight + best[i + p.phrase.length]; if(v > b){ b = v; ch = p; } }
+        best[i] = b; choice[i] = ch;
+    }
+    let out = '', i = 0; const used = new Set();
+    while(i < n){
+        const ch = choice[i];
+        if(ch){ out += ch.alias; used.add(ch.alias); i += ch.phrase.length; }
+        else { out += baseText[i]; i++; }
+    }
+    return { text: out, used };
+}
+function tryOptimalParse(preText, replacedMap, greedyBody, formatOptions, profile){
+    if(!optimalParseEnabled() || replacedMap.size === 0) return null;
+    const pairs = [];
+    replacedMap.forEach((phrase, alias) => {
+        const w = getExactTokenCount(phrase) - getExactTokenCount(alias);
+        if(w > 0 && phrase) pairs.push({ phrase, alias, weight: w });
+    });
+    if(!pairs.length) return null;
+    const parsed = optimalParseApply(preText, pairs);
+    if(!parsed) return null;
+    const prunedMap = new Map();
+    replacedMap.forEach((phrase, alias) => { if(parsed.used.has(alias)) prunedMap.set(alias, phrase); });
+    if(prunedMap.size === 0) return null;
+    const dpTokens = getExactTokenCount(chooseBestCompressedHeader(prunedMap, parsed.text, formatOptions, profile) + parsed.text);
+    const greedyTokens = getExactTokenCount(chooseBestCompressedHeader(replacedMap, greedyBody, formatOptions, profile) + greedyBody);
+    if(dpTokens < greedyTokens) return { text: parsed.text, replacedMap: prunedMap, saved: greedyTokens - dpTokens };
+    return null;
+}
+
+// ============================================================
+// 従来アルゴリズム（BruteForce / GA）— 互換のため保持
 // ============================================================
 function evaluateSolution(bodyText, candidates, bits, baseReplacedMap, formatOptions, profile, useExact) {
     const tempMap = new Map(baseReplacedMap);
@@ -3254,14 +3184,9 @@ function evaluateSolution(bodyText, candidates, bits, baseReplacedMap, formatOpt
         text = text.split(cand.phrase).join(cand._alias);
         tempMap.set(cand._alias, cand.phrase);
     }
-    if (useExact) {
-        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
-        return getExactTokenCount(header + text);
-    } else {
-        const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
-        const p = appSettings.tokenCalcProvider || 'openai';
-        return estimateTokensApprox(header + text, p);
-    }
+    const header = chooseBestCompressedHeader(tempMap, text, formatOptions, profile);
+    if (useExact) return getExactTokenCount(header + text);
+    return estimateTokensApprox(header + text, appSettings.tokenCalcProvider || 'openai');
 }
 function applySolution(bodyText, candidates, bits, baseReplacedMap) {
     const resultMap = new Map(baseReplacedMap);
@@ -3272,16 +3197,12 @@ function applySolution(bodyText, candidates, bits, baseReplacedMap) {
         if (!text.includes(cand.phrase)) continue;
         text = text.split(cand.phrase).join(cand._alias);
         resultMap.set(cand._alias, cand.phrase);
+        rememberStableAlias(cand.phrase, cand._alias);
     }
     return { text, replacedMap: resultMap };
 }
-
-// ============================================================
-// Brute Force
-// ============================================================
 async function bruteForceCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, onProgress) {
-    const n = rawCandidates.length;
-    const total = 1 << n;
+    const n = rawCandidates.length, total = 1 << n;
     let bestBits = new Array(n).fill(false);
     let bestScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
     for (let mask = 1; mask < total; mask++) {
@@ -3290,17 +3211,12 @@ async function bruteForceCompress(bodyText, rawCandidates, baseReplacedMap, form
         const score = evaluateSolution(bodyText, rawCandidates, bits, baseReplacedMap, formatOptions, profile, true);
         if (score < bestScore) { bestScore = score; bestBits = [...bits]; }
         if (mask % 64 === 0 || mask === total - 1) {
-            const pct = Math.round((mask / total) * 100);
-            if (onProgress) onProgress(pct, `全探索: ${mask}/${total}通り (best=${bestScore}tok)`);
+            if (onProgress) onProgress(Math.round((mask / total) * 100), `全探索: ${mask}/${total}通り (best=${bestScore}tok)`);
             await new Promise(r => setTimeout(r, 0));
         }
     }
     return { bits: bestBits, score: bestScore };
 }
-
-// ============================================================
-// Genetic Algorithm
-// ============================================================
 function gaCreateRandomIndividual(n) { const bits = []; for (let i = 0; i < n; i++) bits.push(Math.random() < 0.4); return bits; }
 function gaTournamentSelect(population, fitnesses, tournamentSize) {
     let bestIdx = -1, bestFit = Infinity;
@@ -3310,21 +3226,17 @@ function gaTournamentSelect(population, fitnesses, tournamentSize) {
 function gaUniformCrossover(p1, p2) { const child = []; for (let i = 0; i < p1.length; i++) child.push(Math.random() < 0.5 ? p1[i] : p2[i]); return child; }
 function gaTwoPointCrossover(p1, p2) { const n = p1.length; let a = Math.floor(Math.random() * n), b = Math.floor(Math.random() * n); if (a > b) [a, b] = [b, a]; const child = [...p1]; for (let i = a; i <= b; i++) child[i] = p2[i]; return child; }
 function gaMutate(individual, mutationRate) { const r = [...individual]; for (let i = 0; i < r.length; i++) if (Math.random() * 100 < mutationRate) r[i] = !r[i]; return r; }
-
 async function gaCompress(bodyText, rawCandidates, baseReplacedMap, formatOptions, profile, params, onProgress) {
     const n = rawCandidates.length;
     const { populationSize = 50, generations = 80, mutationRate = 8, eliteCount = 3, tournamentSize = 4, twoStageEval = true } = params;
     let population = [];
     const greedySeed = new Array(n).fill(false);
     for (let i = 0; i < Math.min(n, 5); i++) greedySeed[i] = true;
-    population.push([...greedySeed]);
-    population.push(new Array(n).fill(false));
-    population.push(new Array(n).fill(true));
+    population.push([...greedySeed], new Array(n).fill(false), new Array(n).fill(true));
     while (population.length < populationSize) population.push(gaCreateRandomIndividual(n));
     let globalBestBits = new Array(n).fill(false);
-    let globalBestScore = Infinity;
     const baselineScore = getExactTokenCount(chooseBestCompressedHeader(baseReplacedMap, bodyText, formatOptions, profile) + bodyText);
-    globalBestScore = baselineScore;
+    let globalBestScore = baselineScore;
     for (let gen = 0; gen < generations; gen++) {
         const fitnesses = [];
         for (let i = 0; i < population.length; i++) {
@@ -3339,38 +3251,31 @@ async function gaCompress(bodyText, rawCandidates, baseReplacedMap, formatOption
                 fitnesses[idx] = evaluateSolution(bodyText, rawCandidates, population[idx], baseReplacedMap, formatOptions, profile, true);
             }
         }
-        for (let i = 0; i < population.length; i++) { if (fitnesses[i] < globalBestScore) { globalBestScore = fitnesses[i]; globalBestBits = [...population[i]]; } }
-        const pct = Math.round(((gen + 1) / generations) * 100);
-        const gain = baselineScore - globalBestScore;
-        if (onProgress) onProgress(pct, `GA: 世代 ${gen + 1}/${generations} | best=${globalBestScore}tok (↓${gain})`);
+        for (let i = 0; i < population.length; i++) if (fitnesses[i] < globalBestScore) { globalBestScore = fitnesses[i]; globalBestBits = [...population[i]]; }
+        if (onProgress) onProgress(Math.round(((gen + 1) / generations) * 100), `GA: 世代 ${gen + 1}/${generations} | best=${globalBestScore}tok (↓${baselineScore - globalBestScore})`);
         if (gen % 5 === 0) await new Promise(r => setTimeout(r, 0));
         if (gen === generations - 1) break;
         const eliteIndices = fitnesses.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f).slice(0, eliteCount).map(e => e.i);
         const newPopulation = [];
         for (const ei of eliteIndices) newPopulation.push([...population[ei]]);
         while (newPopulation.length < populationSize) {
-            const parent1 = gaTournamentSelect(population, fitnesses, tournamentSize);
-            const parent2 = gaTournamentSelect(population, fitnesses, tournamentSize);
-            let child = Math.random() < 0.5 ? gaUniformCrossover(parent1, parent2) : gaTwoPointCrossover(parent1, parent2);
-            child = gaMutate(child, mutationRate);
-            newPopulation.push(child);
+            const p1 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            const p2 = gaTournamentSelect(population, fitnesses, tournamentSize);
+            let child = Math.random() < 0.5 ? gaUniformCrossover(p1, p2) : gaTwoPointCrossover(p1, p2);
+            newPopulation.push(gaMutate(child, mutationRate));
         }
         population = newPopulation;
     }
     return { bits: globalBestBits, score: globalBestScore };
 }
 
-// ============================================================
-// Progress helpers
-// ============================================================
 function showCompressProgress(pct, detail) { compressProgressDiv.style.display = 'block'; compressProgressBar.style.width = pct + '%'; compressProgressText.textContent = pct + '%'; compressProgressDetail.textContent = detail || ''; }
 function hideCompressProgress() { compressProgressDiv.style.display = 'none'; compressProgressBar.style.width = '0%'; compressProgressText.textContent = '0%'; compressProgressDetail.textContent = ''; }
-
 function assignAliasesToCandidates(candidates, bodyText, replacedMap, profile) {
     const assigned = [];
     for (let i = 0; i < candidates.length; i++) {
         const cand = { ...candidates[i] };
-        const alias = chooseAliasWithAnalysis(replacedMap.size + i + 1, bodyText, replacedMap, profile);
+        const alias = pickAliasForPhrase(cand.phrase, replacedMap.size + i + 1, bodyText, replacedMap, profile);
         if (!alias) continue;
         cand._alias = alias;
         assigned.push(cand);
@@ -3382,18 +3287,14 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     syncCombinedInput(); const text = inputEl.value;
     if (!text) { showToast('入力テキストがありません'); return; }
     if (!window.Intl || !Intl.Segmenter) { showToast('お使いのブラウザは単語抽出に非対応です'); return; }
-
     const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
     const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
-
     const filtered = findCompressionCandidatesTokenAware(text, minLen, minCount, maxItems, excludeAlnum);
-
     const p = appSettings.tokenCalcProvider || 'openai';
     const hasEncoder = localTokenizers[p]?.status === 'ready' && localTokenizers[p]?.encoder;
     const engineLabel = hasEncoder ? '🎯 正確' : '≈ 近似';
-
     const listContainer = document.getElementById('keywordList');
     listContainer.innerHTML = '';
     if (filtered.length === 0) {
@@ -3401,8 +3302,7 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
     } else {
         filtered.forEach((item, index) => {
             const div = document.createElement('div'); div.className = 'keyword-item';
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'keyword-info';
+            const infoDiv = document.createElement('div'); infoDiv.className = 'keyword-info';
             const wordDiv = document.createElement('div'); wordDiv.className = 'keyword-word'; wordDiv.textContent = item.phrase;
             const statsDiv = document.createElement('div'); statsDiv.className = 'keyword-stats';
             statsDiv.textContent = `出現:${item.count}回 / ${item.phraseTokCost}tok×${item.count}→1tok×${item.count} / ${engineLabel}節約:${item.saving}ﾄｰｸﾝ`;
@@ -3410,7 +3310,7 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
             const addBtn = document.createElement('button'); addBtn.className = 'add-keyword-btn'; addBtn.textContent = '+ 辞書へ';
             addBtn.addEventListener('click', () => {
                 const cd = dictArea.value;
-                const autoAbbr = generateOptimalAbbr(index + 1, text, new Map());
+                const autoAbbr = pickAliasForPhrase(item.phrase, index + 1, text, new Map(), null);
                 _usedAbbrs.delete(autoAbbr);
                 const ne = `${item.phrase}=${autoAbbr}`;
                 if (cd.includes(item.phrase + '=')) { showToast('既に辞書に登録済みです'); return; }
@@ -3427,7 +3327,7 @@ document.getElementById('extractKeywordsBtn').addEventListener('click', () => {
 document.getElementById('closeKeywordDialog').addEventListener('click', () => { document.getElementById('keywordDialog').close(); });
 
 // ============================================================
-// Auto Compress Button (greedy / legacy_batch / bruteforce / GA)
+// 自動圧縮
 // ============================================================
 document.getElementById('autoCompressBtn').addEventListener('click', async () => {
     syncCombinedInput();
@@ -3437,49 +3337,26 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
     resetHighlightMode();
 
     const provider = appSettings.tokenCalcProvider || 'openai';
-    const algorithm = autoCompressAlgorithmSelect.value || 'greedy';
-
+    const algorithm = autoCompressAlgorithmSelect.value || 'lazygreedy';
     try { await initLocalTokenizer(); } catch (e) {}
-
     const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;
     const analysisProfile = getParsedAnalysisProfile();
     const usableProfile = isAnalysisProfileCompatible(analysisProfile) ? analysisProfile : null;
 
     const inputTokensBefore = getExactTokenCount(text);
     const { replacedMap, bodyText } = extractExistingMappings(text);
-
     _usedAbbrs.clear();
     for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
 
-    let processedBody = bodyText;
-    let builtinCount = 0;
-
-    if (autoCompressApplyUmaInput.checked) {
-        const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
-        processedBody = r.text; builtinCount += r.count;
-        for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
-    }
-    if (autoCompressApplyPronounInput.checked) {
-        const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
-        processedBody = r.text; builtinCount += r.count;
-        for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
-    }
-
+    let processedBody = bodyText, builtinCount = 0;
+    if (autoCompressApplyUmaInput.checked) { const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap); processedBody = r.text; builtinCount += r.count; for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr); }
+    if (autoCompressApplyPronounInput.checked) { const r = applyBuiltinDict(processedBody, pronounMap, replacedMap); processedBody = r.text; builtinCount += r.count; for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr); }
     if (autoCompressTrimWhitespaceInput.checked) processedBody = trimWhitespaceForCompression(processedBody);
 
     let dialogueMergeCount = 0;
-    if (autoCompressMergeDialoguesInput.checked) {
-        const r = mergeConsecutiveDialogues(processedBody);
-        processedBody = r.text;
-        dialogueMergeCount = r.mergedCount;
-    }
-
+    if (autoCompressMergeDialoguesInput.checked) { const r = mergeConsecutiveDialogues(processedBody); processedBody = r.text; dialogueMergeCount = r.mergedCount; }
     let bracketReplacedCount = 0;
-    if (autoCompressReplaceBracketsInput.checked) {
-        const r = replaceBracketsLightweight(processedBody);
-        processedBody = r.text;
-        bracketReplacedCount = r.replacedCount;
-    }
+    if (autoCompressReplaceBracketsInput.checked) { const r = replaceBracketsLightweight(processedBody); processedBody = r.text; bracketReplacedCount = r.replacedCount; }
 
     const formatOptions = {
         mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
@@ -3487,77 +3364,70 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
         forceStrictHeader: autoCompressForceStrictHeaderInput ? autoCompressForceStrictHeaderInput.checked : false
     };
 
-    let analyzedAppliedCount = 0;
-    let newText = processedBody;
-
-    if (usableProfile) {
-        const guided = applyAnalyzedSuggestionsFirst(newText, replacedMap, formatOptions, usableProfile);
-        newText = guided.text;
-        analyzedAppliedCount = guided.appliedCount;
-    }
+    const preParseText = processedBody;
+    let analyzedAppliedCount = 0, newText = processedBody;
+    if (usableProfile) { const guided = applyAnalyzedSuggestionsFirst(newText, replacedMap, formatOptions, usableProfile); newText = guided.text; analyzedAppliedCount = guided.appliedCount; }
 
     const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
     const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
     const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
     const excludeAlnum = autoCompressExcludeAlnumInput.checked;
     const maxPasses = parseInt(autoCompressMaxPassesInput.value, 10) || 3;
-
-    let totalCompressedCount = 0;
+    const mapLimit = getMapEntryLimit();
+    let totalCompressedCount = 0, dpSaved = 0;
     const autoCompressBtn = document.getElementById('autoCompressBtn');
     autoCompressBtn.disabled = true;
 
     try {
-        if (algorithm === 'greedy') {
+        if (algorithm === 'lazygreedy') {
+            showCompressProgress(5, '候補を列挙中...');
+            await new Promise(r => setTimeout(r, 0));
+            const pool = parseInt(autoCompressCandidatePoolInput.value, 10) || 400;
+            const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, pool, excludeAlnum);
+            if (rawCandidates.length) {
+                const res = await lazyGreedyCompress(newText, rawCandidates, replacedMap, formatOptions, usableProfile, {
+                    maxEntries: mapLimit,
+                    maxExactEvals: parseInt(autoCompressMaxExactEvalsInput.value, 10) || 600
+                }, (pct, detail) => showCompressProgress(Math.min(95, 5 + Math.round(pct * 0.9)), detail));
+                newText = res.text; totalCompressedCount = res.committed;
+            }
+            const dp = tryOptimalParse(preParseText, replacedMap, newText, formatOptions, usableProfile);
+            if (dp) { newText = dp.text; replacedMap.clear(); dp.replacedMap.forEach((v, k) => replacedMap.set(k, v)); dpSaved = dp.saved; }
+            hideCompressProgress();
+        } else if (algorithm === 'greedy') {
             for (let pass = 0; pass < maxPasses; pass++) {
+                if (replacedMap.size >= mapLimit) break;
                 const rawCandidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
                 if (!rawCandidates.length) break;
                 const rescored = rescoreCompressionCandidatesExactly(newText, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
-                if (!rescored.length) break;
+                if (!rescored.length || rescored[0].gain <= 0) break;
                 const best = rescored[0];
-                if (!best || best.gain <= 0) break;
                 let finalAlias = best.alias;
-                if (!finalAlias || _usedAbbrs.has(finalAlias) || replacedMap.has(finalAlias) || newText.includes(finalAlias)) {
-                    finalAlias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + 1, newText, replacedMap, usableProfile);
-                } else { _usedAbbrs.add(finalAlias); }
+                if (!aliasIsFree(finalAlias, newText, replacedMap)) finalAlias = pickAliasForPhrase(best.phrase, replacedMap.size + totalCompressedCount + 1, newText, replacedMap, usableProfile);
+                else _usedAbbrs.add(finalAlias);
                 if (!finalAlias) break;
                 const exact = scoreReplacementExact(newText, replacedMap, best.phrase, finalAlias, formatOptions, usableProfile);
                 if (exact.gain <= 0) { _usedAbbrs.delete(finalAlias); break; }
-                newText = exact.replacedBody;
-                replacedMap.set(finalAlias, best.phrase);
-                totalCompressedCount++;
+                newText = exact.replacedBody; replacedMap.set(finalAlias, best.phrase); rememberStableAlias(best.phrase, finalAlias); totalCompressedCount++;
             }
         } else if (algorithm === 'legacy_batch') {
             let abbrIndex = replacedMap.size + 1;
             for (let pass = 0; pass < maxPasses; pass++) {
                 const candidates = findCompressionCandidatesTokenAware(newText, minLen, minCount, maxItems, excludeAlnum);
                 if (candidates.length === 0) break;
-
                 let passReplaced = false;
                 const abbrAssignment = new Map();
-
                 for (const cand of candidates) {
-                    let alreadyExists = false;
-                    for (const [, existingOriginal] of replacedMap.entries()) {
-                        if (existingOriginal === cand.phrase) { alreadyExists = true; break; }
-                    }
-                    if (alreadyExists) continue;
-
-                    let abbr = chooseAliasWithAnalysis(abbrIndex, newText, replacedMap, usableProfile);
-                    if (!abbr) abbr = generateOptimalAbbr(abbrIndex, newText, replacedMap);
-                    
-                    abbrAssignment.set(cand.phrase, abbr);
-                    abbrIndex++;
+                    if (replacedMap.size + abbrAssignment.size >= mapLimit) break;
+                    if (hasOriginalInMap(replacedMap, cand.phrase)) continue;
+                    const abbr = pickAliasForPhrase(cand.phrase, abbrIndex, newText, replacedMap, usableProfile);
+                    if (!abbr) continue;
+                    abbrAssignment.set(cand.phrase, abbr); abbrIndex++;
                 }
-
                 const sortedForReplace = [...abbrAssignment.entries()].sort((a, b) => b[0].length - a[0].length);
                 for (const [original, abbr] of sortedForReplace) {
                     const regex = new RegExp(escRegex(original), 'g');
-                    if (regex.test(newText)) {
-                        newText = newText.replace(regex, abbr);
-                        replacedMap.set(abbr, original);
-                        passReplaced = true;
-                        totalCompressedCount++;
-                    }
+                    if (regex.test(newText)) { newText = newText.replace(regex, abbr); replacedMap.set(abbr, original); rememberStableAlias(original, abbr); passReplaced = true; totalCompressedCount++; }
                 }
                 if (!passReplaced) break;
             }
@@ -3572,7 +3442,7 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
                     const result = await bruteForceCompress(newText, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(pct, detail));
                     const applied = applySolution(newText, assigned, result.bits, replacedMap);
                     newText = applied.text;
-                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    for (const [k, v] of applied.replacedMap) if (!replacedMap.has(k)) replacedMap.set(k, v);
                     totalCompressedCount = result.bits.filter(b => b).length;
                     hideCompressProgress();
                 }
@@ -3594,7 +3464,7 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
                     const result = await gaCompress(newText, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(pct, detail));
                     const applied = applySolution(newText, assigned, result.bits, replacedMap);
                     newText = applied.text;
-                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    for (const [k, v] of applied.replacedMap) if (!replacedMap.has(k)) replacedMap.set(k, v);
                     totalCompressedCount = result.bits.filter(b => b).length;
                     hideCompressProgress();
                 }
@@ -3607,51 +3477,41 @@ document.getElementById('autoCompressBtn').addEventListener('click', async () =>
         autoCompressBtn.disabled = false;
         return;
     }
-
     autoCompressBtn.disabled = false;
 
-    if (totalCompressedCount === 0 && analyzedAppliedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) {
-        showToast('自動圧縮できるワードがありませんでした');
-        return;
-    }
+    if (totalCompressedCount === 0 && analyzedAppliedCount === 0 && dialogueMergeCount === 0 && bracketReplacedCount === 0 && builtinCount === 0) { showToast('自動圧縮できるワードがありませんでした'); return; }
 
-    const finalHeader = chooseBestCompressedHeader(replacedMap, newText, formatOptions, usableProfile);
-    const finalOutput = finalHeader + newText;
-
+    const finalOutput = chooseBestCompressedHeader(replacedMap, newText, formatOptions, usableProfile) + newText;
     outputEl.value = finalOutput;
     updateCounts();
+    if (stableAliasEnabled()) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); }
     saveWorkspaceDebounced();
 
     const outputTokensAfter = getExactTokenCount(finalOutput);
     const saved = inputTokensBefore - outputTokensAfter;
     const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
-
     const parts = [];
     if (builtinCount > 0) parts.push(`内蔵辞書${builtinCount}件`);
     if (analyzedAppliedCount > 0) parts.push(`分析候補${analyzedAppliedCount}語`);
     if (totalCompressedCount > 0) {
-        let algoName = '自動';
-        if (algorithm === 'greedy') algoName = '貪欲';
-        else if (algorithm === 'legacy_batch') algoName = '一括';
-        else if (algorithm === 'bruteforce') algoName = '全探索';
-        else if (algorithm === 'ga') algoName = 'GA';
-        parts.push(`${algoName}${totalCompressedCount}語`);
+        const nameMap = { lazygreedy: '遅延貪欲', greedy: '貪欲', legacy_batch: '一括', bruteforce: '全探索', ga: 'GA' };
+        parts.push(`${nameMap[algorithm] || '自動'}${totalCompressedCount}語`);
     }
+    if (dpSaved > 0) parts.push(`DP最適化↓${dpSaved}`);
     if (dialogueMergeCount > 0) parts.push(`セリフ${dialogueMergeCount}行結合`);
     if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
     const detail = parts.length ? `（${parts.join('・')}）` : '';
     const engineLabel = hasEncoder ? '🎯' : '≈';
-
     if (saved > 0) showToast(`🚀 ${engineLabel}${saved}トークン節約 (${pct}%↓) ${detail}`);
     else showToast(`🚀 圧縮完了 ${detail}`);
 });
 
 // ============================================================
-// Static Tokenizer Profile Generator
+// 静的トークナイザープロファイル
 // ============================================================
 function showStaticProgress(pct, detail) { staticProfileProgressDiv.style.display = 'block'; staticProfileProgressBar.style.width = pct + '%'; staticProfileProgressText.textContent = pct + '%'; staticProfileProgressDetail.textContent = detail || ''; }
 function hideStaticProgress() { staticProfileProgressDiv.style.display = 'none'; }
-
+function categorizePrintableChar(ch) { if (/[A-Z]/.test(ch)) return 'upper'; if (/[a-z]/.test(ch)) return 'lower'; if (/[0-9]/.test(ch)) return 'digit'; return 'symbol'; }
 function probeAsciiCharCosts() {
     const results = [];
     for (let cp = 0x21; cp <= 0x7E; cp++) {
@@ -3660,8 +3520,6 @@ function probeAsciiCharCosts() {
     }
     return results;
 }
-function categorizePrintableChar(ch) { if (/[A-Z]/.test(ch)) return 'upper'; if (/[a-z]/.test(ch)) return 'lower'; if (/[0-9]/.test(ch)) return 'digit'; return 'symbol'; }
-
 function probeJapaneseCharCosts(samplesPerCategory) {
     const categories = {
         hiragana: { start: 0x3041, end: 0x3096, label: 'ひらがな' },
@@ -3674,8 +3532,7 @@ function probeJapaneseCharCosts(samplesPerCategory) {
     };
     const results = {};
     for (const [key, cat] of Object.entries(categories)) {
-        const range = cat.end - cat.start + 1;
-        const step = Math.max(1, Math.floor(range / samplesPerCategory));
+        const step = Math.max(1, Math.floor((cat.end - cat.start + 1) / samplesPerCategory));
         const samples = [];
         for (let cp = cat.start; cp <= cat.end && samples.length < samplesPerCategory; cp += step) {
             const ch = String.fromCodePoint(cp);
@@ -3683,28 +3540,31 @@ function probeJapaneseCharCosts(samplesPerCategory) {
             samples.push({ char: ch, codepoint: cp, hex: 'U+' + cp.toString(16).toUpperCase().padStart(4, '0'), isolated_tokens: getExactTokenCount(ch) });
         }
         const costs = samples.map(s => s.isolated_tokens);
-        results[key] = { label: cat.label, range: `U+${cat.start.toString(16).toUpperCase()}-U+${cat.end.toString(16).toUpperCase()}`, sample_count: samples.length, avg_tokens: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(4)) : 0, min_tokens: costs.length ? Math.min(...costs) : 0, max_tokens: costs.length ? Math.max(...costs) : 0, samples: samples.slice(0, 20) };
+        results[key] = { label: cat.label, range: `U+${cat.start.toString(16).toUpperCase()}-U+${cat.end.toString(16).toUpperCase()}`, sample_count: samples.length, avg_tokens: costs.length ? Number(mean(costs).toFixed(4)) : 0, min_tokens: costs.length ? Math.min(...costs) : 0, max_tokens: costs.length ? Math.max(...costs) : 0, samples: samples.slice(0, 20) };
     }
     return results;
 }
-
+function categorizeAliasPattern(alias) {
+    if (/^[A-Z]$/.test(alias)) return '1-upper'; if (/^[a-z]$/.test(alias)) return '1-lower'; if (/^[0-9]$/.test(alias)) return '1-digit'; if (/^[^A-Za-z0-9]$/.test(alias)) return '1-symbol';
+    if (/^[A-Z]{2}$/.test(alias)) return '2-UU'; if (/^[A-Z][a-z]$/.test(alias)) return '2-Ul'; if (/^[A-Z][0-9]$/.test(alias)) return '2-Ud'; if (/^[a-z]{2}$/.test(alias)) return '2-ll'; if (/^[a-z][A-Z]$/.test(alias)) return '2-lU'; if (/^[^A-Za-z0-9][A-Za-z]$/.test(alias)) return '2-sX';
+    if (/^[A-Z]{2}[0-9]$/.test(alias)) return '3-UUd'; if (/^[^A-Za-z0-9][A-Z][0-9]$/.test(alias)) return '3-sUd'; if (/^[^A-Za-z0-9][A-Z]{2}$/.test(alias)) return '3-sUU';
+    return `${alias.length}-other`;
+}
 function probeAliasCosts(probeCount, keepCount) {
     const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower = 'abcdefghijklmnopqrstuvwxyz', digits = '0123456789', symbols = '@#~$%&*?!^';
-    const allChars = upper + lower + digits + symbols;
     const candidates = [], seen = new Set();
     function add(s) { if (seen.has(s) || candidates.length >= probeCount) return; seen.add(s); candidates.push(s); }
-    for (const ch of allChars) add(ch);
-    for (const a of upper) { for (const b of upper) add(a + b); }
-    for (const a of upper) { for (const b of lower) add(a + b); }
-    for (const a of upper) { for (const b of digits) add(a + b); }
-    for (const a of lower) { for (const b of upper) add(a + b); }
-    for (const a of lower) { for (const b of lower) add(a + b); }
-    for (const p of symbols) { for (const b of upper) add(p + b); }
-    for (const p of symbols) { for (const b of lower) add(p + b); }
+    for (const ch of upper + lower + digits + symbols) add(ch);
+    for (const a of upper) for (const b of upper) add(a + b);
+    for (const a of upper) for (const b of lower) add(a + b);
+    for (const a of upper) for (const b of digits) add(a + b);
+    for (const a of lower) for (const b of upper) add(a + b);
+    for (const a of lower) for (const b of lower) add(a + b);
+    for (const p of symbols) for (const b of upper) add(p + b);
+    for (const p of symbols) for (const b of lower) add(p + b);
     for (const a of upper) { for (const b of upper) { for (const c of digits) { add(a + b + c); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
     for (const p of symbols) { for (const a of upper) { for (const b of digits) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
     for (const p of symbols) { for (const a of upper) { for (const b of upper) { add(p + a + b); if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; } if (candidates.length >= probeCount) break; }
-
     const measured = candidates.map(alias => ({ alias, length: alias.length, isolated_tokens: getExactTokenCount(alias), pattern: categorizeAliasPattern(alias) }));
     measured.sort((a, b) => a.isolated_tokens - b.isolated_tokens || a.length - b.length || a.alias.localeCompare(b.alias));
     const oneTokenAliases = measured.filter(m => m.isolated_tokens <= 1);
@@ -3718,13 +3578,6 @@ function probeAliasCosts(probeCount, keepCount) {
     }
     return { total_probed: measured.length, one_token_count: oneTokenAliases.length, multi_token_count: multiTokenAliases.length, one_token_rate: measured.length ? Number((oneTokenAliases.length / measured.length * 100).toFixed(1)) : 0, pattern_stats: patternStats, best_aliases: oneTokenAliases.slice(0, keepCount).map(m => ({ alias: m.alias, length: m.length, isolated_tokens: m.isolated_tokens, pattern: m.pattern })), worst_examples: multiTokenAliases.slice(0, 30).map(m => ({ alias: m.alias, isolated_tokens: m.isolated_tokens, pattern: m.pattern })) };
 }
-function categorizeAliasPattern(alias) {
-    if (/^[A-Z]$/.test(alias)) return '1-upper'; if (/^[a-z]$/.test(alias)) return '1-lower'; if (/^[0-9]$/.test(alias)) return '1-digit'; if (/^[^A-Za-z0-9]$/.test(alias)) return '1-symbol';
-    if (/^[A-Z]{2}$/.test(alias)) return '2-UU'; if (/^[A-Z][a-z]$/.test(alias)) return '2-Ul'; if (/^[A-Z][0-9]$/.test(alias)) return '2-Ud'; if (/^[a-z]{2}$/.test(alias)) return '2-ll'; if (/^[a-z][A-Z]$/.test(alias)) return '2-lU'; if (/^[^A-Za-z0-9][A-Za-z]$/.test(alias)) return '2-sX';
-    if (/^[A-Z]{2}[0-9]$/.test(alias)) return '3-UUd'; if (/^[^A-Za-z0-9][A-Z][0-9]$/.test(alias)) return '3-sUd'; if (/^[^A-Za-z0-9][A-Z]{2}$/.test(alias)) return '3-sUU';
-    return `${alias.length}-other`;
-}
-
 function probeSeparatorCosts() {
     const separators = ['=', ':', '|', '>', '/', ';', '-', '~', ',', '\t', ' '];
     const contexts = [['AA', '主人公'], ['BB', 'トウカイテイオー'], ['CC', 'メジロマックイーン'], ['Q1', 'スペシャルウィーク'], ['ZZ', '会長'], ['@A', '短い'], ['#B', 'やや長めのテスト文字列']];
@@ -3733,7 +3586,6 @@ function probeSeparatorCosts() {
         return { separator: sep, display: sep === '\t' ? '\\t' : sep === ' ' ? '[space]' : sep, avg_line_tokens: Number(mean(costs).toFixed(4)), min_line_tokens: Math.min(...costs), max_line_tokens: Math.max(...costs), samples: contexts.map(([alias, value], i) => ({ line: `${alias}${sep}${value}`, tokens: costs[i] })) };
     }).sort((a, b) => a.avg_line_tokens - b.avg_line_tokens);
 }
-
 function probeHeaderTemplateCosts(aliasPool, exhaustive) {
     const samplePairs = [['主人公', 'MC向けテスト'], ['トウカイテイオー', 'キャラ名'], ['メジロマックイーン', '長めの名前'], ['スペシャルウィーク', '4つ目']];
     const topAliases = aliasPool.slice(0, 4).map(a => a.alias || a);
@@ -3744,13 +3596,9 @@ function probeHeaderTemplateCosts(aliasPool, exhaustive) {
         const extraPrefixes = ['', '@\n', '#\n', '---\n'];
         const extraSuffixes = ['--\n', '#\n', '>\n', '---\n', '\n'];
         const extraEntryFormats = ['{alias}={value}\n', '{alias}:{value}\n', '{alias}|{value}\n', '{alias}>{value}\n', '{alias}/{value}\n', '@{alias}={value}\n', '{alias} = {value}\n'];
-        for (const prefix of extraPrefixes) { for (const entry of extraEntryFormats) { for (const suffix of extraSuffixes) {
-                    const name = `custom_${prefix.trim()||'none'}_${entry.charAt(entry.indexOf('{value}') - 1)}_${suffix.trim()||'none'}`;
-                    if (!templates.find(t => t.prefix === prefix && t.entry === entry && t.suffix === suffix)) {
-                        templates.push({ name, prefix, entry, suffix });
-                    }
-                }
-            }
+        for (const prefix of extraPrefixes) for (const entry of extraEntryFormats) for (const suffix of extraSuffixes) {
+            const name = `custom_${prefix.trim() || 'none'}_${entry.charAt(entry.indexOf('{value}') - 1)}_${suffix.trim() || 'none'}`;
+            if (!templates.find(t => t.prefix === prefix && t.entry === entry && t.suffix === suffix)) templates.push({ name, prefix, entry, suffix });
         }
     }
     return templates.map(tpl => {
@@ -3759,34 +3607,21 @@ function probeHeaderTemplateCosts(aliasPool, exhaustive) {
         return { name: tpl.name, template: tpl, token_cost: tokens, rendered_preview: rendered.slice(0, 300), rendered_length: rendered.length, tokens_per_entry: pairs.length ? Number((tokens / pairs.length).toFixed(2)) : 0 };
     }).sort((a, b) => a.token_cost - b.token_cost);
 }
-
 function probeContextDependentCosts(aliasPool) {
     const topAliases = aliasPool.slice(0, 20).map(a => a.alias || a);
     const contexts = [
-        { name: 'bare', left: '', right: '' },
-        { name: 'after_space', left: ' ', right: '' },
-        { name: 'after_newline', left: '\n', right: '' },
-        { name: 'in_hiragana', left: 'あいう', right: 'えお' },
-        { name: 'in_katakana', left: 'アイウ', right: 'エオ' },
-        { name: 'in_kanji', left: '東京都', right: '大阪府' },
-        { name: 'after_bracket', left: '「', right: '」' },
-        { name: 'after_colon', left: ':', right: '' },
-        { name: 'in_english', left: 'hello', right: 'world' },
-        { name: 'after_eq_header', left: 'XX=テスト\n', right: '' },
-        { name: 'sentence_start', left: '。\n', right: 'は' },
-        { name: 'dialogue_name', left: '', right: '>おはよう' }
+        { name: 'bare', left: '', right: '' }, { name: 'after_space', left: ' ', right: '' }, { name: 'after_newline', left: '\n', right: '' },
+        { name: 'in_hiragana', left: 'あいう', right: 'えお' }, { name: 'in_katakana', left: 'アイウ', right: 'エオ' }, { name: 'in_kanji', left: '東京都', right: '大阪府' },
+        { name: 'after_bracket', left: '「', right: '」' }, { name: 'after_colon', left: ':', right: '' }, { name: 'in_english', left: 'hello', right: 'world' },
+        { name: 'after_eq_header', left: 'XX=テスト\n', right: '' }, { name: 'sentence_start', left: '。\n', right: 'は' }, { name: 'dialogue_name', left: '', right: '>おはよう' }
     ];
     return topAliases.map(alias => {
-        const contextCosts = contexts.map(ctx => {
-            const without = getExactTokenCount(ctx.left + ctx.right);
-            const withAlias = getExactTokenCount(ctx.left + alias + ctx.right);
-            return { context: ctx.name, marginal_cost: withAlias - without };
-        });
+        const contextCosts = contexts.map(ctx => ({ context: ctx.name, marginal_cost: getExactTokenCount(ctx.left + alias + ctx.right) - getExactTokenCount(ctx.left + ctx.right) }));
         const costs = contextCosts.map(c => c.marginal_cost);
-        return { alias, avg_marginal: Number(mean(costs).toFixed(4)), min_marginal: Math.min(...costs), max_marginal: Math.max(...costs), variance: Number((costs.reduce((sum, c) => sum + Math.pow(c - mean(costs), 2), 0) / costs.length).toFixed(4)), by_context: contextCosts };
+        const m = mean(costs);
+        return { alias, avg_marginal: Number(m.toFixed(4)), min_marginal: Math.min(...costs), max_marginal: Math.max(...costs), variance: Number((costs.reduce((s, c) => s + Math.pow(c - m, 2), 0) / costs.length).toFixed(4)), by_context: contextCosts };
     });
 }
-
 function probeJapaneseCompressionPatterns() {
     const patterns = [
         { name: 'dialogue_bracket_to_gt', before: '太郎「おはようございます」', after: '太郎>おはようございます', description: 'Replace Japanese brackets with GT for dialogue' },
@@ -3799,78 +3634,50 @@ function probeJapaneseCompressionPatterns() {
     ];
     return patterns.map(p => ({ ...p, before_tokens: getExactTokenCount(p.before), after_tokens: getExactTokenCount(p.after), gain: getExactTokenCount(p.before) - getExactTokenCount(p.after) }));
 }
-
 function probeBoundaryEffects(aliasPool) {
     const testPhrases = ['おはようございます', 'トウカイテイオー', 'メジロマックイーン', 'スペシャルウィーク', '主人公', '魔法少女', 'レース場', 'トレーニング', '先輩', '大丈夫'];
     const topAliases = aliasPool.slice(0, 5).map(a => a.alias || a);
     const results = [];
-    for (const phrase of testPhrases) {
-        for (const alias of topAliases) {
-            const sentence = `彼は${phrase}と言った。${phrase}は大事だ。`;
-            const replaced = sentence.split(phrase).join(alias);
-            const beforeTok = getExactTokenCount(sentence);
-            const afterTok = getExactTokenCount(replaced);
-            const occurrences = 2;
-            const phraseTok = getExactTokenCount(phrase);
-            const aliasTok = getExactTokenCount(alias);
-            const expectedGain = (phraseTok - aliasTok) * occurrences;
-            const actualGain = beforeTok - afterTok;
-            const boundaryEffect = actualGain - expectedGain;
-            results.push({ phrase, alias, phrase_tokens: phraseTok, alias_tokens: aliasTok, expected_gain: expectedGain, actual_gain: actualGain, boundary_effect: boundaryEffect, boundary_effect_description: boundaryEffect > 0 ? 'bonus (boundary merge)' : boundaryEffect < 0 ? 'penalty (boundary split)' : 'neutral' });
-        }
+    for (const phrase of testPhrases) for (const alias of topAliases) {
+        const sentence = `彼は${phrase}と言った。${phrase}は大事だ。`;
+        const replaced = sentence.split(phrase).join(alias);
+        const phraseTok = getExactTokenCount(phrase), aliasTok = getExactTokenCount(alias);
+        const expectedGain = (phraseTok - aliasTok) * 2;
+        const actualGain = getExactTokenCount(sentence) - getExactTokenCount(replaced);
+        const boundaryEffect = actualGain - expectedGain;
+        results.push({ phrase, alias, phrase_tokens: phraseTok, alias_tokens: aliasTok, expected_gain: expectedGain, actual_gain: actualGain, boundary_effect: boundaryEffect, boundary_effect_description: boundaryEffect > 0 ? 'bonus (boundary merge)' : boundaryEffect < 0 ? 'penalty (boundary split)' : 'neutral' });
     }
     return results;
 }
-
 async function generateStaticProfile(onProgress) {
     const provider = appSettings.tokenCalcProvider || 'openai';
     const entry = localTokenizers[provider];
     if (!entry || entry.status !== 'ready') throw new Error('トークナイザーが準備できていません');
-
     const aliasCount = parseInt(staticProbeAliasCountInput.value, 10) || 5000;
     const aliasKeep = parseInt(staticProbeAliasKeepInput.value, 10) || 500;
     const jaSamples = parseInt(staticProbeJaSamplesInput.value, 10) || 100;
     const exhaustiveHeader = staticProbeExhaustiveHeaderToggle.checked;
     const contextCost = staticProbeContextCostToggle.checked;
 
-    onProgress(5, 'Probing ASCII character costs...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(5, 'Probing ASCII character costs...'); await new Promise(r => setTimeout(r, 0));
     const asciiCosts = probeAsciiCharCosts();
-
-    onProgress(15, 'Probing Japanese character categories...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(15, 'Probing Japanese character categories...'); await new Promise(r => setTimeout(r, 0));
     const jaCosts = probeJapaneseCharCosts(jaSamples);
-
-    onProgress(30, `Probing ${aliasCount} alias candidates...`);
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(30, `Probing ${aliasCount} alias candidates...`); await new Promise(r => setTimeout(r, 0));
     const aliasCosts = probeAliasCosts(aliasCount, aliasKeep);
-
-    onProgress(55, 'Probing separator costs...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(55, 'Probing separator costs...'); await new Promise(r => setTimeout(r, 0));
     const separatorCosts = probeSeparatorCosts();
-
-    onProgress(65, 'Probing header template costs...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(65, 'Probing header template costs...'); await new Promise(r => setTimeout(r, 0));
     const headerCosts = probeHeaderTemplateCosts(aliasCosts.best_aliases, exhaustiveHeader);
-
-    onProgress(75, 'Probing Japanese compression patterns...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(75, 'Probing Japanese compression patterns...'); await new Promise(r => setTimeout(r, 0));
     const jpPatterns = probeJapaneseCompressionPatterns();
-
-    onProgress(80, 'Probing token boundary effects...');
-    await new Promise(r => setTimeout(r, 0));
+    onProgress(80, 'Probing token boundary effects...'); await new Promise(r => setTimeout(r, 0));
     const boundaryEffects = probeBoundaryEffects(aliasCosts.best_aliases);
-
     let contextDependentCosts = null;
-    if (contextCost) {
-        onProgress(88, 'Probing context-dependent costs (slow)...');
-        await new Promise(r => setTimeout(r, 0));
-        contextDependentCosts = probeContextDependentCosts(aliasCosts.best_aliases);
-    }
-
+    if (contextCost) { onProgress(88, 'Probing context-dependent costs (slow)...'); await new Promise(r => setTimeout(r, 0)); contextDependentCosts = probeContextDependentCosts(aliasCosts.best_aliases); }
     onProgress(95, 'Building profile...');
 
-    const profile = {
+    return {
         schema: 'toolbox-static-tokenizer-profile.v1',
         created_at: new Date().toISOString(),
         purpose: 'This is a static analysis of a tokenizer\'s structural characteristics. It does NOT depend on any specific input text. Use this profile to design compression strategies for the target tokenizer.',
@@ -3882,227 +3689,104 @@ async function generateStaticProfile(onProgress) {
             'The japanese_compression_patterns show which common Japanese formatting transformations save tokens.',
             'The boundary_effects section shows how replacing a phrase with an alias can cause unexpected token count changes due to tokenizer boundary shifts.',
             'If context_dependent_costs is present, it shows how the same alias costs different amounts depending on surrounding text.',
-            'Design a compression algorithm that: (1) uses 1-token aliases, (2) uses the cheapest header format, (3) accounts for boundary effects, (4) applies Japanese formatting optimizations where they save tokens.'
+            'Design a compression algorithm that: (1) uses 1-token aliases, (2) uses the cheapest header format, (3) accounts for boundary effects, (4) applies Japanese formatting optimizations where they save tokens.',
+            'Prefer a lazy-greedy (CELF) selection over exhaustive search: the objective is near-submodular, so greedy is close to optimal at a fraction of the cost.',
+            'Keep the mapping table small (roughly 40 entries or fewer): each extra alias costs the reading model accuracy.'
         ],
-        target: {
-            backend: provider,
-            tokenizer_type: entry._type,
-            display_name: provider,
-            precise_mode: provider === 'deepseek' ? !!appSettings.deepseekPreciseTokenizer : null
-        },
-        probe_settings: {
-            alias_probe_count: aliasCount,
-            alias_keep_count: aliasKeep,
-            ja_samples_per_category: jaSamples,
-            exhaustive_header_search: exhaustiveHeader,
-            context_dependent_cost_enabled: contextCost
-        },
-        ascii_char_costs: asciiCosts,
-        japanese_char_costs: jaCosts,
-        alias_analysis: aliasCosts,
-        separator_analysis: separatorCosts,
-        header_templates: headerCosts,
-        japanese_compression_patterns: jpPatterns,
-        boundary_effects: boundaryEffects,
-        context_dependent_costs: contextDependentCosts,
+        target: { backend: provider, tokenizer_type: entry._type, display_name: provider, precise_mode: provider === 'deepseek' ? !!appSettings.deepseekPreciseTokenizer : null },
+        probe_settings: { alias_probe_count: aliasCount, alias_keep_count: aliasKeep, ja_samples_per_category: jaSamples, exhaustive_header_search: exhaustiveHeader, context_dependent_cost_enabled: contextCost },
+        ascii_char_costs: asciiCosts, japanese_char_costs: jaCosts, alias_analysis: aliasCosts, separator_analysis: separatorCosts,
+        header_templates: headerCosts, japanese_compression_patterns: jpPatterns, boundary_effects: boundaryEffects, context_dependent_costs: contextDependentCosts,
         summary: {
-            best_1token_alias_patterns: Object.entries(aliasCosts.pattern_stats)
-                .map(([pat, stat]) => ({ pattern: pat, one_token_rate: stat.total ? Number((stat.one_token / stat.total * 100).toFixed(1)) : 0, count: stat.one_token, examples: stat.examples }))
-                .sort((a, b) => b.one_token_rate - a.one_token_rate || b.count - a.count),
+            best_1token_alias_patterns: Object.entries(aliasCosts.pattern_stats).map(([pat, stat]) => ({ pattern: pat, one_token_rate: stat.total ? Number((stat.one_token / stat.total * 100).toFixed(1)) : 0, count: stat.one_token, examples: stat.examples })).sort((a, b) => b.one_token_rate - a.one_token_rate || b.count - a.count),
             best_separator: separatorCosts[0]?.separator || '=',
             best_header_template: headerCosts[0]?.name || 'unknown',
             best_header_token_cost: headerCosts[0]?.token_cost || 0,
             jp_patterns_with_gain: jpPatterns.filter(p => p.gain > 0).map(p => p.name),
-            boundary_effect_summary: {
-                avg_effect: Number(mean(boundaryEffects.map(b => b.boundary_effect)).toFixed(4)),
-                positive_count: boundaryEffects.filter(b => b.boundary_effect > 0).length,
-                negative_count: boundaryEffects.filter(b => b.boundary_effect < 0).length,
-                neutral_count: boundaryEffects.filter(b => b.boundary_effect === 0).length
-            }
+            boundary_effect_summary: { avg_effect: Number(mean(boundaryEffects.map(b => b.boundary_effect)).toFixed(4)), positive_count: boundaryEffects.filter(b => b.boundary_effect > 0).length, negative_count: boundaryEffects.filter(b => b.boundary_effect < 0).length, neutral_count: boundaryEffects.filter(b => b.boundary_effect === 0).length }
         }
     };
-
-    return profile;
 }
-
 function formatStaticProfileAsText(profile) {
-    const lines = [];
-    const hr = '='.repeat(72);
-    const hr2 = '-'.repeat(72);
-
-    lines.push(hr);
-    lines.push('STATIC TOKENIZER PROFILE');
-    lines.push(hr);
-    lines.push('');
-    lines.push(`Schema       : ${profile.schema}`);
-    lines.push(`Created      : ${profile.created_at}`);
-    lines.push(`Target       : ${profile.target.display_name} (${profile.target.backend})`);
-    lines.push(`Tokenizer    : ${profile.target.tokenizer_type}`);
-    if (profile.target.precise_mode !== null) {
-        lines.push(`Precise mode : ${profile.target.precise_mode}`);
-    }
-    lines.push('');
-    lines.push('PURPOSE:');
-    lines.push(profile.purpose);
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('INSTRUCTIONS FOR AI ANALYSIS');
-    lines.push(hr2);
-    profile.instructions_for_ai.forEach((inst, i) => {
-        lines.push(`${i + 1}. ${inst}`);
-    });
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('SUMMARY');
-    lines.push(hr2);
+    const lines = [], hr = '='.repeat(72), hr2 = '-'.repeat(72);
+    lines.push(hr, 'STATIC TOKENIZER PROFILE', hr, '');
+    lines.push(`Schema       : ${profile.schema}`, `Created      : ${profile.created_at}`, `Target       : ${profile.target.display_name} (${profile.target.backend})`, `Tokenizer    : ${profile.target.tokenizer_type}`);
+    if (profile.target.precise_mode !== null) lines.push(`Precise mode : ${profile.target.precise_mode}`);
+    lines.push('', 'PURPOSE:', profile.purpose, '');
+    lines.push(hr2, 'INSTRUCTIONS FOR AI ANALYSIS', hr2);
+    profile.instructions_for_ai.forEach((inst, i) => lines.push(`${i + 1}. ${inst}`));
+    lines.push('', hr2, 'SUMMARY', hr2);
     const s = profile.summary;
-    lines.push(`Best separator       : "${s.best_separator}"`);
-    lines.push(`Best header template : ${s.best_header_template} (cost=${s.best_header_token_cost} tokens)`);
-    lines.push(`JP patterns with gain: ${s.jp_patterns_with_gain.join(', ') || 'none'}`);
-    lines.push('');
+    lines.push(`Best separator       : "${s.best_separator}"`, `Best header template : ${s.best_header_template} (cost=${s.best_header_token_cost} tokens)`, `JP patterns with gain: ${s.jp_patterns_with_gain.join(', ') || 'none'}`, '');
     lines.push('Alias pattern effectiveness (1-token rate):');
-    s.best_1token_alias_patterns.forEach(p => {
-        lines.push(`  ${p.pattern.padEnd(12)} : ${p.one_token_rate}% (${p.count} aliases) e.g. ${p.examples.join(', ')}`);
-    });
-    lines.push('');
-    lines.push('Boundary effects:');
+    s.best_1token_alias_patterns.forEach(p => lines.push(`  ${p.pattern.padEnd(12)} : ${p.one_token_rate}% (${p.count} aliases) e.g. ${p.examples.join(', ')}`));
+    lines.push('', 'Boundary effects:');
     const be = s.boundary_effect_summary;
-    lines.push(`  avg=${be.avg_effect}  bonus=${be.positive_count}  penalty=${be.negative_count}  neutral=${be.neutral_count}`);
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push(`ALIAS POOL (top ${Math.min(profile.alias_analysis.best_aliases.length, 200)} of ${profile.alias_analysis.total_probed} probed, ${profile.alias_analysis.one_token_count} are 1-token)`);
-    lines.push(hr2);
+    lines.push(`  avg=${be.avg_effect}  bonus=${be.positive_count}  penalty=${be.negative_count}  neutral=${be.neutral_count}`, '');
+    lines.push(hr2, `ALIAS POOL (top ${Math.min(profile.alias_analysis.best_aliases.length, 200)} of ${profile.alias_analysis.total_probed} probed, ${profile.alias_analysis.one_token_count} are 1-token)`, hr2);
     const topAliases = profile.alias_analysis.best_aliases.slice(0, 200);
-    for (let i = 0; i < topAliases.length; i += 20) {
-        lines.push('  ' + topAliases.slice(i, i + 20).map(a => a.alias).join(', '));
-    }
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('SEPARATOR COSTS');
-    lines.push(hr2);
-    profile.separator_analysis.forEach(sep => {
-        lines.push(`  "${sep.display}" : avg=${sep.avg_line_tokens} tokens/line (min=${sep.min_line_tokens}, max=${sep.max_line_tokens})`);
-    });
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('HEADER TEMPLATE RANKING (top 10)');
-    lines.push(hr2);
-    profile.header_templates.slice(0, 10).forEach((h, i) => {
-        lines.push(`  #${i + 1} ${h.name} : ${h.token_cost} tokens (${h.tokens_per_entry} per entry)`);
-        lines.push(`      Preview: ${h.rendered_preview.replace(/\n/g, '\\n').slice(0, 120)}`);
-    });
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('JAPANESE COMPRESSION PATTERNS');
-    lines.push(hr2);
+    for (let i = 0; i < topAliases.length; i += 20) lines.push('  ' + topAliases.slice(i, i + 20).map(a => a.alias).join(', '));
+    lines.push('', hr2, 'SEPARATOR COSTS', hr2);
+    profile.separator_analysis.forEach(sep => lines.push(`  "${sep.display}" : avg=${sep.avg_line_tokens} tokens/line (min=${sep.min_line_tokens}, max=${sep.max_line_tokens})`));
+    lines.push('', hr2, 'HEADER TEMPLATE RANKING (top 10)', hr2);
+    profile.header_templates.slice(0, 10).forEach((h, i) => { lines.push(`  #${i + 1} ${h.name} : ${h.token_cost} tokens (${h.tokens_per_entry} per entry)`); lines.push(`      Preview: ${h.rendered_preview.replace(/\n/g, '\\n').slice(0, 120)}`); });
+    lines.push('', hr2, 'JAPANESE COMPRESSION PATTERNS', hr2);
     profile.japanese_compression_patterns.forEach(p => {
         const marker = p.gain > 0 ? '✓' : p.gain === 0 ? '=' : '✗';
-        lines.push(`  ${marker} ${p.name}: ${p.description}`);
-        lines.push(`    before=${p.before_tokens}tok  after=${p.after_tokens}tok  gain=${p.gain}`);
-        lines.push(`    "${p.before}" -> "${p.after}"`);
+        lines.push(`  ${marker} ${p.name}: ${p.description}`, `    before=${p.before_tokens}tok  after=${p.after_tokens}tok  gain=${p.gain}`, `    "${p.before}" -> "${p.after}"`);
     });
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('BOUNDARY EFFECT SAMPLES');
-    lines.push(hr2);
+    lines.push('', hr2, 'BOUNDARY EFFECT SAMPLES', hr2);
     const grouped = {};
-    profile.boundary_effects.forEach(b => {
-        if (!grouped[b.phrase]) grouped[b.phrase] = [];
-        grouped[b.phrase].push(b);
-    });
+    profile.boundary_effects.forEach(b => { (grouped[b.phrase] || (grouped[b.phrase] = [])).push(b); });
     for (const [phrase, effects] of Object.entries(grouped)) {
         lines.push(`  Phrase: "${phrase}" (${effects[0].phrase_tokens} tokens)`);
-        effects.forEach(e => {
-            lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`);
-        });
+        effects.forEach(e => lines.push(`    -> ${e.alias}: expected_gain=${e.expected_gain}, actual_gain=${e.actual_gain}, boundary_effect=${e.boundary_effect} (${e.boundary_effect_description})`));
     }
     lines.push('');
-
     if (profile.context_dependent_costs) {
-        lines.push(hr2);
-        lines.push('CONTEXT-DEPENDENT ALIAS COSTS');
-        lines.push(hr2);
+        lines.push(hr2, 'CONTEXT-DEPENDENT ALIAS COSTS', hr2);
         profile.context_dependent_costs.forEach(c => {
             lines.push(`  ${c.alias}: avg=${c.avg_marginal} min=${c.min_marginal} max=${c.max_marginal} variance=${c.variance}`);
-            c.by_context.forEach(ctx => {
-                lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`);
-            });
+            c.by_context.forEach(ctx => lines.push(`    ${ctx.context.padEnd(20)}: ${ctx.marginal_cost} tokens`));
         });
         lines.push('');
     }
-
-    lines.push(hr2);
-    lines.push('ASCII CHARACTER COSTS');
-    lines.push(hr2);
+    lines.push(hr2, 'ASCII CHARACTER COSTS', hr2);
     const byCat = { upper: [], lower: [], digit: [], symbol: [] };
     profile.ascii_char_costs.forEach(c => { if (byCat[c.category]) byCat[c.category].push(c); });
-    for (const [cat, chars] of Object.entries(byCat)) {
-        const costs = chars.map(c => c.isolated_tokens);
-        lines.push(`  ${cat}: avg=${mean(costs).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);
-    }
-    lines.push('');
-
-    lines.push(hr2);
-    lines.push('JAPANESE CHARACTER CATEGORY COSTS');
-    lines.push(hr2);
-    for (const [key, cat] of Object.entries(profile.japanese_char_costs)) {
-        lines.push(`  ${cat.label} (${cat.range}): avg=${cat.avg_tokens} min=${cat.min_tokens} max=${cat.max_tokens} (${cat.sample_count} samples)`);
-    }
-    lines.push('');
-
-    lines.push(hr);
-    lines.push('END OF STATIC PROFILE');
-    lines.push(hr);
-
+    for (const [cat, chars] of Object.entries(byCat)) lines.push(`  ${cat}: avg=${mean(chars.map(c => c.isolated_tokens)).toFixed(2)} tokens  [${chars.map(c => `${c.char}=${c.isolated_tokens}`).join(', ')}]`);
+    lines.push('', hr2, 'JAPANESE CHARACTER CATEGORY COSTS', hr2);
+    for (const [, cat] of Object.entries(profile.japanese_char_costs)) lines.push(`  ${cat.label} (${cat.range}): avg=${cat.avg_tokens} min=${cat.min_tokens} max=${cat.max_tokens} (${cat.sample_count} samples)`);
+    lines.push('', hr, 'END OF STATIC PROFILE', hr);
     return lines.join('\n');
 }
-
 runStaticProfileBtn.addEventListener('click', async () => {
     const provider = appSettings.tokenCalcProvider || 'openai';
     runStaticProfileBtn.disabled = true;
     staticProfileNotice.textContent = 'トークナイザーを準備しています…';
-
     try {
         await initLocalTokenizer();
         const entry = localTokenizers[provider];
         if (!entry || entry.status !== 'ready') throw new Error('トークナイザーの準備に失敗しました');
-
-        const profile = await generateStaticProfile((pct, detail) => {
-            showStaticProgress(pct, detail);
-        });
-
-        const textOutput = formatStaticProfileAsText(profile);
-
-        analysisOutputs.static = textOutput;
-
+        const profile = await generateStaticProfile((pct, detail) => showStaticProgress(pct, detail));
+        analysisOutputs.static = formatStaticProfileAsText(profile);
         analysisActiveTab = 'static';
         renderAnalysisTab();
         saveWorkspaceDebounced();
-
         showStaticProgress(100, 'Complete');
         setTimeout(hideStaticProgress, 1500);
         staticProfileNotice.textContent = `完了: ${provider} / 略号${profile.alias_analysis.one_token_count}件が1トークン / best header="${profile.summary.best_header_template}"`;
         showToast('静的プロファイル生成完了');
-
     } catch (err) {
         console.error(err);
         staticProfileNotice.textContent = `失敗: ${err.message || err}`;
         showToast('静的プロファイル生成に失敗しました');
         hideStaticProgress();
-    } finally {
-        runStaticProfileBtn.disabled = false;
-    }
+    } finally { runStaticProfileBtn.disabled = false; }
 });
 
 // ============================================================
-// Highlight mode
+// ハイライト表示
 // ============================================================
 function getHighlightedHTML(text, searchStr = '') {
     if (!text) return '';
@@ -4113,22 +3797,20 @@ function getHighlightedHTML(text, searchStr = '') {
             else html += escapeHtml(parts[i]);
         }
         return html;
-    } else {
-        const ml = 8; if (text.length < ml) return escapeHtml(text);
-        let hm = new Array(text.length).fill(false); let ng = new Map();
-        for (let i = 0; i <= text.length - ml; i++) { let sub = text.substring(i, i + ml); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }
-        for (let [, indices] of ng.entries()) { if (indices.length > 1) { for (let idx of indices) { for (let k = 0; k < ml; k++) hm[idx + k] = true; } } }
-        let html = '', inH = false;
-        for (let i = 0; i < text.length; i++) {
-            if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`; inH = true; }
-            else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
-            html += escapeHtml(text[i]);
-        }
-        if (inH) html += `</mark>`;
-        return html;
     }
+    const ml = 8; if (text.length < ml) return escapeHtml(text);
+    const hm = new Array(text.length).fill(false); const ng = new Map();
+    for (let i = 0; i <= text.length - ml; i++) { const sub = text.substring(i, i + ml); if (/^[\s\r\n]+$/.test(sub)) continue; if (ng.has(sub)) ng.get(sub).push(i); else ng.set(sub, [i]); }
+    for (const [, indices] of ng.entries()) if (indices.length > 1) for (const idx of indices) for (let k = 0; k < ml; k++) hm[idx + k] = true;
+    let html = '', inH = false;
+    for (let i = 0; i < text.length; i++) {
+        if (hm[i] && !inH) { html += `<mark style="background-color:#03a9f4;color:#000;font-weight:bold;padding:0 2px;border-radius:2px">`; inH = true; }
+        else if (!hm[i] && inH) { html += `</mark>`; inH = false; }
+        html += escapeHtml(text[i]);
+    }
+    if (inH) html += `</mark>`;
+    return html;
 }
-
 toggleHighlightBtn.addEventListener('click', () => {
     isHighlightMode = !isHighlightMode;
     if (isHighlightMode) {
@@ -4139,9 +3821,7 @@ toggleHighlightBtn.addEventListener('click', () => {
         outputEl.style.display = 'none'; outputPreview.style.display = 'block';
         toggleHighlightBtn.innerHTML = '✏️ 編集に戻る'; toggleHighlightBtn.classList.add('active-mode');
         if (ss) showToast(`「${ss}」をハイライトしました`); else showToast('8文字以上の重複箇所をハイライトしました');
-    } else {
-        resetHighlightMode();
-    }
+    } else resetHighlightMode();
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
@@ -4149,16 +3829,13 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     updateCounts(); resetHighlightMode(); saveWorkspaceDebounced();
 });
 document.getElementById('applyToInputBtn').addEventListener('click', () => {
-    if (outputEl.value) {
-        setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました');
-    }
+    if (outputEl.value) { setSplitInputText(outputEl.value); outputEl.value = ''; updateCounts(); resetHighlightMode(); saveWorkspaceDebounced(); showToast('結果を前半入力欄に反映しました'); }
 });
 document.getElementById('copyBtn').addEventListener('click', async () => {
     if (!outputEl.value) return;
     try { await navigator.clipboard.writeText(outputEl.value); showToast('コピーしました！'); }
     catch (err) { showToast('コピーに失敗しました'); }
 });
-
 runSelectedActionBtn.addEventListener('click', () => {
     const action = actionPicker.value;
     if (!action) { showToast('処理を選択してください'); return; }
@@ -4172,7 +3849,7 @@ runSelectedActionBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// Full Pipeline Compression - ワンボタン最強圧縮
+// フルパイプライン圧縮
 // ============================================================
 const fullPipelineBtn = document.getElementById('fullPipelineBtn');
 const pipelineNormalizeToggle = document.getElementById('pipelineNormalize');
@@ -4194,53 +3871,32 @@ async function runFullPipeline() {
     const startTime = Date.now();
 
     try {
-        // --- Phase 0: トークナイザー準備 ---
         showCompressProgress(2, 'Phase 0: トークナイザー準備中...');
         await initLocalTokenizer();
         const hasEncoder = localTokenizers[provider]?.status === 'ready' && localTokenizers[provider]?.encoder;
-
         const inputTokensBefore = getExactTokenCount(text);
 
-        // --- Phase 1: テキスト正規化 ---
         showCompressProgress(5, 'Phase 1: テキスト正規化...');
         await new Promise(r => setTimeout(r, 0));
-
         if (pipelineNormalizeToggle.checked) {
             text = text.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
             text = text.replace(kanaRegex, m => kanaMap[m]);
         }
 
-        // --- Phase 2: 既存マッピングの抽出 ---
         showCompressProgress(8, 'Phase 2: 既存マッピング解析...');
         const { replacedMap, bodyText } = extractExistingMappings(text);
         let processedBody = bodyText;
-
         _usedAbbrs.clear();
         for (const [abbr] of replacedMap) _usedAbbrs.add(abbr);
 
-        // --- Phase 3: 構造的前処理 ---
         showCompressProgress(12, 'Phase 3: 空白・空行削除...');
         await new Promise(r => setTimeout(r, 0));
-
-        if (autoCompressTrimWhitespaceInput.checked) {
-            processedBody = trimWhitespaceForCompression(processedBody);
-        }
+        if (autoCompressTrimWhitespaceInput.checked) processedBody = trimWhitespaceForCompression(processedBody);
 
         let dialogueMergeCount = 0;
-        if (autoCompressMergeDialoguesInput.checked) {
-            showCompressProgress(15, 'Phase 3: セリフ結合...');
-            const r = mergeConsecutiveDialogues(processedBody);
-            processedBody = r.text;
-            dialogueMergeCount = r.mergedCount;
-        }
-
+        if (autoCompressMergeDialoguesInput.checked) { showCompressProgress(15, 'Phase 3: セリフ結合...'); const r = mergeConsecutiveDialogues(processedBody); processedBody = r.text; dialogueMergeCount = r.mergedCount; }
         let bracketReplacedCount = 0;
-        if (autoCompressReplaceBracketsInput.checked) {
-            showCompressProgress(18, 'Phase 3: 鉤括弧→軽量記号...');
-            const r = replaceBracketsLightweight(processedBody);
-            processedBody = r.text;
-            bracketReplacedCount = r.replacedCount;
-        }
+        if (autoCompressReplaceBracketsInput.checked) { showCompressProgress(18, 'Phase 3: 鉤括弧→軽量記号...'); const r = replaceBracketsLightweight(processedBody); processedBody = r.text; bracketReplacedCount = r.replacedCount; }
 
         const formatOptions = {
             mergedDialogues: autoCompressMergeDialoguesInput.checked && dialogueMergeCount > 0,
@@ -4248,98 +3904,74 @@ async function runFullPipeline() {
             forceStrictHeader: pipelineForceStrictHeaderToggle ? pipelineForceStrictHeaderToggle.checked : false
         };
 
-        // --- Phase 4: 内蔵辞書適用 ---
         let builtinCount = 0;
-        if (autoCompressApplyUmaInput.checked) {
-            showCompressProgress(22, 'Phase 4: ウマ娘辞書適用...');
-            const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap);
-            processedBody = r.text; builtinCount += r.count;
-            for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr);
-        }
-        if (autoCompressApplyPronounInput.checked) {
-            showCompressProgress(25, 'Phase 4: 人称代名詞辞書適用...');
-            const r = applyBuiltinDict(processedBody, pronounMap, replacedMap);
-            processedBody = r.text; builtinCount += r.count;
-            for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr);
-        }
+        if (autoCompressApplyUmaInput.checked) { showCompressProgress(22, 'Phase 4: ウマ娘辞書適用...'); const r = applyBuiltinDict(processedBody, umaNameOnlyMap, replacedMap); processedBody = r.text; builtinCount += r.count; for (const [, abbr] of Object.entries(umaNameOnlyMap)) _usedAbbrs.add(abbr); }
+        if (autoCompressApplyPronounInput.checked) { showCompressProgress(25, 'Phase 4: 人称代名詞辞書適用...'); const r = applyBuiltinDict(processedBody, pronounMap, replacedMap); processedBody = r.text; builtinCount += r.count; for (const [, abbr] of Object.entries(pronounMap)) _usedAbbrs.add(abbr); }
 
-        // --- Phase 5: 分析プロファイル自動生成 ---
         let usableProfile = null;
         if (pipelineAutoAnalyzeToggle.checked) {
             showCompressProgress(28, 'Phase 5: 分析プロファイル生成中...');
             await new Promise(r => setTimeout(r, 0));
-
             const existingProfile = getParsedAnalysisProfile();
-            if (isAnalysisProfileCompatible(existingProfile)) {
-                usableProfile = existingProfile;
-                showCompressProgress(35, 'Phase 5: 既存プロファイルを活用');
-            } else if (hasEncoder) {
+            if (isAnalysisProfileCompatible(existingProfile)) { usableProfile = existingProfile; showCompressProgress(35, 'Phase 5: 既存プロファイルを活用'); }
+            else if (hasEncoder) {
                 try {
-                    const prefixes = ['@', '#', '~', 'Q', 'Z'];
-                    const separators = ['=', ':', '|', '>', '~', ';'];
-                    const aliasPool = analyzeAliasPoolWeb(processedBody, prefixes, 64, 1000);
-                    const separatorRows = analyzeSeparatorsWeb(separators);
+                    const aliasPool = analyzeAliasPoolWeb(processedBody, ['@', '#', '~', 'Q', 'Z'], 64, 1000);
+                    const separatorRows = analyzeSeparatorsWeb(['=', ':', '|', '>', '~', ';']);
                     const sampleValues = pickSampleValuesWeb(processedBody, 4);
                     const headerRows = analyzeHeaderTemplatesWeb(aliasPool, sampleValues);
                     const bestHeader = headerRows[0] || { name: 'fallback', token_cost: 0, template: ANALYSIS_HEADER_LIBRARY[0] };
-
                     showCompressProgress(38, 'Phase 5: N-gram候補検出中...');
                     await new Promise(r => setTimeout(r, 0));
-
                     const phraseRows = analyzePhraseSuggestionsWeb(processedBody, aliasPool, bestHeader, { ngramMin: 2, ngramMax: 8, minCount: 2, phraseLimit: 30 });
                     const charRows = analyzeCharBurdenWeb(processedBody, 40);
-                    const distilledRules = buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows);
-
                     usableProfile = {
                         schema: 'toolbox-tokenizer-analysis.v1',
                         target: { backend: provider, target: provider, display_name: provider, tokenizer_status: 'ready' },
                         corpus: { chars: processedBody.length, tokens: getExactTokenCount(processedBody) },
                         summary: { best_header_name: headerRows[0]?.name || null, best_header_token_cost: headerRows[0]?.token_cost || null, top_phrase_gain: phraseRows[0]?.gain || 0 },
-                        alias_pool: aliasPool,
-                        header_templates: headerRows,
-                        phrase_suggestions: phraseRows,
-                        distilled_rules: distilledRules
+                        alias_pool: aliasPool, header_templates: headerRows, phrase_suggestions: phraseRows,
+                        distilled_rules: buildDistilledRulesWeb(aliasPool, separatorRows, headerRows, charRows, phraseRows)
                     };
-
                     showCompressProgress(42, `Phase 5: プロファイル生成完了 (候補${phraseRows.length}件)`);
-                } catch (e) {
-                    console.warn('Pipeline: profile generation failed:', e);
-                    showCompressProgress(42, 'Phase 5: プロファイル生成スキップ');
-                }
+                } catch (e) { console.warn('Pipeline: profile generation failed:', e); showCompressProgress(42, 'Phase 5: プロファイル生成スキップ'); }
             }
         } else {
             const existing = getParsedAnalysisProfile();
             if (isAnalysisProfileCompatible(existing)) usableProfile = existing;
         }
 
-        // --- Phase 6: 分析プロファイル候補の先行適用 ---
+        const preParseText = processedBody;
         let analyzedAppliedCount = 0;
         if (usableProfile) {
             showCompressProgress(45, 'Phase 6: 分析候補を先行適用中...');
             await new Promise(r => setTimeout(r, 0));
             const guided = applyAnalyzedSuggestionsFirst(processedBody, replacedMap, formatOptions, usableProfile);
-            processedBody = guided.text;
-            analyzedAppliedCount = guided.appliedCount;
+            processedBody = guided.text; analyzedAppliedCount = guided.appliedCount;
         }
 
-        // --- Phase 7: メイン圧縮（GA/全探索/greedy 自動選択）---
         const minLen = parseInt(autoCompressMinLenInput.value, 10) || 3;
         const minCount = parseInt(autoCompressMinCountInput.value, 10) || 2;
         const maxItems = parseInt(autoCompressMaxItemsInput.value, 10) || 20;
         const excludeAlnum = autoCompressExcludeAlnumInput.checked;
         const bfThreshold = parseInt(pipelineBfThresholdInput.value, 10) || 15;
-
-        let totalCompressedCount = 0;
-        let mainAlgoUsed = 'none';
+        const mapLimit = getMapEntryLimit();
+        let totalCompressedCount = 0, mainAlgoUsed = 'none', dpSaved = 0;
 
         showCompressProgress(50, 'Phase 7: 圧縮候補検出中...');
         await new Promise(r => setTimeout(r, 0));
+        const poolSize = Math.max(maxItems, parseInt(autoCompressCandidatePoolInput.value, 10) || 400);
+        const rawCandidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, poolSize, excludeAlnum);
 
-        const rawCandidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, Math.max(maxItems, 40), excludeAlnum);
-
-        if (rawCandidates.length > 0 && pipelineSmartAlgoToggle.checked) {
-            const assigned = assignAliasesToCandidates(rawCandidates, processedBody, replacedMap, usableProfile);
-
+        if (rawCandidates.length > 0 && !pipelineSmartAlgoToggle.checked) {
+            mainAlgoUsed = '遅延貪欲';
+            const res = await lazyGreedyCompress(processedBody, rawCandidates, replacedMap, formatOptions, usableProfile, {
+                maxEntries: mapLimit,
+                maxExactEvals: parseInt(autoCompressMaxExactEvalsInput.value, 10) || 600
+            }, (pct, detail) => showCompressProgress(50 + Math.round(pct * 0.25), detail));
+            processedBody = res.text; totalCompressedCount = res.committed;
+        } else if (rawCandidates.length > 0) {
+            const assigned = assignAliasesToCandidates(rawCandidates.slice(0, Math.max(bfThreshold, 40)), processedBody, replacedMap, usableProfile);
             if (assigned.length > 0) {
                 if (assigned.length <= bfThreshold) {
                     mainAlgoUsed = `全探索(${assigned.length}候補)`;
@@ -4347,122 +3979,83 @@ async function runFullPipeline() {
                     const result = await bruteForceCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
                     const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
                     processedBody = applied.text;
-                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    for (const [k, v] of applied.replacedMap) if (!replacedMap.has(k)) replacedMap.set(k, v);
                     totalCompressedCount = result.bits.filter(b => b).length;
                 } else {
                     mainAlgoUsed = `GA(${assigned.length}候補)`;
                     showCompressProgress(55, `Phase 7: GA (${assigned.length}候補)...`);
-                    const gaParams = {
-                        populationSize: Math.min(100, Math.max(50, assigned.length * 3)),
-                        generations: Math.min(150, Math.max(80, assigned.length * 4)),
-                        mutationRate: 10,
-                        eliteCount: Math.max(3, Math.floor(assigned.length * 0.1)),
-                        tournamentSize: 4,
-                        twoStageEval: true
-                    };
+                    const gaParams = { populationSize: Math.min(100, Math.max(50, assigned.length * 3)), generations: Math.min(150, Math.max(80, assigned.length * 4)), mutationRate: 10, eliteCount: Math.max(3, Math.floor(assigned.length * 0.1)), tournamentSize: 4, twoStageEval: true };
                     const result = await gaCompress(processedBody, assigned, replacedMap, formatOptions, usableProfile, gaParams, (pct, detail) => showCompressProgress(55 + Math.round(pct * 0.2), detail));
                     const applied = applySolution(processedBody, assigned, result.bits, replacedMap);
                     processedBody = applied.text;
-                    for (const [k, v] of applied.replacedMap) { if (!replacedMap.has(k)) replacedMap.set(k, v); }
+                    for (const [k, v] of applied.replacedMap) if (!replacedMap.has(k)) replacedMap.set(k, v);
                     totalCompressedCount = result.bits.filter(b => b).length;
-                }
-            }
-        } else if (rawCandidates.length > 0) {
-            mainAlgoUsed = 'greedy';
-            const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, rawCandidates, 8);
-            if (rescored.length > 0 && rescored[0].gain > 0) {
-                const best = rescored[0];
-                let alias = best.alias;
-                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
-                    alias = chooseAliasWithAnalysis(replacedMap.size + 1, processedBody, replacedMap, usableProfile);
-                } else { _usedAbbrs.add(alias); }
-                if (alias) {
-                    const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
-                    if (exact.gain > 0) {
-                        processedBody = exact.replacedBody;
-                        replacedMap.set(alias, best.phrase);
-                        totalCompressedCount++;
-                    }
                 }
             }
         }
 
-        // --- Phase 8: greedy仕上げパス ---
         let greedyFinishCount = 0;
         if (pipelineGreedyFinishToggle.checked) {
             const greedyPasses = parseInt(pipelineGreedyPassesInput.value, 10) || 3;
-
             for (let pass = 0; pass < greedyPasses; pass++) {
-                showCompressProgress(78 + Math.round((pass / greedyPasses) * 15), `Phase 8: greedy仕上げ (${pass + 1}/${greedyPasses})...`);
+                if (replacedMap.size >= mapLimit) break;
+                showCompressProgress(78 + Math.round((pass / greedyPasses) * 12), `Phase 8: greedy仕上げ (${pass + 1}/${greedyPasses})...`);
                 await new Promise(r => setTimeout(r, 0));
-
                 const candidates = findCompressionCandidatesTokenAware(processedBody, minLen, minCount, maxItems, excludeAlnum);
                 if (!candidates.length) break;
-
                 const rescored = rescoreCompressionCandidatesExactly(processedBody, replacedMap, formatOptions, usableProfile, candidates, 8);
                 if (!rescored.length || rescored[0].gain <= 0) break;
-
                 const best = rescored[0];
                 let alias = best.alias;
-                if (!alias || _usedAbbrs.has(alias) || replacedMap.has(alias) || processedBody.includes(alias)) {
-                    alias = chooseAliasWithAnalysis(replacedMap.size + totalCompressedCount + greedyFinishCount + 1, processedBody, replacedMap, usableProfile);
-                } else { _usedAbbrs.add(alias); }
+                if (!aliasIsFree(alias, processedBody, replacedMap)) alias = pickAliasForPhrase(best.phrase, replacedMap.size + totalCompressedCount + greedyFinishCount + 1, processedBody, replacedMap, usableProfile);
+                else _usedAbbrs.add(alias);
                 if (!alias) break;
-
                 const exact = scoreReplacementExact(processedBody, replacedMap, best.phrase, alias, formatOptions, usableProfile);
                 if (exact.gain <= 0) { _usedAbbrs.delete(alias); break; }
-
                 processedBody = exact.replacedBody;
                 replacedMap.set(alias, best.phrase);
+                rememberStableAlias(best.phrase, alias);
                 greedyFinishCount++;
             }
         }
 
-        // --- Phase 9: 最適ヘッダー選択＆出力 ---
-        showCompressProgress(95, 'Phase 9: 最適ヘッダー構築...');
+        showCompressProgress(92, 'Phase 9: 出現位置の最適パースDP...');
         await new Promise(r => setTimeout(r, 0));
+        const dp = tryOptimalParse(preParseText, replacedMap, processedBody, formatOptions, usableProfile);
+        if (dp) { processedBody = dp.text; replacedMap.clear(); dp.replacedMap.forEach((v, k) => replacedMap.set(k, v)); dpSaved = dp.saved; }
 
-        const finalHeader = chooseBestCompressedHeader(replacedMap, processedBody, formatOptions, usableProfile);
-        const finalOutput = finalHeader + processedBody;
-
+        showCompressProgress(96, 'Phase 10: 最適ヘッダー構築...');
+        await new Promise(r => setTimeout(r, 0));
+        const finalOutput = chooseBestCompressedHeader(replacedMap, processedBody, formatOptions, usableProfile) + processedBody;
         outputEl.value = finalOutput;
         updateCounts();
+        if (stableAliasEnabled()) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); }
         saveWorkspaceDebounced();
 
-        // --- 結果表示 ---
         const outputTokensAfter = getExactTokenCount(finalOutput);
         const saved = inputTokensBefore - outputTokensAfter;
         const pct = inputTokensBefore > 0 ? Math.round((saved / inputTokensBefore) * 100) : 0;
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
         const parts = [];
         if (pipelineNormalizeToggle.checked) parts.push('正規化');
         if (builtinCount > 0) parts.push(`辞書${builtinCount}件`);
         if (analyzedAppliedCount > 0) parts.push(`分析${analyzedAppliedCount}語`);
         if (totalCompressedCount > 0) parts.push(`${mainAlgoUsed}${totalCompressedCount}語`);
-        if (greedyFinishCount > 0) parts.push(`greedy仕上${greedyFinishCount}語`);
+        if (greedyFinishCount > 0) parts.push(`仕上${greedyFinishCount}語`);
+        if (dpSaved > 0) parts.push(`DP↓${dpSaved}`);
         if (dialogueMergeCount > 0) parts.push(`結合${dialogueMergeCount}行`);
         if (bracketReplacedCount > 0) parts.push(`括弧${bracketReplacedCount}箇所`);
-
         showCompressProgress(100, `完了！ ${elapsed}秒`);
         setTimeout(hideCompressProgress, 2000);
-
         const engineLabel = hasEncoder ? '🎯' : '≈';
-        if (saved > 0) {
-            showToast(`⚡ ${engineLabel}${saved}トークン節約 (${pct}%↓) [${parts.join('→')}] ${elapsed}秒`);
-        } else {
-            showToast(`⚡ パイプライン完了 [${parts.join('→')}] ${elapsed}秒`);
-        }
-
+        if (saved > 0) showToast(`⚡ ${engineLabel}${saved}トークン節約 (${pct}%↓) [${parts.join('→')}] ${elapsed}秒`);
+        else showToast(`⚡ パイプライン完了 [${parts.join('→')}] ${elapsed}秒`);
     } catch (err) {
         console.error('Pipeline error:', err);
         hideCompressProgress();
         showToast('パイプライン中にエラー: ' + (err.message || err));
-    } finally {
-        fullPipelineBtn.disabled = false;
-    }
+    } finally { fullPipelineBtn.disabled = false; }
 }
-
 fullPipelineBtn.addEventListener('click', runFullPipeline);
 
 loadSettings();
@@ -4473,17 +4066,15 @@ renderAnalysisTab();
 initLocalTokenizer();
 
 window.addEventListener('beforeunload', () => {
-    if (persistWorkspaceToggle.checked) {
-        collectCurrentState();
-        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-    }
+    if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); }
 });
 window.addEventListener('pagehide', () => {
-    if (persistWorkspaceToggle.checked) {
-        collectCurrentState();
-        localStorage.setItem('toolbox_settings', JSON.stringify(appSettings));
-    }
+    if (persistWorkspaceToggle.checked) { collectCurrentState(); localStorage.setItem('toolbox_settings', JSON.stringify(appSettings)); }
 });
 </script>
 </body>
 </html>
+
+            
+            
+            
